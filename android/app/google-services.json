@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "446906882706",
+    "project_id": "onlinemusicnew-22821",
+    "storage_bucket": "onlinemusicnew-22821.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:446906882706:android:7df52fcf05534c7acaa44b",
+        "android_client_info": {
+          "package_name": "com.example.onlinemusic"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "446906882706-vsm8bdi0jb9a43hr4p79l5shigigkjtd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDqgLlIOf0198BlwLxVmqBbGORBFavQ4RQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "446906882706-vsm8bdi0jb9a43hr4p79l5shigigkjtd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
