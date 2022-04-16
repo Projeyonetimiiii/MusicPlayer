@@ -1,5 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:onlinemusic/models/usermodel.dart';
+import 'package:onlinemusic/services/auth.dart';
+
+import 'home.dart';
 
 class ReqisterScreen extends StatefulWidget {
   const ReqisterScreen({Key? key}) : super(key: key);
@@ -19,6 +23,8 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
       TextEditingController();
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  final AuthService _authService = AuthService();
 
   @override
   Widget build(BuildContext context) {
@@ -179,10 +185,28 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
                                 color: Colors.white,
                               )),
                             )),
-                            SizedBox(height: 50,),
-                              InkWell(
+                        SizedBox(
+                          height: 50,
+                        ),
+                        InkWell(
                           onTap: () async {
-                         
+                            UserModel user = UserModel(
+                              email: _emailController.text,
+                              userName: _nameController.text,
+                              id: _auth.currentUser!.uid,
+                            );
+                            await _authService
+                                .createPerson(
+                              user,
+                              _passwordController.text,
+                            )
+                                .then((value) {
+                              print("Buraya geldi");
+                              return Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => HomePage()));
+                            });
                           },
                           child: Container(
                             padding: EdgeInsets.symmetric(vertical: 5),
@@ -209,7 +233,6 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
                         SizedBox(
                           height: size.height * 0.08,
                         ),
-
                       ],
                     ),
                   ),
