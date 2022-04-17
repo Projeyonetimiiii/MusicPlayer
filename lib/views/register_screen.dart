@@ -4,6 +4,7 @@ import 'package:onlinemusic/models/usermodel.dart';
 import 'package:onlinemusic/services/auth.dart';
 
 import 'home.dart';
+import 'login_screen.dart';
 
 class ReqisterScreen extends StatefulWidget {
   const ReqisterScreen({Key? key}) : super(key: key);
@@ -221,7 +222,7 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
                               padding: const EdgeInsets.all(5.0),
                               child: Center(
                                   child: Text(
-                                "Kaydet",
+                                "Kayıt Ol",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
@@ -230,9 +231,36 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
                             ),
                           ),
                         ),
-                        SizedBox(
-                          height: size.height * 0.08,
+                          SizedBox(
+                    height: size.height * 0.02,
+                  ),
+                  InkWell(
+                    onTap: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => LoginScreen()));
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Container(
+                          height: 1,
+                          width: 75,
+                          color: Colors.white,
                         ),
+                        Text(
+                          "Giriş Yap",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        Container(
+                          height: 1,
+                          width: 75,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
                       ],
                     ),
                   ),
@@ -242,17 +270,6 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
           ),
         ),
         SizedBox(height: 80),
-        Expanded(
-          child: Container(
-            height: 200,
-            width: 500,
-            decoration: BoxDecoration(
-                color: Colors.teal.shade900,
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(15),
-                    topRight: Radius.circular(15))),
-          ),
-        )
       ],
     ));
   }

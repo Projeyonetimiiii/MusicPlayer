@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:onlinemusic/views/state.dart';
 
 import 'home.dart';
 import 'register_screen.dart';
@@ -17,7 +18,7 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     Future.delayed(Duration(seconds: 2), () {
       Navigator.push(
-          context, MaterialPageRoute(builder: (context) => ReqisterScreen()));
+          context, MaterialPageRoute(builder: (context) => StateScreen()));
     });
   }
 
