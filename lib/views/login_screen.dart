@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:onlinemusic/services/auth.dart';
+import 'package:onlinemusic/views/home.dart';
 
 import 'register_screen.dart';
 
@@ -12,7 +14,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-
+  final AuthService _authService = AuthService();
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
@@ -182,7 +184,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: InkWell(
-                      onTap: () {},
+                      onTap: () {
+                         _authService
+                          .signIn(
+                              _emailController.text, _passwordController.text)
+                          .then((value) {
+                        if (value != null) {
+                          return Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => HomePage()));
+                        }
+                      });
+                      },
                       child: CircleAvatar(
                         maxRadius: 30,
                         child: Center(
