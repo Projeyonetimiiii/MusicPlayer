@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../services/auth.dart';
+
 class HomePage extends StatefulWidget {
   HomePage({Key? key}) : super(key: key);
 
@@ -8,8 +10,18 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+ 
+  final AuthService _authService = AuthService();
+
+
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Scaffold(
+      
+      appBar: AppBar(
+        automaticallyImplyLeading :false,
+        title:Text("Ana sayfa")
+      ),
+    );
   }
 }

@@ -181,8 +181,7 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
                               onTap: () async {
                                 UserModel user = UserModel(
                                   email: _emailController.text,
-                                  userName: _nameController.text,
-                                  id: _auth.currentUser!.uid,
+                                  userName: _nameController.text
                                 );
                                 await _authService
                                     .createPerson(
