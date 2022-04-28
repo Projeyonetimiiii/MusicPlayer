@@ -31,27 +31,18 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
     return Scaffold(
-        body: Center(
+        body:  Container(
+         color: Colors.grey.shade400.withOpacity(0.1),
+          child: Center(
       child: SingleChildScrollView(
-        physics: BouncingScrollPhysics(),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 20.0),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                  child: Container(
-                    width: size.width * .92,
-                    decoration: BoxDecoration(
-                        color: Colors.teal.shade800,
-                        borderRadius: BorderRadius.all(Radius.circular(20)),
-                        boxShadow: [
-                          BoxShadow(
-                              color: Colors.grey.withOpacity(.75),
-                              blurRadius: 10,
-                              spreadRadius: 2)
-                        ]),
+          physics: BouncingScrollPhysics(),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 20.0),
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
                     child: Padding(
                       padding: const EdgeInsets.all(10.0),
                       child: Center(
@@ -59,123 +50,108 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
                           children: [
                             Padding(
                               padding: const EdgeInsets.all(8.0),
-                              child: Text("Kayıt Ekranı",
+                              child: Text("Welcome ",
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 20,
-                                      color: Colors.white)),
+                                      color: Colors.black)),
                             ),
-                            TextField(
-                                controller: _nameController,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                ),
-                                cursorColor: Colors.white,
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: InputDecoration(
-                                  prefixIcon: Icon(
-                                    Icons.person,
-                                    color: Colors.white,
-                                  ),
-                                  hintText: 'Kullanıcı adı',
-                                  prefixText: ' ',
-                                  hintStyle: TextStyle(color: Colors.white),
-                                  focusColor: Colors.white,
-                                  focusedBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                    color: Colors.white,
-                                  )),
-                                  enabledBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                    color: Colors.white,
-                                  )),
-                                )),
+                            SizedBox(height: 30,),
+                            Material(
+                       color: Colors.white,
+                       borderRadius: BorderRadius.all(Radius.circular(10)), 
+                       child: TextField(
+                           controller: _nameController,
+                           style: TextStyle(
+                             color: Colors.black,
+                           ),
+                           cursorColor: Colors.black,
+                           keyboardType: TextInputType.emailAddress,
+                           decoration: InputDecoration(
+                             prefixIcon: Icon(
+                               Icons.mail,
+                               color: Colors.black,
+                             ),
+                             hintText: 'user name',
+                             prefixText: ' ',
+                             hintStyle: TextStyle(color: Colors.black),
+                                border: InputBorder.none
+                           )),
+                     ),
                             SizedBox(
                               height: size.height * 0.02,
                             ),
-                            TextField(
-                                controller: _emailController,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                ),
-                                cursorColor: Colors.white,
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: InputDecoration(
-                                  prefixIcon: Icon(
-                                    Icons.mail,
-                                    color: Colors.white,
-                                  ),
-                                  hintText: 'E-Mail',
-                                  prefixText: ' ',
-                                  hintStyle: TextStyle(color: Colors.white),
-                                  focusColor: Colors.white,
-                                  focusedBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                    color: Colors.white,
-                                  )),
-                                  enabledBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                    color: Colors.white,
-                                  )),
-                                )),
+                            Material(
+                       color: Colors.white,
+                       borderRadius: BorderRadius.all(Radius.circular(10)), 
+                       child: TextField(
+                           controller: _emailController,
+                           style: TextStyle(
+                             color: Colors.black,
+                           ),
+                           cursorColor: Colors.black,
+                           keyboardType: TextInputType.emailAddress,
+                           decoration: InputDecoration(
+                             prefixIcon: Icon(
+                               Icons.mail,
+                               color: Colors.black,
+                             ),
+                             hintText: 'E-Mail',
+                             prefixText: ' ',
+                             hintStyle: TextStyle(color: Colors.black),
+                                border: InputBorder.none
+                           )),
+                     ),
                             SizedBox(
                               height: size.height * 0.02,
                             ),
-                            TextField(
-                                style: TextStyle(
-                                  color: Colors.white,
-                                ),
-                                cursorColor: Colors.white,
-                                controller: _passwordController,
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                  prefixIcon: Icon(
-                                    Icons.vpn_key,
-                                    color: Colors.white,
-                                  ),
-                                  hintText: 'Parola',
-                                  prefixText: ' ',
-                                  hintStyle: TextStyle(color: Colors.white),
-                                  focusColor: Colors.white,
-                                  focusedBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                    color: Colors.white,
-                                  )),
-                                  enabledBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                    color: Colors.white,
-                                  )),
-                                )),
+                                            Material(
+                       color: Colors.white,
+                       borderRadius: BorderRadius.all(Radius.circular(10)), 
+                       child: TextField(
+                           controller: _passwordController,
+                           style: TextStyle(
+                             color: Colors.black,
+                           ),
+                           cursorColor: Colors.black,
+                           keyboardType: TextInputType.emailAddress,
+                           decoration: InputDecoration(
+                             prefixIcon: Icon(
+                               Icons.lock,
+                               color: Colors.black,
+                             ),
+                             hintText: 'password',
+                             prefixText: ' ',
+                             hintStyle: TextStyle(color: Colors.black),
+                            border: InputBorder.none
+                           )),
+                     ),
                             SizedBox(
                               height: size.height * 0.02,
                             ),
-                            TextField(
-                                style: TextStyle(
-                                  color: Colors.white,
-                                ),
-                                cursorColor: Colors.white,
-                                controller: _passwordAgainController,
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                  prefixIcon: Icon(
-                                    Icons.vpn_key,
-                                    color: Colors.white,
-                                  ),
-                                  hintText: 'Parola Tekrar',
-                                  prefixText: ' ',
-                                  hintStyle: TextStyle(color: Colors.white),
-                                  focusColor: Colors.white,
-                                  focusedBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                    color: Colors.white,
-                                  )),
-                                  enabledBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(
-                                    color: Colors.white,
-                                  )),
-                                )),
+                                          Material(
+                       color: Colors.white,
+                       borderRadius: BorderRadius.all(Radius.circular(10)), 
+                       child: TextField(
+                           controller: _passwordAgainController,
+                           style: TextStyle(
+                             color: Colors.black,
+                           ),
+                           cursorColor: Colors.black,
+                           keyboardType: TextInputType.emailAddress,
+                           decoration: InputDecoration(
+                             prefixIcon: Icon(
+                               Icons.lock,
+                               color: Colors.black,
+                             ),
+                             hintText: 'password again',
+                             prefixText: ' ',
+                             hintStyle: TextStyle(color: Colors.black),
+                            border: InputBorder.none
+                           )),
+                     ),
                             SizedBox(
-                              height: 50,
+                              height: 40,
                             ),
                             InkWell(
                               onTap: () async {
@@ -197,19 +173,17 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
                                 });
                               },
                               child: Container(
-                                padding: EdgeInsets.symmetric(vertical: 5),
-                                decoration: BoxDecoration(
-                                    color: Colors.teal.shade900,
-                                    border: Border.all(
-                                        color: Colors.teal.shade900, width: 2),
-                                    //color: colorPrimaryShade,
-                                    borderRadius:
-                                        BorderRadius.all(Radius.circular(30))),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(5.0),
+                         padding: EdgeInsets.symmetric(vertical: 5),
+                         decoration: BoxDecoration(
+                             color: Colors.red.shade600,
+                            
+                             borderRadius:
+                                 BorderRadius.all(Radius.circular(10))),
+                         child: Padding(
+                           padding: const EdgeInsets.all(5.0),
                                   child: Center(
                                       child: Text(
-                                    "Kayıt Ol",
+                                    "Sign up",
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 20,
@@ -225,8 +199,8 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "Hesabın varmı? ",
-                                  style: TextStyle(color: Colors.white),
+                                  "do you have an account? ",
+                                  style: TextStyle(color: Colors.black),
                                 ),
                                 InkWell(
                                   onTap: () {
@@ -237,7 +211,7 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
                                                 LoginScreen()));
                                   },
                                   child: Text(
-                                    "Giriş Yap",
+                                    "Sign In",
                                     style: TextStyle(
                                       color: Colors.blue,
                                       fontWeight: FontWeight.bold,
@@ -253,10 +227,10 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
       ),
-    ));
+    ),
+        ));
   }
 }
