@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/state.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -13,10 +14,12 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(Duration(seconds: 2), () {
-      Navigator.push(
-          context, MaterialPageRoute(builder: (context) => StateScreen()));
-    });
+    Future.delayed(
+      Duration(seconds: 2),
+      () {
+        context.push(StateScreen());
+      },
+    );
   }
 
   @override

@@ -46,6 +46,8 @@ dependencies:
   extended_image: ^6.0.1
   rxdart: ^0.27.2
   chips_choice_null_safety: ^2.0.4
+  email_validator: ^2.0.1
+  overlay_support: ^1.2.1
 
 
 dev_dependencies:

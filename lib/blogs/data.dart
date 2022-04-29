@@ -1,7 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
-class MyData extends ChangeNotifier{
-  
-}
+class MyData extends ChangeNotifier {}

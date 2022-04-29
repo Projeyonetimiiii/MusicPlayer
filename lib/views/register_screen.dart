@@ -2,18 +2,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:onlinemusic/models/usermodel.dart';
 import 'package:onlinemusic/services/auth.dart';
+import 'package:onlinemusic/util/extensions.dart';
+import 'package:onlinemusic/util/helper_functions.dart';
 
 import 'home.dart';
 import 'login_screen.dart';
 
-class ReqisterScreen extends StatefulWidget {
-  const ReqisterScreen({Key? key}) : super(key: key);
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({Key? key}) : super(key: key);
 
   @override
-  State<ReqisterScreen> createState() => _ReqisterScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _ReqisterScreenState extends State<ReqisterScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _nameController = TextEditingController();
 
   final TextEditingController _emailController = TextEditingController();
@@ -23,18 +25,16 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
   final TextEditingController _passwordAgainController =
       TextEditingController();
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-
   final AuthService _authService = AuthService();
 
   @override
   Widget build(BuildContext context) {
     var size = MediaQuery.of(context).size;
     return Scaffold(
-        body:  Container(
-         color: Colors.grey.shade400.withOpacity(0.1),
-          child: Center(
-      child: SingleChildScrollView(
+        body: Container(
+      color: Colors.grey.shade400.withOpacity(0.1),
+      child: Center(
+        child: SingleChildScrollView(
           physics: BouncingScrollPhysics(),
           child: Column(
             children: [
@@ -56,131 +56,143 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
                                       fontSize: 20,
                                       color: Colors.black)),
                             ),
-                            SizedBox(height: 30,),
-                            Material(
-                       color: Colors.white,
-                       borderRadius: BorderRadius.all(Radius.circular(10)), 
-                       child: TextField(
-                           controller: _nameController,
-                           style: TextStyle(
-                             color: Colors.black,
-                           ),
-                           cursorColor: Colors.black,
-                           keyboardType: TextInputType.emailAddress,
-                           decoration: InputDecoration(
-                             prefixIcon: Icon(
-                               Icons.mail,
-                               color: Colors.black,
-                             ),
-                             hintText: 'user name',
-                             prefixText: ' ',
-                             hintStyle: TextStyle(color: Colors.black),
-                                border: InputBorder.none
-                           )),
-                     ),
                             SizedBox(
-                              height: size.height * 0.02,
+                              height: 30,
                             ),
                             Material(
-                       color: Colors.white,
-                       borderRadius: BorderRadius.all(Radius.circular(10)), 
-                       child: TextField(
-                           controller: _emailController,
-                           style: TextStyle(
-                             color: Colors.black,
-                           ),
-                           cursorColor: Colors.black,
-                           keyboardType: TextInputType.emailAddress,
-                           decoration: InputDecoration(
-                             prefixIcon: Icon(
-                               Icons.mail,
-                               color: Colors.black,
-                             ),
-                             hintText: 'E-Mail',
-                             prefixText: ' ',
-                             hintStyle: TextStyle(color: Colors.black),
-                                border: InputBorder.none
-                           )),
-                     ),
+                              color: Colors.white,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10)),
+                              child: TextField(
+                                  controller: _nameController,
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                  ),
+                                  cursorColor: Colors.black,
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: InputDecoration(
+                                      prefixIcon: Icon(
+                                        Icons.mail,
+                                        color: Colors.black,
+                                      ),
+                                      hintText: 'user name',
+                                      prefixText: ' ',
+                                      hintStyle: TextStyle(color: Colors.black),
+                                      border: InputBorder.none)),
+                            ),
                             SizedBox(
                               height: size.height * 0.02,
                             ),
-                                            Material(
-                       color: Colors.white,
-                       borderRadius: BorderRadius.all(Radius.circular(10)), 
-                       child: TextField(
-                           controller: _passwordController,
-                           style: TextStyle(
-                             color: Colors.black,
-                           ),
-                           cursorColor: Colors.black,
-                           keyboardType: TextInputType.emailAddress,
-                           decoration: InputDecoration(
-                             prefixIcon: Icon(
-                               Icons.lock,
-                               color: Colors.black,
-                             ),
-                             hintText: 'password',
-                             prefixText: ' ',
-                             hintStyle: TextStyle(color: Colors.black),
-                            border: InputBorder.none
-                           )),
-                     ),
+                            Material(
+                              color: Colors.white,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10)),
+                              child: TextField(
+                                  controller: _emailController,
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                  ),
+                                  cursorColor: Colors.black,
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: InputDecoration(
+                                      prefixIcon: Icon(
+                                        Icons.mail,
+                                        color: Colors.black,
+                                      ),
+                                      hintText: 'E-Mail',
+                                      prefixText: ' ',
+                                      hintStyle: TextStyle(color: Colors.black),
+                                      border: InputBorder.none)),
+                            ),
                             SizedBox(
                               height: size.height * 0.02,
                             ),
-                                          Material(
-                       color: Colors.white,
-                       borderRadius: BorderRadius.all(Radius.circular(10)), 
-                       child: TextField(
-                           controller: _passwordAgainController,
-                           style: TextStyle(
-                             color: Colors.black,
-                           ),
-                           cursorColor: Colors.black,
-                           keyboardType: TextInputType.emailAddress,
-                           decoration: InputDecoration(
-                             prefixIcon: Icon(
-                               Icons.lock,
-                               color: Colors.black,
-                             ),
-                             hintText: 'password again',
-                             prefixText: ' ',
-                             hintStyle: TextStyle(color: Colors.black),
-                            border: InputBorder.none
-                           )),
-                     ),
+                            Material(
+                              color: Colors.white,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10)),
+                              child: TextField(
+                                  obscureText: true,
+                                  controller: _passwordController,
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                  ),
+                                  cursorColor: Colors.black,
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: InputDecoration(
+                                      prefixIcon: Icon(
+                                        Icons.lock,
+                                        color: Colors.black,
+                                      ),
+                                      hintText: 'password',
+                                      prefixText: ' ',
+                                      hintStyle: TextStyle(color: Colors.black),
+                                      border: InputBorder.none)),
+                            ),
+                            SizedBox(
+                              height: size.height * 0.02,
+                            ),
+                            Material(
+                              color: Colors.white,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10)),
+                              child: TextField(
+                                  obscureText: true,
+                                  controller: _passwordAgainController,
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                  ),
+                                  cursorColor: Colors.black,
+                                  keyboardType: TextInputType.emailAddress,
+                                  decoration: InputDecoration(
+                                      prefixIcon: Icon(
+                                        Icons.lock,
+                                        color: Colors.black,
+                                      ),
+                                      hintText: 'password again',
+                                      prefixText: ' ',
+                                      hintStyle: TextStyle(color: Colors.black),
+                                      border: InputBorder.none)),
+                            ),
                             SizedBox(
                               height: 40,
                             ),
                             InkWell(
                               onTap: () async {
-                                UserModel user = UserModel(
-                                  email: _emailController.text,
-                                  userName: _nameController.text
-                                );
-                                await _authService
-                                    .createPerson(
-                                  user,
+                                if (_passwordController.text !=
+                                    _passwordAgainController.text) {
+                                  showErrorNotification(
+                                    description: "Şifreler uyuşmuyor",
+                                  );
+                                  return;
+                                } else {
+                                  if (_passwordController.text.length < 6) {
+                                    showErrorNotification(
+                                      description:
+                                          "Şifre en az 6 karakter olmalı",
+                                    );
+                                    return;
+                                  }
+                                }
+                                UserModel userModel = UserModel(
+                                    email: _emailController.text,
+                                    userName: _nameController.text);
+                                User? user = await _authService.createPerson(
+                                  userModel,
                                   _passwordController.text,
-                                )
-                                    .then((value) {
-                                  print("Buraya geldi");
-                                  return Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) => HomePage()));
-                                });
+                                );
+                                if (user != null) {
+                                  context.pushAndRemoveUntil(HomePage());
+                                }
                               },
                               child: Container(
-                         padding: EdgeInsets.symmetric(vertical: 5),
-                         decoration: BoxDecoration(
-                             color: Colors.red.shade600,
-                            
-                             borderRadius:
-                                 BorderRadius.all(Radius.circular(10))),
-                         child: Padding(
-                           padding: const EdgeInsets.all(5.0),
+                                padding: EdgeInsets.symmetric(vertical: 5),
+                                decoration: BoxDecoration(
+                                    color: Colors.red.shade600,
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(10))),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(5.0),
                                   child: Center(
                                       child: Text(
                                     "Sign up",
@@ -204,11 +216,13 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
                                 ),
                                 InkWell(
                                   onTap: () {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                LoginScreen()));
+                                    Navigator.pushAndRemoveUntil(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => LoginScreen(),
+                                      ),
+                                      (_) => false,
+                                    );
                                   },
                                   child: Text(
                                     "Sign In",
@@ -229,8 +243,8 @@ class _ReqisterScreenState extends State<ReqisterScreen> {
               ),
             ],
           ),
+        ),
       ),
-    ),
-        ));
+    ));
   }
 }
