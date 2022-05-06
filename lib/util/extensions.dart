@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:onlinemusic/blogs/data.dart';
+import 'package:provider/provider.dart';
 
 extension BuildContextExt on BuildContext {
   Future<T?> push<T>(Widget page) {
@@ -12,4 +14,6 @@ extension BuildContextExt on BuildContext {
       (_) => false,
     );
   }
+
+  MyData get myData => this.read<MyData>();
 }

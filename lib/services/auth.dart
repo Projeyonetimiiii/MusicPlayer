@@ -22,9 +22,10 @@ class AuthService {
       return null;
     }
     try {
-      var user = await _auth.signInWithEmailAndPassword(
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
           email: email, password: password);
-      return user.user;
+      print(userCredential);
+      return userCredential.user;
     } on FirebaseAuthException catch (e) {
       print("Hata: " + e.code);
       if (e.code == "network-request-failed") {
@@ -32,18 +33,21 @@ class AuthService {
         showErrorNotification(
           description: "Lütfen internet bağlantınızı kontol edin",
         );
+        return null;
       }
       if (e.code == "user-not-found") {
         //! kayıtlı bir kullanıcı yok
         showErrorNotification(
           description: "Kayıtlı bir kullanıcı yok",
         );
+        return null;
       }
       if (e.code == "wrong-password") {
         //! hatalı şifre
         showErrorNotification(
           description: "E-posta veya şifre hatalı",
         );
+        return null;
       } else {
         showErrorNotification(
           description: "Hata oluştu, lütfen daha sonra tekrar dene",
