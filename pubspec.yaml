@@ -48,6 +48,7 @@ dependencies:
   chips_choice_null_safety: ^2.0.4
   email_validator: ^2.0.1
   overlay_support: ^1.2.1
+  on_audio_query: ^2.0.0
 
 
 dev_dependencies:

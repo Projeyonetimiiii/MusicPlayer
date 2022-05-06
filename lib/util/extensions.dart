@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:onlinemusic/blogs/data.dart';
+import 'package:onlinemusic/providers/data.dart';
 import 'package:provider/provider.dart';
 
 extension BuildContextExt on BuildContext {
