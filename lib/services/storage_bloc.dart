@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:onlinemusic/models/media_reference.dart';
 
-class StorageBlock {
-  StorageBlock() {
+class StorageBloc {
+  StorageBloc() {
     _storage = FirebaseStorage.instance;
     _reference = _storage.ref();
   }
@@ -48,7 +48,4 @@ class StorageBlock {
   }
 
   void dispose() {}
-
-
-
 }

@@ -5,7 +5,7 @@ import 'package:on_audio_query/on_audio_query.dart';
 import 'package:onlinemusic/services/storage_bloc.dart';
 
 class MyData extends ChangeNotifier {
-  late StorageBlock _storageBlock;
+  late StorageBloc _storageBlock;
   List<MapEntry<int, Uint8List?>> songsImages = [];
   List<SongModel> songs = [];
 
@@ -13,12 +13,12 @@ class MyData extends ChangeNotifier {
     init();
   }
 
-  StorageBlock get sB => _storageBlock;
+  StorageBloc get sB => _storageBlock;
 
   void dispose() {}
 
   Future<void> init() async {
-    _storageBlock = StorageBlock();
+    _storageBlock = StorageBloc();
     getMusics();
   }
 
