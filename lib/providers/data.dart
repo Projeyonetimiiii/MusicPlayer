@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'dart:typed_data';
 
 import 'package:on_audio_query/on_audio_query.dart';
+import 'package:onlinemusic/services/audios_bloc.dart';
 import 'package:onlinemusic/services/storage_bloc.dart';
 
 class MyData extends ChangeNotifier {
-  late StorageBloc _storageBlock;
+  late StorageBloc _storageBloc;
+  late AudiosBloc _audiosBloc;
   List<MapEntry<int, Uint8List?>> songsImages = [];
   List<SongModel> songs = [];
 
@@ -13,12 +15,14 @@ class MyData extends ChangeNotifier {
     init();
   }
 
-  StorageBloc get sB => _storageBlock;
+  StorageBloc get sB => _storageBloc;
+  AudiosBloc get aB => _audiosBloc;
 
   void dispose() {}
 
   Future<void> init() async {
-    _storageBlock = StorageBloc();
+    _storageBloc = StorageBloc();
+    _audiosBloc = AudiosBloc();
     getMusics();
   }
 

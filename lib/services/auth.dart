@@ -9,6 +9,9 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  CollectionReference<Map<String, dynamic>> get usersReference =>
+      _firestore.collection("Users");
+
   //giriş yap fonksiyonu
   Future<User?> signIn(
     String email,
@@ -104,18 +107,26 @@ class AuthService {
     User? user = userCredential.user;
     if (user == null) return null;
     user = FirebaseAuth.instance.currentUser ?? user;
+    userModel = userModel
+      ..id = user.uid
+      ..image = user.photoURL;
     await _firestore
-        .collection("User")
+        .collection("Users")
         .doc(user.uid)
-        .set({'userName': user.displayName, 'email': user.email});
-
-    await _firestore.collection("UserProfile").doc(user.uid).set(
-        (userModel
-              ..id = user.uid
-              ..image = user.photoURL)
-            .toMap(),
-        SetOptions(merge: true));
+        .set(userModel.toMap(), SetOptions(merge: true));
 
     return user;
+  }
+
+  Future<UserModel?> getUserFromId(String id) async {
+    DocumentSnapshot<Map<String, dynamic>> userData =
+        await usersReference.doc(id).get();
+    try {
+      if (userData.data() != null) {
+        return UserModel.fromMap(userData.data()!);
+      }
+    } finally {
+      return null;
+    }
   }
 }

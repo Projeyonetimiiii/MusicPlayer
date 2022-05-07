@@ -1,12 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:onlinemusic/models/audio.dart';
 
 class AudiosBloc {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  List<dynamic> audiosList = [];
+  late final FirebaseFirestore _firestore;
+  List<Audio> audioList = [];
+
+  CollectionReference<Map<String, dynamic>> get audiosReference =>
+      _firestore.collection("audios");
+
+  AudiosBloc() {
+    _firestore = FirebaseFirestore.instance;
+  }
+
   void getAudiosMusic() async {
-    await _firestore.collection("audios").get().then((value) {
-      audiosList =
-          value.docs.map((value) => dynamic.fromMap(value.data())).toList();
+    await audiosReference.get().then((value) {
+      audioList =
+          value.docs.map((value) => Audio.fromMap(value.data())).toList();
     });
   }
 }
