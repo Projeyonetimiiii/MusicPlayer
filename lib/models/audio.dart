@@ -51,7 +51,7 @@ class Audio {
       'artist': artist,
       'url': url,
       'image': image,
-      'genres': genreIds,
+      'genreIds': genreIds,
       'duration': duration.inMilliseconds,
       'idOfTheSharingUser': idOfTheSharingUser,
     };
@@ -64,7 +64,7 @@ class Audio {
       artist: map['artist'] ?? '',
       url: map['url'] ?? '',
       image: map['image'] ?? '',
-      genreIds: List<int>.from(map['genres']),
+      genreIds: List<int>.from(map['genreIds']),
       duration: Duration(milliseconds: map['duration']),
       idOfTheSharingUser: map['idOfTheSharingUser'] ?? '',
     );
@@ -76,7 +76,7 @@ class Audio {
 
   @override
   String toString() {
-    return 'Audio(id: $id, title: $title, artist: $artist, url: $url, image: $image, genres: $genreIds, duration: $duration, idOfTheSharingUser: $idOfTheSharingUser)';
+    return 'Audio(id: $id, title: $title, artist: $artist, url: $url, image: $image, genreIds: $genreIds, duration: $duration, idOfTheSharingUser: $idOfTheSharingUser)';
   }
 
   @override

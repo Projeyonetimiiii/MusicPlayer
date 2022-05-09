@@ -18,4 +18,18 @@ class AudiosBloc {
           value.docs.map((value) => Audio.fromMap(value.data())).toList();
     });
   }
+
+  Stream<List<Audio>> getAudiosFromGenre(int genreId) async* {
+    await for (var event in audiosReference
+        .where(
+          "genreIds",
+          arrayContains: genreId,
+        )
+        .snapshots()) {
+      List<Audio> audios = event.docs.map((e) {
+        return Audio.fromMap(e.data());
+      }).toList();
+      yield audios;
+    }
+  }
 }
