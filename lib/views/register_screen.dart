@@ -5,7 +5,7 @@ import 'package:onlinemusic/services/auth.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/util/helper_functions.dart';
 
-import 'home.dart';
+import 'root_app.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -182,7 +182,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   _passwordController.text,
                                 );
                                 if (user != null) {
-                                  context.pushAndRemoveUntil(HomePage());
+                                  context.pushAndRemoveUntil(RootApp());
                                 }
                               },
                               child: Container(

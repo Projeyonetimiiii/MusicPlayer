@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-class YouubePlaylist {
+class YoutubePlaylist {
   String? title;
   String? type;
   String? count;
@@ -13,7 +13,7 @@ class YouubePlaylist {
   String? imageMedium;
   String? imageStandart;
   String? imageMax;
-  YouubePlaylist({
+  YoutubePlaylist({
     this.title,
     this.type,
     this.count,
@@ -66,7 +66,7 @@ class YouubePlaylist {
     }
   }
 
-  YouubePlaylist copyWith({
+  YoutubePlaylist copyWith({
     String? title,
     String? type,
     String? count,
@@ -80,7 +80,7 @@ class YouubePlaylist {
     String? imageStandart,
     String? imageMax,
   }) {
-    return YouubePlaylist(
+    return YoutubePlaylist(
       title: title ?? this.title,
       type: type ?? this.type,
       count: count ?? this.count,
@@ -113,8 +113,8 @@ class YouubePlaylist {
     };
   }
 
-  factory YouubePlaylist.fromMap(Map<String, dynamic> map) {
-    return YouubePlaylist(
+  factory YoutubePlaylist.fromMap(Map<String, dynamic> map) {
+    return YoutubePlaylist(
       title: map['title'],
       type: map['type'],
       count: map['count'],
@@ -132,8 +132,8 @@ class YouubePlaylist {
 
   String toJson() => json.encode(toMap());
 
-  factory YouubePlaylist.fromJson(String source) =>
-      YouubePlaylist.fromMap(json.decode(source));
+  factory YoutubePlaylist.fromJson(String source) =>
+      YoutubePlaylist.fromMap(json.decode(source));
 
   @override
   String toString() {
@@ -144,7 +144,7 @@ class YouubePlaylist {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
-    return other is YouubePlaylist &&
+    return other is YoutubePlaylist &&
         other.title == title &&
         other.type == type &&
         other.count == count &&

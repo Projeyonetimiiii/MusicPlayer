@@ -5,7 +5,7 @@ import 'package:onlinemusic/models/youtube_playlist.dart';
 
 class YoutubeGenre {
   String? title;
-  List<YouubePlaylist>? playlists;
+  List<YoutubePlaylist>? playlists;
   YoutubeGenre({
     this.title,
     this.playlists,
@@ -13,7 +13,7 @@ class YoutubeGenre {
 
   YoutubeGenre copyWith({
     String? title,
-    List<YouubePlaylist>? playlists,
+    List<YoutubePlaylist>? playlists,
   }) {
     return YoutubeGenre(
       title: title ?? this.title,
@@ -31,8 +31,8 @@ class YoutubeGenre {
   factory YoutubeGenre.fromMap(Map<String, dynamic> map) {
     return YoutubeGenre(
       title: map['title'],
-      playlists: List<YouubePlaylist>.from(
-          map['playlists']?.map((x) => YouubePlaylist.fromMap(x))),
+      playlists: List<YoutubePlaylist>.from(
+          map['playlists']?.map((x) => YoutubePlaylist.fromMap(x))),
     );
   }
 

@@ -17,7 +17,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Future.delayed(
       Duration(seconds: 2),
       () {
-        context.push(StateScreen());
+        context.pushAndRemoveUntil(StateScreen());
       },
     );
   }

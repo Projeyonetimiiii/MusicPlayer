@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:onlinemusic/services/auth.dart';
 import 'package:onlinemusic/util/extensions.dart';
-import 'package:onlinemusic/views/home.dart';
+import 'package:onlinemusic/views/root_app.dart';
 
 import 'register_screen.dart';
 
@@ -114,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 _passwordController.text,
                               );
                               if (user != null) {
-                                context.pushAndRemoveUntil(HomePage());
+                                context.pushAndRemoveUntil(RootApp());
                               }
                             },
                             child: Container(
@@ -189,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 _passwordController.text,
                               );
                               if (user != null) {
-                                context.pushAndRemoveUntil(HomePage());
+                                context.pushAndRemoveUntil(RootApp());
                               }
                             },
                           ),
