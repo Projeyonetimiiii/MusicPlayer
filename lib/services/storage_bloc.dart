@@ -48,4 +48,8 @@ class StorageBloc {
   }
 
   void dispose() {}
+
+  Future<String> uploadImage() async {
+    return "ad";
+  }
 }

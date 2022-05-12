@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:onlinemusic/models/audio.dart';
 
@@ -31,5 +33,9 @@ class AudiosBloc {
       }).toList();
       yield audios;
     }
+  }
+
+  Future<String> saveImage(Uint8List? bytes) async {
+    return "";
   }
 }

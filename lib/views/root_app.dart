@@ -5,7 +5,7 @@ import 'package:onlinemusic/views/favorite_page.dart';
 import 'package:onlinemusic/views/home_page.dart';
 import 'package:onlinemusic/views/library_page.dart';
 import 'package:onlinemusic/views/search_page.dart';
-import 'package:onlinemusic/views/share_song_screen.dart';
+import 'package:onlinemusic/views/share_song_page.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 
 class RootApp extends StatefulWidget {
@@ -36,7 +36,7 @@ class _RootAppState extends State<RootApp> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          context.push(ShareSongScreen());
+          context.push(ShareSongPage());
         },
         child: Icon(Icons.add),
       ),
