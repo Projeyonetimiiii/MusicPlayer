@@ -289,6 +289,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.0.0"
+  icon_loading_button:
+    dependency: "direct main"
+    description:
+      name: icon_loading_button
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.1"
   id3:
     dependency: transitive
     description:

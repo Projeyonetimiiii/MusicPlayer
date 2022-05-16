@@ -1,8 +1,13 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:math';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:icon_loading_button/icon_loading_button.dart';
 import 'package:on_audio_query/on_audio_query.dart';
+import 'package:onlinemusic/models/audio.dart';
+import 'package:onlinemusic/models/genre.dart';
+import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/category_sheet.dart';
-import 'package:provider/provider.dart';
+import 'package:onlinemusic/widgets/custom_textfield.dart';
 
 import '../providers/data.dart';
 
@@ -14,22 +19,56 @@ class ShareSongPage extends StatefulWidget {
 }
 
 class _ShareSongPageState extends State<ShareSongPage> {
+  SongModel? selectedSong;
+  PageController pageController = PageController();
+  List<Genre> genres = [];
+
+  TextEditingController title = TextEditingController();
+  TextEditingController artist = TextEditingController();
+  IconButtonController controller = IconButtonController();
+
+  late MyData data;
+
+  @override
+  void initState() {
+    super.initState();
+    data = context.myData;
+    data.addListener(_listener);
+  }
+
+  @override
+  void dispose() {
+    data.removeListener(_listener);
+    super.dispose();
+  }
+
+  void _listener() {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
-    final musicData = Provider.of<MyData>(context);
-
+    Size size = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
         title: Text("Müzik Paylaş"),
       ),
-      body: musicData.songs.isEmpty
-          ? Center(
-              child: CupertinoActivityIndicator(),
-            )
-          : ListView.builder(
-              itemCount: musicData.songs.length,
+      body: PageView(
+        physics: NeverScrollableScrollPhysics(),
+        controller: pageController,
+        children: [
+          if (data.songs.isEmpty)
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("Hiç Müziğiniz Yok"),
+              ],
+            ),
+          ListView.builder(
+              physics: BouncingScrollPhysics(),
+              itemCount: data.songs.length,
               itemBuilder: (context, int index) {
-                SongModel music = musicData.songs[index];
+                SongModel music = data.songs[index];
                 return Padding(
                   padding: const EdgeInsets.only(
                     left: 5.0,
@@ -40,7 +79,22 @@ class _ShareSongPageState extends State<ShareSongPage> {
                       width: 50.0,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(5.0),
+                        color: Colors.grey.shade300,
                         //  image: DecorationImage(image:  FileImage())
+                      ),
+                      child: FutureBuilder<Uint8List?>(
+                        future: OnAudioQuery.platform
+                            .queryArtwork(music.id, ArtworkType.AUDIO),
+                        builder: (c, snap) {
+                          if (!snap.hasData) {
+                            return Icon(Icons.hide_image_rounded);
+                          } else {
+                            return Image.memory(
+                              snap.data!,
+                              fit: BoxFit.cover,
+                            );
+                          }
+                        },
                       ),
                       clipBehavior: Clip.antiAlias,
                     ),
@@ -54,15 +108,168 @@ class _ShareSongPageState extends State<ShareSongPage> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     onTap: () async {
-                      await showModalBottomSheet(
-                          context: context,
-                          builder: (context) {
-                            return CategoryPage();
-                          });
+                      setState(() {
+                        selectedSong = music;
+                        title.text = selectedSong!.title;
+                        artist.text = selectedSong!.artist ?? "artist";
+                      });
+                      pageController.animateToPage(
+                        1,
+                        curve: Curves.linear,
+                        duration: Duration(milliseconds: 350),
+                      );
                     },
                   ),
                 );
               }),
+          Column(
+            children: [
+              Expanded(
+                child: ListView(
+                  physics: BouncingScrollPhysics(),
+                  padding: EdgeInsets.symmetric(
+                    vertical: 12,
+                  ),
+                  children: [
+                    Center(
+                      child: SizedBox(
+                        width: size.width / 1.5,
+                        child: AspectRatio(
+                          aspectRatio: 1,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.grey.shade300,
+                            ),
+                            child: selectedSong == null
+                                ? Center(
+                                    child: Text(""),
+                                  )
+                                : FutureBuilder<Uint8List?>(
+                                    future: OnAudioQuery.platform.queryArtwork(
+                                        selectedSong!.id, ArtworkType.AUDIO),
+                                    builder: (c, snap) {
+                                      if (!snap.hasData) {
+                                        return Center(
+                                          child: Text("Yükleniyor..."),
+                                        );
+                                      } else {
+                                        return Image.memory(
+                                          snap.data!,
+                                          fit: BoxFit.cover,
+                                        );
+                                      }
+                                    },
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(5.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              style: TextButton.styleFrom(
+                                backgroundColor: Colors.grey.shade300,
+                                shape: RoundedRectangleBorder(),
+                              ),
+                              onPressed: () {
+                                pageController.animateToPage(
+                                  0,
+                                  curve: Curves.linear,
+                                  duration: Duration(milliseconds: 350),
+                                );
+                              },
+                              child: Text("Müzik Seçimine Dön"),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    RawMaterialButton(
+                      onPressed: () async {
+                        selectGenre();
+                      },
+                      child: genres.isEmpty
+                          ? Text("Tür Seçiniz*")
+                          : Wrap(
+                              direction: Axis.horizontal,
+                              children: genres.map((e) {
+                                return Container(
+                                  margin: EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(0),
+                                    color: Colors.grey.shade300,
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(e.name),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                    ),
+                    CustomTextField(
+                      hintText: "Başlık",
+                      controller: title,
+                    ),
+                    CustomTextField(
+                      hintText: "Sanatçı",
+                      controller: artist,
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(5.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: IconLoadingButton(
+                        elevation: 0,
+                        width: MediaQuery.of(context).size.width - 10,
+                        height: 45,
+                        loaderSize: 45,
+                        child: Text("Paylaş"),
+                        iconData: Icons.share_rounded,
+                        onPressed: () async {
+                          controller.start();
+                          try {
+                            await shareAudio(data);
+                            controller.success();
+                          } on Exception catch (e) {
+                            debugPrint(e.toString());
+                            controller.error();
+                          }
+                        },
+                        controller: controller,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
+  }
+
+  Future<void> shareAudio(MyData data) async {}
+
+  void selectGenre() async {
+    List<Genre>? genres = await showModalBottomSheet<List<Genre>>(
+        isScrollControlled: true,
+        context: context,
+        builder: (context) {
+          return CategoryPage(genres: this.genres);
+        });
+    if (genres != null) {
+      setState(() {
+        this.genres = genres;
+      });
+    }
   }
 }

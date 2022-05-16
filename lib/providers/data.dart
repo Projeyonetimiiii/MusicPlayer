@@ -38,9 +38,14 @@ class MyData extends ChangeNotifier {
                 .queryArtwork(song.id, ArtworkType.AUDIO, size: 200)));
       }
       songs = songsModel;
+      notifyListeners();
     } else {
       print("İzin Verilmedi");
     }
+  }
+
+  Future<String> saveImage() async {
+    return "";
   }
 
   List<SongModel> getFilteredSongs(List<SongModel> songs, int second) {
