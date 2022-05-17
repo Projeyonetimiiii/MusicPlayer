@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:onlinemusic/models/audio.dart';
 import 'package:onlinemusic/models/genre.dart';
@@ -8,8 +10,11 @@ import 'package:onlinemusic/models/youtube_playlist.dart';
 import 'package:onlinemusic/services/youtube_service.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
+import 'package:onlinemusic/views/profile_screen.dart';
 import 'package:page_view_indicators/page_view_indicators.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+
+import '../models/usermodel.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -72,11 +77,66 @@ class _YoutubeHomePageState extends State<HomePage> {
     super.dispose();
   }
 
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Ana Sayfa"),
+          actions: [
+          StreamBuilder<DocumentSnapshot>(
+            stream: _firestore
+                .collection("Users")
+                .doc(_auth.currentUser!.uid)
+                .snapshots(),
+            builder:
+                (BuildContext context, AsyncSnapshot<DocumentSnapshot> veri) {
+              if (veri.hasData) {
+                UserModel userModel = UserModel.fromMap(
+                    veri.data!.data() as Map<String, dynamic>);
+
+                return InkWell(
+                  onTap: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (c) =>
+                                ProfileScreen(userModel: userModel)));
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                        child: userModel.image == null
+                            ? CircleAvatar(
+                                maxRadius: 25,
+                                child:
+                                    Icon(Icons.supervised_user_circle_outlined),
+                              )
+                            : userModel.image!.isNotEmpty
+                                ? CircleAvatar(
+                                    maxRadius: 25,
+                                    backgroundImage:
+                                        NetworkImage(userModel.image!),
+                                  )
+                                : CircleAvatar(
+                                    maxRadius: 25,
+                                    child: Icon(
+                                        Icons.supervised_user_circle_outlined),
+                                  )),
+                  ),
+                );
+              } else {
+                return CircleAvatar(
+                  maxRadius: 30,
+                  child: Icon(Icons.supervised_user_circle_outlined),
+                );
+              }
+            },
+          ),
+        ],
+        automaticallyImplyLeading: false,
       ),
       body: SafeArea(
         child: ListView(
