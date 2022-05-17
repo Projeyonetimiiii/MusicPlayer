@@ -5,6 +5,9 @@ class Const {
   static const String kDefaultProfilePicture =
       "https://firebasestorage.googleapis.com/v0/b/onlinemusicnew-22821.appspot.com/o/profile_pictures%2Fdefault_profile_picture.jpg?alt=media&token=bd225467-9ba8-4fa5-aaeb-8d713e447176";
 
+  static const String kDefaultImageUrl =
+      "https://firebasestorage.googleapis.com/v0/b/onlinemusicnew-22821.appspot.com/o/audio_images%2Fdefault_audio_image.png?alt=media&token=571a469a-2e3d-46e3-84f0-a351c5308f0d";
+
   static const Color kWhite = Colors.white;
 
   static List<Genre> genres = [

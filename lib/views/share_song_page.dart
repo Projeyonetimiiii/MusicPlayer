@@ -1,10 +1,12 @@
-import 'dart:math';
+import 'dart:io';
 import 'dart:typed_data';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:icon_loading_button/icon_loading_button.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:onlinemusic/models/audio.dart';
 import 'package:onlinemusic/models/genre.dart';
+import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/category_sheet.dart';
 import 'package:onlinemusic/widgets/custom_textfield.dart';
@@ -237,6 +239,12 @@ class _ShareSongPageState extends State<ShareSongPage> {
                         onPressed: () async {
                           controller.start();
                           try {
+                            if (genres.isEmpty) {
+                              await selectGenre();
+                              if (genres.isEmpty) {
+                                return;
+                              }
+                            }
                             await shareAudio(data);
                             controller.success();
                           } on Exception catch (e) {
@@ -257,9 +265,61 @@ class _ShareSongPageState extends State<ShareSongPage> {
     );
   }
 
-  Future<void> shareAudio(MyData data) async {}
+  String getNowMillisecondsSinceEpoch() {
+    return DateTime.now().millisecondsSinceEpoch.toString();
+  }
 
-  void selectGenre() async {
+  Future<void> shareAudio(MyData data) async {
+    String? audioUrl;
+    String? imagePath;
+    String imageUrl;
+    String userId = FirebaseAuth.instance.currentUser!.uid;
+    String timeStamp = getNowMillisecondsSinceEpoch();
+
+    try {
+      audioUrl = (await data.sB
+              .uploadAudio(file: File(selectedSong!.data), userUid: userId))
+          .downloadURL;
+      if (audioUrl == null) {
+        return;
+      }
+      print("AudioUrl: " + audioUrl);
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return;
+    }
+
+    imagePath = await data.saveImage(selectedSong!);
+
+    if (imagePath != null) {
+      String? uploadImageUrl =
+          await data.sB.uploadImage(imagePath, userId, timeStamp: timeStamp);
+      imageUrl = uploadImageUrl ?? Const.kDefaultImageUrl;
+      print("İmageUrl: " + imageUrl);
+    } else {
+      imageUrl = Const.kDefaultImageUrl;
+    }
+
+    Audio audio = Audio(
+      id: userId + timeStamp,
+      title: title.text.trim(),
+      artist: artist.text.trim(),
+      url: audioUrl,
+      image: imageUrl,
+      genreIds: genres.map((e) => e.id).toList(),
+      duration: Duration(milliseconds: selectedSong!.duration ?? 0),
+      idOfTheSharingUser: userId,
+    );
+
+    bool res = await data.aB.saveAudioToFirebase(audio);
+    if (res) {
+      print("Yükleme başarılı");
+    } else {
+      print("Yükleme işlemi başarısız");
+    }
+  }
+
+  Future<void> selectGenre() async {
     List<Genre>? genres = await showModalBottomSheet<List<Genre>>(
         isScrollControlled: true,
         context: context,

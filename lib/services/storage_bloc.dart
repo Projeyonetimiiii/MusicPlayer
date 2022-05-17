@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:onlinemusic/models/media_reference.dart';
 
 class StorageBloc {
@@ -17,6 +18,10 @@ class StorageBloc {
 
   Reference get audiosRef {
     return reference.child("audio");
+  }
+
+  Reference get audioImagesRef {
+    return reference.child("audio_images");
   }
 
   Future<MediaReference> uploadAudio({
@@ -49,7 +54,23 @@ class StorageBloc {
 
   void dispose() {}
 
-  Future<String> uploadImage() async {
-    return "ad";
+  Future<String?> uploadImage(
+    String imagePath,
+    String userId, {
+    String? timeStamp,
+  }) async {
+    String ext = fileExt(imagePath);
+    timeStamp = timeStamp ?? DateTime.now().millisecondsSinceEpoch.toString();
+    String ref = "$timeStamp.$ext";
+    try {
+      UploadTask task = audioImagesRef.child(userId).child(ref).putFile(
+          File(imagePath), SettableMetadata(contentType: 'image/$ext'));
+      await task.whenComplete(() => null);
+      String downloadURL = await task.snapshot.ref.getDownloadURL();
+      return downloadURL;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return null;
+    }
   }
 }

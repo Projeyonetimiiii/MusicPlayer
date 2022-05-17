@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
 
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:onlinemusic/services/audios_bloc.dart';
 import 'package:onlinemusic/services/storage_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 
 class MyData extends ChangeNotifier {
   late StorageBloc _storageBloc;
@@ -44,8 +47,42 @@ class MyData extends ChangeNotifier {
     }
   }
 
-  Future<String> saveImage() async {
-    return "";
+  Uint8List? getBytesFromSongId(int id) {
+    try {
+      return songsImages[songsImages.indexWhere((e) => e.key == id)].value;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<String?> saveImage(SongModel song) async {
+    Uint8List? bytes = getBytesFromSongId(song.id);
+    if (bytes != null) {
+      String? path = await getFilePathFromBytes(bytes, song.title, song.artist);
+      print(path);
+      return path;
+    }
+    return null;
+  }
+
+  Future<String?> getFilePathFromBytes(
+      Uint8List? bytes, String title, String? artist) async {
+    String tempDir = (await getTemporaryDirectory()).path;
+    String? filePath;
+    if (bytes != null) {
+      try {
+        final File file = File(
+            '$tempDir/${title.toString().replaceAll('/', '')}-${artist.toString().replaceAll('/', '')}.jpg');
+        filePath = file.path;
+        if (!await file.exists()) {
+          await file.create();
+          file.writeAsBytesSync(bytes);
+        }
+      } catch (e) {
+        filePath = null;
+      }
+    }
+    return filePath;
   }
 
   List<SongModel> getFilteredSongs(List<SongModel> songs, int second) {

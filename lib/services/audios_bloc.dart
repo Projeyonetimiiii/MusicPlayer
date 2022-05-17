@@ -1,6 +1,6 @@
-import 'dart:typed_data';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:onlinemusic/models/audio.dart';
 
 class AudiosBloc {
@@ -35,7 +35,21 @@ class AudiosBloc {
     }
   }
 
-  Future<String> saveImage(Uint8List? bytes) async {
-    return "";
+  Future<bool> saveAudioToFirebase(Audio audio) async {
+    try {
+      audiosReference.add(audio.toMap());
+      return true;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return false;
+    }
+  }
+
+  Future<List<Audio>> getMySharedAudios() async {
+    String myId = FirebaseAuth.instance.currentUser!.uid;
+    QuerySnapshot<Map<String, dynamic>> query = await audiosReference
+        .where("idOfTheSharingUser", isEqualTo: myId)
+        .get();
+    return query.docs.map((e) => Audio.fromMap(e.data())).toList();
   }
 }
