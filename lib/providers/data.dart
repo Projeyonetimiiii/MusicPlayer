@@ -13,7 +13,7 @@ class MyData extends ChangeNotifier {
   late AudiosBloc _audiosBloc;
   List<MapEntry<int, Uint8List?>> songsImages = [];
   List<SongModel> songs = [];
-
+  bool?isEmpty;
   MyData() {
     init();
   }
@@ -97,5 +97,11 @@ class MyData extends ChangeNotifier {
       return await OnAudioQuery().permissionsRequest();
     }
     return true;
+  }
+
+  List<SongModel> getSearchMusicData(){
+
+    return [];
+
   }
 }

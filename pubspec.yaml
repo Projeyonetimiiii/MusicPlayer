@@ -55,6 +55,7 @@ dependencies:
   salomon_bottom_bar: ^3.1.0
   page_view_indicators: ^2.0.0
   icon_loading_button: ^1.0.1
+  skeleton_animation: ^0.1.4
   
 
 
