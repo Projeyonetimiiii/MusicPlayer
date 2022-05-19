@@ -1,11 +1,11 @@
-import 'dart:typed_data';
-
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:on_audio_query/on_audio_query.dart';
+import 'package:onlinemusic/util/const.dart';
+import 'package:onlinemusic/util/extensions.dart';
 
 class QueuePage extends StatefulWidget {
-  final SongModel playingSong;
-  final List<SongModel> queue;
+  final MediaItem playingSong;
+  final List<MediaItem> queue;
   const QueuePage({
     Key? key,
     required this.playingSong,
@@ -38,7 +38,7 @@ class _QueuePageState extends State<QueuePage> {
                 physics: BouncingScrollPhysics(),
                 itemCount: widget.queue.length,
                 itemBuilder: (BuildContext context, int index) {
-                  SongModel song = widget.queue[index];
+                  MediaItem song = widget.queue[index];
                   return ListTile(
                     key: Key(song.id.toString()),
                     contentPadding:
@@ -50,20 +50,7 @@ class _QueuePageState extends State<QueuePage> {
                         width: 100,
                         child: AspectRatio(
                           aspectRatio: 16 / 9,
-                          child: FutureBuilder<Uint8List?>(
-                            future: OnAudioQuery.platform
-                                .queryArtwork(song.id, ArtworkType.AUDIO),
-                            builder: (c, snap) {
-                              if (!snap.hasData) {
-                                return Icon(Icons.hide_image_rounded);
-                              } else {
-                                return Image.memory(
-                                  snap.data!,
-                                  fit: BoxFit.cover,
-                                );
-                              }
-                            },
-                          ),
+                          child: song.getImageWidget,
                         ),
                       ),
                     ),
@@ -73,10 +60,8 @@ class _QueuePageState extends State<QueuePage> {
                             color: Theme.of(context).colorScheme.secondary,
                           )
                         : Text(
-                            Duration(milliseconds: song.duration ?? 0)
-                                .toString()
-                                .split(".")
-                                .first,
+                            Const.getDurationString(
+                                song.duration ?? Duration.zero),
                           ),
                     title: Text(
                       song.title,

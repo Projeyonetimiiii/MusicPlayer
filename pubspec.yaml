@@ -55,6 +55,8 @@ dependencies:
   salomon_bottom_bar: ^3.1.0
   page_view_indicators: ^2.0.0
   icon_loading_button: ^1.0.1
+  audio_service: ^0.18.4
+  just_audio: ^0.9.21
 
 
 dev_dependencies:

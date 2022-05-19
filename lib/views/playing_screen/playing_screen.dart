@@ -1,10 +1,14 @@
-import 'dart:typed_data';
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:on_audio_query/on_audio_query.dart';
+import 'package:onlinemusic/providers/data.dart';
+import 'package:onlinemusic/services/background_audio_handler.dart';
+import 'package:onlinemusic/util/const.dart';
+import 'package:onlinemusic/util/extensions.dart';
+import 'package:onlinemusic/views/playing_screen/widgets/seekbar.dart';
 import 'package:onlinemusic/views/queue_screen.dart';
 
 class PlayingScreen extends StatefulWidget {
-  final SongModel song;
+  final MediaItem song;
   PlayingScreen({
     Key? key,
     required this.song,
@@ -19,23 +23,30 @@ class _PlayingScreenState extends State<PlayingScreen>
   late bool isFavorite;
   late PageController pageController;
 
-  SongModel get song => widget.song;
+  MediaItem get song => widget.song;
+  BackgroundAudioHandler get handler => context.myData.handler;
 
   @override
   void initState() {
     super.initState();
     pageController = PageController();
+    setUrl();
+  }
+
+  void setUrl() async {
+    await handler.playMediaItem(song);
+    await handler.play();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      body: playingScreenBody(context, song),
+      body: playingScreenBody(context),
     );
   }
 
-  Stack playingScreenBody(BuildContext context, SongModel song) {
+  Stack playingScreenBody(BuildContext context) {
     return Stack(
       children: [
         Positioned.fill(
@@ -61,17 +72,17 @@ class _PlayingScreenState extends State<PlayingScreen>
                                 child: Column(
                                   children: [
                                     buildTopActions(),
-                                    buildImageWidget(context, song),
+                                    buildImageWidget(),
                                     SizedBox(
                                       height: 20,
                                     ),
-                                    buildTitleWidget(song),
+                                    buildTitleWidget(),
                                   ],
                                 ),
                               ),
                               Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 16),
-                                child: buildSliderWidget(song),
+                                child: buildSliderWidget(),
                               ),
                               Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 16),
@@ -81,8 +92,6 @@ class _PlayingScreenState extends State<PlayingScreen>
                                   ],
                                 ),
                               ),
-                              SizedBox(),
-                              SizedBox(),
                             ],
                           ),
                         ),
@@ -128,24 +137,14 @@ class _PlayingScreenState extends State<PlayingScreen>
     );
   }
 
-  Padding buildImageWidget(BuildContext context, SongModel video) {
+  Padding buildImageWidget() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: AspectRatio(
         aspectRatio: 1,
-        child: FutureBuilder<Uint8List?>(
-          future:
-              OnAudioQuery.platform.queryArtwork(song.id, ArtworkType.AUDIO),
-          builder: (c, snap) {
-            if (!snap.hasData) {
-              return Icon(Icons.hide_image_rounded);
-            } else {
-              return Image.memory(
-                snap.data!,
-                fit: BoxFit.cover,
-              );
-            }
-          },
+        child: Card(
+          elevation: 4,
+          child: song.getImageWidget,
         ),
       ),
     );
@@ -156,7 +155,7 @@ class _PlayingScreenState extends State<PlayingScreen>
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
-          onPressed: () {},
+          onPressed: null,
           icon: Icon(Icons.shuffle),
           iconSize: 20,
         ),
@@ -169,9 +168,21 @@ class _PlayingScreenState extends State<PlayingScreen>
             SizedBox(
               width: 6,
             ),
-            IconButton(
-              onPressed: () async {},
-              icon: Icon(Icons.play_arrow),
+            StreamBuilder<bool>(
+              stream: handler.playingStream,
+              builder: (context, snapshot) {
+                bool isPlaying = snapshot.data ?? false;
+                return IconButton(
+                  onPressed: () async {
+                    if (isPlaying) {
+                      context.myData.handler.pause();
+                    } else {
+                      context.myData.handler.play();
+                    }
+                  },
+                  icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                );
+              },
             ),
             SizedBox(
               width: 6,
@@ -183,7 +194,7 @@ class _PlayingScreenState extends State<PlayingScreen>
           ],
         ),
         IconButton(
-          onPressed: () {},
+          onPressed: null,
           icon: Icon(Icons.repeat),
           iconSize: 20,
         ),
@@ -191,7 +202,7 @@ class _PlayingScreenState extends State<PlayingScreen>
     );
   }
 
-  SizedBox buildSliderWidget(SongModel song) {
+  SizedBox buildSliderWidget() {
     return SizedBox(
       height: 70,
       width: double.maxFinite,
@@ -206,41 +217,39 @@ class _PlayingScreenState extends State<PlayingScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  StreamBuilder<Duration>(
+                      stream: handler.positionStream,
+                      initialData: Duration.zero,
+                      builder: (context, snapshot) {
+                        Duration position = snapshot.data!;
+                        return Text(
+                          Const.getDurationString(position),
+                        );
+                      }),
                   Text(
-                    "0:00",
-                  ),
-                  Text(
-                    Duration(milliseconds: song.duration ?? 0)
-                        .toString()
-                        .split(".")
-                        .first,
+                    Const.getDurationString(song.duration ?? Duration.zero),
                   ),
                 ],
               ),
             ),
           ),
           Positioned(
-            top: 11,
+            top: 0,
             right: 0,
             left: 0,
-            child: Slider(
-              value: 0.5,
-              min: 0,
-              max: 1,
-              onChanged: (double value) {},
-            ),
-          ),
-          Positioned(
-            bottom: -5,
-            right: 6,
-            child: IconButton(
-              onPressed: () {},
-              icon: Text(
-                "1x",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            child: StreamBuilder<PlaybackState>(
+              stream: handler.playbackState,
+              builder: (context, snapshot) {
+                PlaybackState? state = snapshot.data;
+                Duration position = state?.position ?? Duration.zero;
+                Duration bufferedPosition =
+                    state?.bufferedPosition ?? Duration.zero;
+                return SeekBar(
+                  duration: song.duration ?? Duration.zero,
+                  bufferedPosition: bufferedPosition,
+                  position: position,
+                );
+              },
             ),
           ),
         ],
@@ -248,7 +257,7 @@ class _PlayingScreenState extends State<PlayingScreen>
     );
   }
 
-  Padding buildTitleWidget(SongModel video) {
+  Padding buildTitleWidget() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: SizedBox(
@@ -261,7 +270,7 @@ class _PlayingScreenState extends State<PlayingScreen>
               child: Material(
                 color: Colors.transparent,
                 child: Text(
-                  video.title,
+                  song.title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -279,7 +288,7 @@ class _PlayingScreenState extends State<PlayingScreen>
               child: Material(
                 color: Colors.transparent,
                 child: Text(
-                  video.artist!,
+                  song.artist ?? "Sanatçı",
                   style: TextStyle(
                     fontSize: 13,
                   ),

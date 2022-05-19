@@ -1,10 +1,12 @@
 import 'dart:io';
 
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
 
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:onlinemusic/services/audios_bloc.dart';
+import 'package:onlinemusic/services/background_audio_handler.dart';
 import 'package:onlinemusic/services/storage_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -13,6 +15,7 @@ class MyData extends ChangeNotifier {
   late AudiosBloc _audiosBloc;
   List<MapEntry<int, Uint8List?>> songsImages = [];
   List<SongModel> songs = [];
+  late BackgroundAudioHandler handler;
 
   MyData() {
     init();
@@ -26,6 +29,13 @@ class MyData extends ChangeNotifier {
   Future<void> init() async {
     _storageBloc = StorageBloc();
     _audiosBloc = AudiosBloc();
+    handler = await AudioService.init(
+      builder: () => BackgroundAudioHandler(),
+      config: AudioServiceConfig(
+        androidNotificationChannelName: "Müzik",
+        androidNotificationChannelDescription: "Müzik Bildirimi",
+      ),
+    );
     getMusics();
   }
 

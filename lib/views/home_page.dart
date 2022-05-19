@@ -8,6 +8,7 @@ import 'package:onlinemusic/models/youtube_playlist.dart';
 import 'package:onlinemusic/services/youtube_service.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
+import 'package:onlinemusic/views/playing_screen/playing_screen.dart';
 import 'package:page_view_indicators/page_view_indicators.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
@@ -363,7 +364,11 @@ class _YoutubeHomePageState extends State<HomePage> {
                     Audio audio = audios[i];
                     return InkWell(
                       onTap: () {
-                        //? playlist ekranına gidicek
+                        context.push(
+                          PlayingScreen(
+                            song: audio.toMediaItem,
+                          ),
+                        );
                       },
                       child: Padding(
                         padding: const EdgeInsets.all(8.0),

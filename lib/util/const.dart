@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:onlinemusic/models/genre.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 class Const {
   static const String kDefaultProfilePicture =
@@ -24,4 +25,15 @@ class Const {
     Genre(id: 11, name: "Punk"),
     Genre(id: 12, name: "Pop "),
   ];
+
+  static Future<String> getAudioUrlFromVideoId(String videoId) async {
+    YoutubeExplode youtubeExplode = YoutubeExplode();
+    StreamManifest manifest =
+        await youtubeExplode.videos.streamsClient.getManifest(videoId);
+    return manifest.audioOnly.withHighestBitrate().url.toString();
+  }
+
+  static String getDurationString(Duration duration) {
+    return duration.toString().split(".").first.split(":").sublist(1).join(":");
+  }
 }
