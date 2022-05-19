@@ -57,6 +57,8 @@ dependencies:
   icon_loading_button: ^1.0.1
   audio_service: ^0.18.4
   just_audio: ^0.9.21
+  skeleton_animation: ^0.1.4
+  
 
 
 dev_dependencies:

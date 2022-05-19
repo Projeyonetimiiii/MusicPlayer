@@ -17,6 +17,7 @@ class MyData extends ChangeNotifier {
   List<SongModel> songs = [];
   late BackgroundAudioHandler handler;
 
+  bool? isEmpty;
   MyData() {
     init();
   }
@@ -107,5 +108,9 @@ class MyData extends ChangeNotifier {
       return await OnAudioQuery().permissionsRequest();
     }
     return true;
+  }
+
+  List<SongModel> getSearchMusicData() {
+    return [];
   }
 }

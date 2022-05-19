@@ -5,11 +5,13 @@ class UserModel {
   String? email;
   String? userName;
   String? id;
+  String? bio;
   UserModel({
     this.image,
     this.email,
     this.userName,
     this.id,
+    this.bio
   });
 
   Map<String, dynamic> toMap() {
@@ -18,6 +20,7 @@ class UserModel {
       'email': email,
       'userName': userName,
       'id': id,
+      'bio':bio
     };
   }
 
@@ -27,6 +30,7 @@ class UserModel {
       email: map['email'] != null ? map['email'] : null,
       userName: map['userName'] != null ? map['userName'] : null,
       id: map['id'] != null ? map['id'] : null,
+      bio: map['bio'] != null ? map['bio'] : null,
     );
   }
 
