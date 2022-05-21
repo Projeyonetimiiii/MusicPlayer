@@ -7,10 +7,16 @@ class AudiosBloc {
   late final FirebaseFirestore _firestore;
   List<Audio> audioList = [];
 
+  static AudiosBloc? _instance;
+
   CollectionReference<Map<String, dynamic>> get audiosReference =>
       _firestore.collection("audios");
 
-  AudiosBloc() {
+  factory AudiosBloc() {
+    return _instance ??= AudiosBloc._();
+  }
+
+  AudiosBloc._() {
     _firestore = FirebaseFirestore.instance;
   }
 

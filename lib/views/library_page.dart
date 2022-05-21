@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:on_audio_query/on_audio_query.dart';
+import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/providers/data.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/playing_screen/playing_screen.dart';
@@ -65,7 +66,10 @@ class _LibraryPageState extends State<LibraryPage> {
                 ),
                 onTap: () async {
                   context.push(
-                    PlayingScreen(song: music.toMediaItem),
+                    PlayingScreen(
+                      song: music.toMediaItem,
+                      queue: data.songs.map((e) => e.toMediaItem).toList(),
+                    ),
                   );
                 },
               ),

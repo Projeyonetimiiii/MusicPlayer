@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:onlinemusic/models/usermodel.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/helper_functions.dart';
@@ -121,12 +122,14 @@ class AuthService {
   Future<UserModel?> getUserFromId(String id) async {
     DocumentSnapshot<Map<String, dynamic>> userData =
         await usersReference.doc(id).get();
+    UserModel? user;
     try {
       if (userData.data() != null) {
-        return UserModel.fromMap(userData.data()!);
+        user = UserModel.fromMap(userData.data()!);
       }
-    } finally {
-      return null;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
     }
+    return user;
   }
 }

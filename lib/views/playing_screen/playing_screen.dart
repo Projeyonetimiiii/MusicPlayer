@@ -1,17 +1,20 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/providers/data.dart';
-import 'package:onlinemusic/services/background_audio_handler.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/playing_screen/widgets/seekbar.dart';
+import 'package:onlinemusic/views/playing_screen/widgets/stream_media_item.dart';
 import 'package:onlinemusic/views/queue_screen.dart';
 
 class PlayingScreen extends StatefulWidget {
-  final MediaItem song;
+  final MediaItem? song;
+  final List<MediaItem>? queue;
   PlayingScreen({
     Key? key,
-    required this.song,
+    this.song,
+    this.queue,
   }) : super(key: key);
 
   @override
@@ -23,19 +26,31 @@ class _PlayingScreenState extends State<PlayingScreen>
   late bool isFavorite;
   late PageController pageController;
 
-  MediaItem get song => widget.song;
-  BackgroundAudioHandler get handler => context.myData.handler;
+  MediaItem? get song => widget.song;
+  MyData get myData => context.myData;
 
   @override
   void initState() {
     super.initState();
     pageController = PageController();
-    setUrl();
+    setMediaItem(updateQueue: true);
   }
 
-  void setUrl() async {
-    await handler.playMediaItem(song);
-    await handler.play();
+  Future<void> updateQueue() async {
+    if (widget.queue != null) {
+      await handler.updateQueue(widget.queue!);
+    }
+  }
+
+  void setMediaItem({MediaItem? mediaItem, bool updateQueue = false}) async {
+    if (updateQueue) {
+      await this.updateQueue();
+    }
+    MediaItem? newItem = mediaItem ?? song;
+    if (newItem != null) {
+      await handler.playMediaItem(newItem);
+      await handler.play();
+    }
   }
 
   @override
@@ -100,9 +115,22 @@ class _PlayingScreenState extends State<PlayingScreen>
                   ),
                 ],
               ),
-              QueuePage(
-                playingSong: song,
-                queue: [song],
+              StreamBuilder<List<MediaItem>>(
+                stream: handler.queue,
+                initialData: handler.queue.value,
+                builder: (context, snapshot) {
+                  return QueuePage(
+                    queue: snapshot.data ?? [],
+                    changeItem: (newSong) {
+                      setMediaItem(mediaItem: newSong);
+                      pageController.animateToPage(
+                        0,
+                        duration: Duration(milliseconds: 350),
+                        curve: Curves.linear,
+                      );
+                    },
+                  );
+                },
               ),
             ],
           ),
@@ -125,12 +153,17 @@ class _PlayingScreenState extends State<PlayingScreen>
             },
             icon: Icon(Icons.keyboard_arrow_down_rounded, size: 40),
           ),
-          IconButton(
-            padding: EdgeInsets.zero,
-            onPressed: () {
-              Navigator.pop(context);
+          StreamMediaItem(
+            builder: (song) {
+              if (song?.isOnline == false) {
+                return SizedBox();
+              }
+              return IconButton(
+                padding: EdgeInsets.zero,
+                onPressed: () {},
+                icon: Icon(Icons.person_search_rounded, size: 30),
+              );
             },
-            icon: Icon(Icons.person_search_rounded, size: 30),
           ),
         ],
       ),
@@ -144,61 +177,107 @@ class _PlayingScreenState extends State<PlayingScreen>
         aspectRatio: 1,
         child: Card(
           elevation: 4,
-          child: song.getImageWidget,
+          child: StreamMediaItem(
+            builder: (song) {
+              if (song == null) return SizedBox();
+              return song.getImageWidget;
+            },
+          ),
         ),
       ),
     );
   }
 
-  Row buildActionsWidget() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        IconButton(
-          onPressed: null,
-          icon: Icon(Icons.shuffle),
-          iconSize: 20,
-        ),
-        Row(
+  StreamMediaItem buildActionsWidget() {
+    return StreamMediaItem(
+      builder: (song) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            IconButton(
-              onPressed: () async {},
-              icon: Icon(Icons.skip_previous),
-            ),
-            SizedBox(
-              width: 6,
-            ),
             StreamBuilder<bool>(
-              stream: handler.playingStream,
+              stream: handler.playbackState
+                  .map((event) =>
+                      event.shuffleMode == AudioServiceShuffleMode.all)
+                  .distinct(),
+              initialData: false,
               builder: (context, snapshot) {
-                bool isPlaying = snapshot.data ?? false;
+                bool isShuffleMode = snapshot.data!;
                 return IconButton(
-                  onPressed: () async {
-                    if (isPlaying) {
-                      context.myData.handler.pause();
-                    } else {
-                      context.myData.handler.play();
-                    }
+                  onPressed: () {
+                    handler.setShuffleMode(isShuffleMode
+                        ? AudioServiceShuffleMode.none
+                        : AudioServiceShuffleMode.all);
+                    setState(() {});
                   },
-                  icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                  icon: Icon(Icons.shuffle),
+                  iconSize: 20,
+                  color: isShuffleMode ? Colors.black : Colors.black54,
                 );
               },
             ),
-            SizedBox(
-              width: 6,
+            Row(
+              children: [
+                IconButton(
+                  onPressed: !handler.hasPrev
+                      ? null
+                      : () async {
+                          await handler.skipToPrevious();
+                          handler.play();
+                        },
+                  icon: Icon(Icons.skip_previous),
+                ),
+                SizedBox(
+                  width: 6,
+                ),
+                StreamBuilder<bool>(
+                  stream: handler.playingStream,
+                  builder: (context, snapshot) {
+                    bool isPlaying = snapshot.data ?? false;
+                    return IconButton(
+                      onPressed: () async {
+                        if (isPlaying) {
+                          handler.pause();
+                        } else {
+                          handler.play();
+                        }
+                      },
+                      icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                    );
+                  },
+                ),
+                SizedBox(
+                  width: 6,
+                ),
+                IconButton(
+                  onPressed: !handler.hasNext
+                      ? null
+                      : () async {
+                          await handler.skipToNext();
+                          handler.play();
+                        },
+                  icon: Icon(Icons.skip_next),
+                ),
+              ],
             ),
-            IconButton(
-              onPressed: () async {},
-              icon: Icon(Icons.skip_next),
+            StreamBuilder<AudioServiceRepeatMode>(
+              stream: handler.playbackState
+                  .map((event) => event.repeatMode)
+                  .distinct(),
+              builder: (context, snapshot) {
+                return IconButton(
+                  onPressed: () {
+                    myData.setRepeatMode();
+                    setState(() {});
+                  },
+                  icon: myData.getRepeatModeIcon(
+                      snapshot.data ?? AudioServiceRepeatMode.none),
+                  iconSize: 20,
+                );
+              },
             ),
           ],
-        ),
-        IconButton(
-          onPressed: null,
-          icon: Icon(Icons.repeat),
-          iconSize: 20,
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -218,16 +297,21 @@ class _PlayingScreenState extends State<PlayingScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   StreamBuilder<Duration>(
-                      stream: handler.positionStream,
-                      initialData: Duration.zero,
+                      stream: AudioService.position,
                       builder: (context, snapshot) {
-                        Duration position = snapshot.data!;
                         return Text(
-                          Const.getDurationString(position),
+                          Const.getDurationString(
+                              handler.playbackState.value.position),
                         );
                       }),
-                  Text(
-                    Const.getDurationString(song.duration ?? Duration.zero),
+                  StreamMediaItem(
+                    builder: (song) {
+                      return Text(
+                        Const.getDurationString(
+                          song?.duration ?? Duration.zero,
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -237,17 +321,21 @@ class _PlayingScreenState extends State<PlayingScreen>
             top: 0,
             right: 0,
             left: 0,
-            child: StreamBuilder<PlaybackState>(
-              stream: handler.playbackState,
-              builder: (context, snapshot) {
-                PlaybackState? state = snapshot.data;
-                Duration position = state?.position ?? Duration.zero;
-                Duration bufferedPosition =
-                    state?.bufferedPosition ?? Duration.zero;
-                return SeekBar(
-                  duration: song.duration ?? Duration.zero,
-                  bufferedPosition: bufferedPosition,
-                  position: position,
+            child: StreamMediaItem(
+              builder: (song) {
+                return StreamBuilder<Duration>(
+                  stream: AudioService.position,
+                  builder: (context, snapshot) {
+                    Duration position = handler.playbackState.value.position;
+
+                    Duration bufferedPosition =
+                        handler.playbackState.value.bufferedPosition;
+                    return SeekBar(
+                      duration: song?.duration ?? Duration.zero,
+                      bufferedPosition: bufferedPosition,
+                      position: position,
+                    );
+                  },
                 );
               },
             ),
@@ -260,43 +348,47 @@ class _PlayingScreenState extends State<PlayingScreen>
   Padding buildTitleWidget() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16),
-      child: SizedBox(
-        width: double.maxFinite,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Hero(
-              tag: "title",
-              child: Material(
-                color: Colors.transparent,
-                child: Text(
-                  song.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+      child: StreamMediaItem(
+        builder: (song) {
+          return SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Hero(
+                  tag: "title",
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Text(
+                      song?.title ?? "Title",
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            SizedBox(
-              height: 10,
-            ),
-            Hero(
-              tag: "artist",
-              child: Material(
-                color: Colors.transparent,
-                child: Text(
-                  song.artist ?? "Sanatçı",
-                  style: TextStyle(
-                    fontSize: 13,
+                SizedBox(
+                  height: 10,
+                ),
+                Hero(
+                  tag: "artist",
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Text(
+                      song?.artist ?? "Artist",
+                      style: TextStyle(
+                        fontSize: 13,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

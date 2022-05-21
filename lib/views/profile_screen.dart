@@ -187,8 +187,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         UserModel userModel = widget.userModel;
                         if (profileImage != null) {
                           var mediaUrl = await storageService.uploadImage(
-                              profileImage!.path, _auth.currentUser!.uid,
-                              timeStamp: "");
+                            profileImage!.path,
+                            _auth.currentUser!.uid,
+                          );
                           userModel = userModel..image = mediaUrl;
                         }
                         userModel = userModel

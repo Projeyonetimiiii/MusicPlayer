@@ -427,6 +427,7 @@ class _YoutubeHomePageState extends State<HomePage> {
                         context.push(
                           PlayingScreen(
                             song: audio.toMediaItem,
+                            queue: audios.map((e) => e.toMediaItem).toList(),
                           ),
                         );
                       },

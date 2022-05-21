@@ -123,6 +123,19 @@ extension MediaItemExt on MediaItem {
     }
   }
 
+  Map<String, dynamic> get toMap {
+    return {
+      "id": id,
+      "title": title,
+      "artUri": this.artUri.toString(),
+      "duration": this.duration?.inMilliseconds ?? 0,
+      "album": this.album,
+      "artist": this.artist,
+      "genre": this.genre,
+      "extras": this.extras,
+    };
+  }
+
   Future<String?> get source async {
     if (type.isVideo) {
       return Const.getAudioUrlFromVideoId(id);
@@ -140,4 +153,14 @@ extension ModelTypeExt on ModelType {
   bool get isVideo => this == ModelType.Video;
   bool get isAudio => this == ModelType.Audio;
   bool get isSongModel => this == ModelType.SongModel;
+}
+
+extension ListExt<T> on List<T> {
+  List<T> get copyList {
+    List<T> temp = [];
+    for (var item in this) {
+      temp.add(item);
+    }
+    return temp;
+  }
 }
