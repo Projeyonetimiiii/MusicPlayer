@@ -5,13 +5,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:onlinemusic/models/audio.dart';
-import 'package:provider/provider.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
-
-import '../providers/data.dart';
 import '../services/search_service.dart';
-import '../util/const.dart';
-import '../widgets/loading_widget.dart';
 import '../widgets/search_cards.dart';
 import '../widgets/snackbar.dart';
 
@@ -39,7 +34,8 @@ class _SearchPageState extends State<SearchPage> {
             child: ListView(
           children: [
             FutureBuilder<List<Audio>>(
-              future: SearchService.fetchAudiosFromQuery("query"),
+              future: SearchService.fetchAudiosFromQuery(
+                  searcController.text.toLowerCase()),
               builder:
                   (BuildContext context, AsyncSnapshot<List<Audio>> snapshot) {
                 if (snapshot.hasData) {
@@ -55,9 +51,14 @@ class _SearchPageState extends State<SearchPage> {
                 }
               },
             ),
-            Column(children: getMusicList.map((e) => localMusic(e)).toList()),
+            Column(
+                children: SearchService.fetchMusicFromQuery(
+                        searcController.text.toLowerCase(), context)
+                    .map((e) => localMusic(e))
+                    .toList()),
             FutureBuilder<List<Video>>(
-              future: SearchService.fetchVideos("query"),
+              future:
+                  SearchService.fetchVideos(searcController.text.toLowerCase()),
               builder:
                   (BuildContext context, AsyncSnapshot<List<Video>> snapshot) {
                 if (snapshot.hasData) {
@@ -82,45 +83,33 @@ class _SearchPageState extends State<SearchPage> {
     return Container(
         width: MediaQuery.of(context).size.width,
         decoration: BoxDecoration(color: Theme.of(context).backgroundColor),
-        child: Row(
-          children: [
-            Expanded(
-              child: TextFormField(
-                autofocus: true,
-                controller: searcController,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                decoration: InputDecoration(
-                  border: InputBorder.none,
-                  hintText: "Müzik Bul",
-                  hintStyle: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Theme.of(context).secondaryHeaderColor),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      Icons.close,
-                      size: 25,
-                      color: Theme.of(context).iconTheme.color,
-                    ),
-                    onPressed: () {},
-                  ),
+        child: TextField(
+            autofocus: true,
+            controller: searcController,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              hintText: "Müzik Bul",
+              hintStyle: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).secondaryHeaderColor),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  Icons.close,
+                  size: 25,
+                  color: Theme.of(context).iconTheme.color,
                 ),
-                textInputAction: TextInputAction.search,
-                onFieldSubmitted: (value) {
-                  if (value == '') {
-                    openSnacbar(scaffoldKey, 'Birşeyler yaz!');
-                  } else {}
+                onPressed: () {
+                  setState(() {
+                    searcController.text = "";
+                  });
                 },
               ),
             ),
-            SizedBox(
-              width: 5,
-            ),
-            MaterialButton(
-              onPressed: () {},
-              child: Center(child: Icon(Icons.search)),
-            )
-          ],
-        ));
+            textInputAction: TextInputAction.search,
+            onSubmitted: (value) {
+              setState(() {});
+            }));
   }
 }
