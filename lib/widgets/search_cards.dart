@@ -1,82 +1,44 @@
-import 'dart:typed_data';
-
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:on_audio_query/on_audio_query.dart';
-import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+import 'package:onlinemusic/util/const.dart';
+import 'package:onlinemusic/util/extensions.dart';
+import 'package:onlinemusic/views/playing_screen/playing_screen.dart';
 
-import '../models/audio.dart';
-
-Widget firebaseCard({required Audio audio}) {
+Widget buildMusicItem(
+    MediaItem item, List<MediaItem> queue, BuildContext context) {
   return ListTile(
-    leading: ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Image.network(
-        audio.image,
-        fit: BoxFit.cover,
+    contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+    onTap: () {
+      context.push(PlayingScreen(
+        queue: queue,
+        song: item,
+      ));
+    },
+    leading: Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+      ),
+      elevation: 10,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: SizedBox(
+          width: 100,
+          child: AspectRatio(
+            aspectRatio: 16 / 9,
+            child: item.getImageWidget,
+          ),
+        ),
       ),
     ),
+    trailing: Text(
+      Const.getDurationString(item.duration ?? Duration.zero),
+    ),
+    subtitle: Text(item.artist ?? "Artist"),
     title: Text(
-      audio.title,
-      maxLines: 1,
+      item.title,
+      maxLines: 2,
       overflow: TextOverflow.ellipsis,
-      style: TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.bold,
-      ),
+      style: TextStyle(fontSize: 14),
     ),
-    trailing: Text(audio.duration.toString()),
-  );
-}
-
-Widget localMusic(SongModel e) {
-  return ListTile(
-    leading: ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: FutureBuilder<Uint8List?>(
-        future: OnAudioQuery.platform.queryArtwork(e.id, ArtworkType.AUDIO),
-        builder: (c, snap) {
-          if (!snap.hasData) {
-            return Icon(Icons.hide_image_rounded);
-          } else {
-            return Image.memory(
-              snap.data!,
-              fit: BoxFit.cover,
-            );
-          }
-        },
-      ),
-    ),
-    title: Text(
-      e.title,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    trailing: Text(e.duration.toString()),
-  );
-}
-
-Widget youtubeCard({required Video video}) {
-  return ListTile(
-    leading: ClipRRect(
-      borderRadius: BorderRadius.circular(12),
-      child: Image.network(
-        video.url,
-        fit: BoxFit.cover,
-      ),
-    ),
-    title: Text(
-      video.title,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-    trailing: Text(video.duration.toString()),
   );
 }

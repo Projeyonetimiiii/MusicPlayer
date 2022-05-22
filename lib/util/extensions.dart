@@ -1,8 +1,9 @@
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:on_audio_query/on_audio_query.dart';
+import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/models/audio.dart';
 import 'package:onlinemusic/models/quality_image.dart';
 import 'package:onlinemusic/providers/data.dart';
@@ -55,6 +56,7 @@ extension SongModelExt on SongModel {
       title: title,
       album: album,
       artist: artist,
+      artUri: Uri.file(getImagePath),
       duration: Duration(milliseconds: duration ?? 0),
       extras: {
         "url": data,
@@ -62,6 +64,11 @@ extension SongModelExt on SongModel {
         "isOnline": false,
       },
     );
+  }
+
+  String get getImagePath {
+    MyData data = MyApp.navigatorKey.currentContext!.myData;
+    return data.getImagePathFromSongModel(this);
   }
 }
 
@@ -86,9 +93,9 @@ extension AudioExt on Audio {
 
 extension MediaItemExt on MediaItem {
   Widget get getImageWidget {
-    Widget errorWidget = Container(
-      color: Colors.grey.shade300,
-      child: Center(child: Icon(Icons.image_not_supported_rounded)),
+    Widget errorWidget = Image.asset(
+      "assets/images/default_song_image.png",
+      fit: BoxFit.cover,
     );
     if (isOnline) {
       return Image.network(
@@ -99,27 +106,34 @@ extension MediaItemExt on MediaItem {
         },
       );
     } else {
-      int? id = int.tryParse(this.id);
-
-      if (id == null) {
-        return errorWidget;
-      }
-      return FutureBuilder<Uint8List?>(
-        future: OnAudioQuery.platform.queryArtwork(id, ArtworkType.AUDIO),
-        builder: (c, snap) {
-          if (!snap.hasData) {
-            return errorWidget;
-          } else {
-            return Image.memory(
-              snap.data!,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) {
-                return errorWidget;
-              },
-            );
-          }
+      return Image.file(
+        File(artUri!.toFilePath()),
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) {
+          return errorWidget;
         },
       );
+      // int? id = int.tryParse(this.id);
+
+      // if (id == null) {
+      //   return errorWidget;
+      // }
+      // return FutureBuilder<Uint8List?>(
+      //   future: OnAudioQuery.platform.queryArtwork(id, ArtworkType.AUDIO),
+      //   builder: (c, snap) {
+      //     if (!snap.hasData) {
+      //       return errorWidget;
+      //     } else {
+      //       return Image.memory(
+      //         snap.data!,
+      //         fit: BoxFit.cover,
+      //         errorBuilder: (_, __, ___) {
+      //           return errorWidget;
+      //         },
+      //       );
+      //     }
+      //   },
+      // );
     }
   }
 

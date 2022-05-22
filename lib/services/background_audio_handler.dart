@@ -90,6 +90,9 @@ class BackgroundAudioHandler extends BaseAudioHandler
     }
   }
 
+  @override
+  Future<void> seek(Duration position) => player.seek(position);
+
   Future<void> updatePlayingMediaItem(MediaItem mediaItem1) async {
     mediaItem.add(mediaItem1);
     String? url = mediaItem1.extras?["url"];
@@ -169,7 +172,7 @@ class BackgroundAudioHandler extends BaseAudioHandler
       index = queue.value.indexWhere((e) => e.id == mediaItem.value!.id);
     } else {
       queue.add(_effectiveQueue.copyList);
-      index = queue.value.indexWhere((e) => e.id == mediaItem.value!.id);
+      index = queue.value.indexWhere((e) => e.id == mediaItem.value?.id);
     }
     _broadcastState(shuffleMode: shuffleMode);
   }

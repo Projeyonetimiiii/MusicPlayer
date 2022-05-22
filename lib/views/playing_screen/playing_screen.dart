@@ -17,6 +17,8 @@ class PlayingScreen extends StatefulWidget {
     this.queue,
   }) : super(key: key);
 
+  static bool isRunning = false;
+
   @override
   _PlayingScreenState createState() => _PlayingScreenState();
 }
@@ -32,13 +34,22 @@ class _PlayingScreenState extends State<PlayingScreen>
   @override
   void initState() {
     super.initState();
+    PlayingScreen.isRunning = true;
     pageController = PageController();
     setMediaItem(updateQueue: true);
+  }
+
+  @override
+  void dispose() {
+    PlayingScreen.isRunning = false;
+    super.dispose();
   }
 
   Future<void> updateQueue() async {
     if (widget.queue != null) {
       await handler.updateQueue(widget.queue!);
+      await handler.setShuffleMode(AudioServiceShuffleMode.none);
+      await handler.setRepeatMode(AudioServiceRepeatMode.none);
     }
   }
 
@@ -334,6 +345,9 @@ class _PlayingScreenState extends State<PlayingScreen>
                       duration: song?.duration ?? Duration.zero,
                       bufferedPosition: bufferedPosition,
                       position: position,
+                      onChangeEnd: (position) {
+                        handler.seek(position);
+                      },
                     );
                   },
                 );

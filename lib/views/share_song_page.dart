@@ -1,9 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data';
+import 'package:audio_service/audio_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:icon_loading_button/icon_loading_button.dart';
-import 'package:on_audio_query/on_audio_query.dart';
 import 'package:onlinemusic/models/audio.dart';
 import 'package:onlinemusic/models/genre.dart';
 import 'package:onlinemusic/util/const.dart';
@@ -21,7 +20,7 @@ class ShareSongPage extends StatefulWidget {
 }
 
 class _ShareSongPageState extends State<ShareSongPage> {
-  SongModel? selectedSong;
+  MediaItem? selectedSong;
   PageController pageController = PageController();
   List<Genre> genres = [];
 
@@ -70,7 +69,7 @@ class _ShareSongPageState extends State<ShareSongPage> {
               physics: BouncingScrollPhysics(),
               itemCount: data.songs.length,
               itemBuilder: (context, int index) {
-                SongModel music = data.songs[index];
+                MediaItem music = data.songs[index].toMediaItem;
                 return Padding(
                   padding: const EdgeInsets.only(
                     left: 5.0,
@@ -84,20 +83,7 @@ class _ShareSongPageState extends State<ShareSongPage> {
                         color: Colors.grey.shade300,
                         //  image: DecorationImage(image:  FileImage())
                       ),
-                      child: FutureBuilder<Uint8List?>(
-                        future: OnAudioQuery.platform
-                            .queryArtwork(music.id, ArtworkType.AUDIO),
-                        builder: (c, snap) {
-                          if (!snap.hasData) {
-                            return Icon(Icons.hide_image_rounded);
-                          } else {
-                            return Image.memory(
-                              snap.data!,
-                              fit: BoxFit.cover,
-                            );
-                          }
-                        },
-                      ),
+                      child: music.getImageWidget,
                       clipBehavior: Clip.antiAlias,
                     ),
                     title: Text(
@@ -147,22 +133,7 @@ class _ShareSongPageState extends State<ShareSongPage> {
                                 ? Center(
                                     child: Text(""),
                                   )
-                                : FutureBuilder<Uint8List?>(
-                                    future: OnAudioQuery.platform.queryArtwork(
-                                        selectedSong!.id, ArtworkType.AUDIO),
-                                    builder: (c, snap) {
-                                      if (!snap.hasData) {
-                                        return Center(
-                                          child: Text("Yükleniyor..."),
-                                        );
-                                      } else {
-                                        return Image.memory(
-                                          snap.data!,
-                                          fit: BoxFit.cover,
-                                        );
-                                      }
-                                    },
-                                  ),
+                                : selectedSong!.getImageWidget,
                           ),
                         ),
                       ),
@@ -277,8 +248,8 @@ class _ShareSongPageState extends State<ShareSongPage> {
     String timeStamp = getNowMillisecondsSinceEpoch();
 
     try {
-      audioUrl = (await data.sB
-              .uploadAudio(file: File(selectedSong!.data), userUid: userId))
+      audioUrl = (await data.sB.uploadAudio(
+              file: File(selectedSong!.extras!["url"]), userUid: userId))
           .downloadURL;
       if (audioUrl == null) {
         return;
@@ -307,7 +278,7 @@ class _ShareSongPageState extends State<ShareSongPage> {
       url: audioUrl,
       image: imageUrl,
       genreIds: genres.map((e) => e.id).toList(),
-      duration: Duration(milliseconds: selectedSong!.duration ?? 0),
+      duration: selectedSong!.duration ?? Duration.zero,
       idOfTheSharingUser: userId,
     );
 

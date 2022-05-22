@@ -36,6 +36,7 @@ Future<void> initBackgroundService() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
+  static GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider<MyData>(
@@ -45,6 +46,7 @@ class MyApp extends StatelessWidget {
       child: AppLifecycle(
         child: OverlaySupport.global(
           child: MaterialApp(
+            navigatorKey: navigatorKey,
             title: "online Music",
             color: Colors.black,
             debugShowCheckedModeBanner: false,

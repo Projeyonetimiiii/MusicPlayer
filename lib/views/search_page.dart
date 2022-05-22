@@ -1,14 +1,11 @@
-import 'dart:developer';
-import 'dart:typed_data';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:onlinemusic/models/audio.dart';
+import 'package:onlinemusic/util/extensions.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import '../services/search_service.dart';
 import '../widgets/search_cards.dart';
-import '../widgets/snackbar.dart';
 
 class SearchPage extends StatefulWidget {
   SearchPage({Key? key}) : super(key: key);
@@ -26,12 +23,12 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: _searchBar(),
-        ),
-        key: scaffoldKey,
-        body: SafeArea(
-            child: ListView(
+      appBar: AppBar(
+        title: _searchBar(),
+      ),
+      key: scaffoldKey,
+      body: SafeArea(
+        child: ListView(
           children: [
             FutureBuilder<List<Audio>>(
               future: SearchService.fetchAudiosFromQuery(
@@ -39,11 +36,25 @@ class _SearchPageState extends State<SearchPage> {
               builder:
                   (BuildContext context, AsyncSnapshot<List<Audio>> snapshot) {
                 if (snapshot.hasData) {
+                  if ((snapshot.data ?? []).isEmpty) {
+                    return SizedBox();
+                  }
                   //firebase
                   return Column(
-                      children: snapshot.data!
-                          .map((e) => firebaseCard(audio: e))
-                          .toList());
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      buildTitle("Kullanıcıların Yükledikleri Müzikler:"),
+                      Column(
+                          children: snapshot.data!
+                              .map((e) => buildMusicItem(
+                                  e.toMediaItem,
+                                  snapshot.data!
+                                      .map((e) => e.toMediaItem)
+                                      .toList(),
+                                  context))
+                              .toList()),
+                    ],
+                  );
                 } else {
                   return Center(
                     child: CupertinoActivityIndicator(),
@@ -52,21 +63,47 @@ class _SearchPageState extends State<SearchPage> {
               },
             ),
             Column(
-                children: SearchService.fetchMusicFromQuery(
-                        searcController.text.toLowerCase(), context)
-                    .map((e) => localMusic(e))
-                    .toList()),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                buildTitle("Cihazdaki Müzikler:"),
+                Column(
+                    children: SearchService.fetchMusicFromQuery(
+                            searcController.text.toLowerCase(), context)
+                        .map((e) => buildMusicItem(
+                            e.toMediaItem,
+                            SearchService.fetchMusicFromQuery(
+                                    searcController.text.toLowerCase(), context)
+                                .map((e) => e.toMediaItem)
+                                .toList(),
+                            context))
+                        .toList()),
+              ],
+            ),
             FutureBuilder<List<Video>>(
               future:
                   SearchService.fetchVideos(searcController.text.toLowerCase()),
               builder:
                   (BuildContext context, AsyncSnapshot<List<Video>> snapshot) {
                 if (snapshot.hasData) {
+                  if ((snapshot.data ?? []).isEmpty) {
+                    return SizedBox();
+                  }
                   //youtube
                   return Column(
-                    children: snapshot.data!
-                        .map((e) => youtubeCard(video: e))
-                        .toList(),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      buildTitle("Youtube Müzikleri:"),
+                      Column(
+                        children: snapshot.data!
+                            .map((e) => buildMusicItem(
+                                e.toMediaItem,
+                                snapshot.data!
+                                    .map((e) => e.toMediaItem)
+                                    .toList(),
+                                context))
+                            .toList(),
+                      ),
+                    ],
                   );
                 } else {
                   return Center(
@@ -76,7 +113,35 @@ class _SearchPageState extends State<SearchPage> {
               },
             ),
           ],
-        )));
+        ),
+      ),
+    );
+  }
+
+  Widget buildTitle(String text) {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: IntrinsicWidth(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            IntrinsicWidth(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            Divider(
+              color: Colors.black,
+              thickness: 1,
+              height: 1,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _searchBar() {

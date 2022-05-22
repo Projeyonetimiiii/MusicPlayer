@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:typed_data';
 
 import 'package:on_audio_query/on_audio_query.dart';
@@ -13,10 +14,12 @@ import 'package:path_provider/path_provider.dart';
 class MyData extends ChangeNotifier {
   late StorageBloc _storageBloc;
   late AudiosBloc _audiosBloc;
-  List<MapEntry<int, Uint8List?>> songsImages = [];
+  List<MapEntry<int, String>> songsImage = [];
   List<SongModel> songs = [];
 
   bool? isEmpty;
+
+  String defaultImagePath = "";
   MyData() {
     init();
   }
@@ -29,7 +32,6 @@ class MyData extends ChangeNotifier {
   Future<void> init() async {
     _storageBloc = StorageBloc();
     _audiosBloc = AudiosBloc();
-
     getMusics();
   }
 
@@ -39,10 +41,14 @@ class MyData extends ChangeNotifier {
       List<SongModel> songsModel =
           getFilteredSongs(await OnAudioQuery().querySongs(), 60);
       for (var song in songsModel) {
-        songsImages.add(MapEntry<int, Uint8List?>(
+        songsImage.add(MapEntry<int, String>(
             song.id,
-            await OnAudioQuery()
-                .queryArtwork(song.id, ArtworkType.AUDIO, size: 200)));
+            (await getFilePathFromBytes(
+                await OnAudioQuery()
+                    .queryArtwork(song.id, ArtworkType.AUDIO, size: 200),
+                song.title,
+                song.artist,
+                default_image: true))!));
       }
       songs = songsModel;
       notifyListeners();
@@ -51,26 +57,27 @@ class MyData extends ChangeNotifier {
     }
   }
 
-  Uint8List? getBytesFromSongId(int id) {
-    try {
-      return songsImages[songsImages.indexWhere((e) => e.key == id)].value;
-    } catch (e) {
-      return null;
-    }
+  String getImagePathFromSongId(int id) {
+    return songsImage[songsImage.indexWhere((e) => e.key == id)].value;
   }
 
-  Future<String?> saveImage(SongModel song) async {
-    Uint8List? bytes = getBytesFromSongId(song.id);
-    if (bytes != null) {
-      String? path = await getFilePathFromBytes(bytes, song.title, song.artist);
-      print(path);
-      return path;
-    }
-    return null;
+  Future<String?> saveImage(MediaItem song) async {
+    // Uint8List? bytes = getBytesFromSongId(song.id);
+    // if (bytes != null) {
+    //   String? path = await getFilePathFromBytes(bytes, song.title, song.artist);
+    //   print(path);
+    //   return path;
+    // }
+    return getImagePathFromSongId(int.parse(song.id));
+  }
+
+  String getImagePathFromSongModel(SongModel song) {
+    return getImagePathFromSongId(song.id);
   }
 
   Future<String?> getFilePathFromBytes(
-      Uint8List? bytes, String title, String? artist) async {
+      Uint8List? bytes, String title, String? artist,
+      {bool default_image = false}) async {
     String tempDir = (await getTemporaryDirectory()).path;
     String? filePath;
     if (bytes != null) {
@@ -83,10 +90,28 @@ class MyData extends ChangeNotifier {
           file.writeAsBytesSync(bytes);
         }
       } catch (e) {
-        filePath = null;
+        debugPrint(e.toString());
+      }
+    }
+    if (default_image) {
+      if (filePath == null) {
+        filePath = await _getImageFileFromAssets();
       }
     }
     return filePath;
+  }
+
+  Future<String> _getImageFileFromAssets() async {
+    if (defaultImagePath != '') return defaultImagePath;
+    final file =
+        File('${(await getTemporaryDirectory()).path}/default_image.jpg');
+    defaultImagePath = file.path;
+    if (await file.exists()) return file.path;
+    final byteData =
+        await rootBundle.load('assets/images/default_song_image.png');
+    await file.writeAsBytes(byteData.buffer
+        .asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+    return file.path;
   }
 
   List<SongModel> getFilteredSongs(List<SongModel> songs, int second) {
@@ -101,10 +126,6 @@ class MyData extends ChangeNotifier {
       return await OnAudioQuery().permissionsRequest();
     }
     return true;
-  }
-
-  List<SongModel> getSearchMusicData() {
-    return [];
   }
 
   Future<void> setRepeatMode() async {

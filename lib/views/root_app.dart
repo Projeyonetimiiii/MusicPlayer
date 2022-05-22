@@ -1,9 +1,12 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/favorite_page.dart';
 import 'package:onlinemusic/views/home_page.dart';
 import 'package:onlinemusic/views/library_page.dart';
+import 'package:onlinemusic/views/playing_screen/playing_screen.dart';
 import 'package:onlinemusic/views/search_page.dart';
 import 'package:onlinemusic/views/share_song_page.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
@@ -18,6 +21,22 @@ class RootApp extends StatefulWidget {
 class _RootAppState extends State<RootApp> {
   PageController _pageController = PageController();
   final _bottomPageNotifier = ValueNotifier<int>(0);
+
+  @override
+  void initState() {
+    AudioService.notificationClicked.listen((clicked) {
+      if (clicked) {
+        BuildContext? navigatorContext = MyApp.navigatorKey.currentContext;
+        if (navigatorContext != null) {
+          print(PlayingScreen.isRunning);
+          if (!PlayingScreen.isRunning) {
+            navigatorContext.push(PlayingScreen());
+          }
+        }
+      }
+    });
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {

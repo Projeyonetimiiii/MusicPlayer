@@ -1,8 +1,5 @@
-import 'dart:typed_data';
-
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:on_audio_query/on_audio_query.dart';
-import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/providers/data.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/playing_screen/playing_screen.dart';
@@ -26,7 +23,7 @@ class _LibraryPageState extends State<LibraryPage> {
           physics: BouncingScrollPhysics(),
           itemCount: data.songs.length,
           itemBuilder: (context, int index) {
-            SongModel music = data.songs[index];
+            MediaItem music = data.songs[index].toMediaItem;
             return Padding(
               padding: const EdgeInsets.only(
                 left: 5.0,
@@ -39,20 +36,7 @@ class _LibraryPageState extends State<LibraryPage> {
                     borderRadius: BorderRadius.circular(5.0),
                     color: Colors.grey.shade300,
                   ),
-                  child: FutureBuilder<Uint8List?>(
-                    future: OnAudioQuery.platform
-                        .queryArtwork(music.id, ArtworkType.AUDIO),
-                    builder: (c, snap) {
-                      if (!snap.hasData) {
-                        return Icon(Icons.hide_image_rounded);
-                      } else {
-                        return Image.memory(
-                          snap.data!,
-                          fit: BoxFit.cover,
-                        );
-                      }
-                    },
-                  ),
+                  child: music.getImageWidget,
                   clipBehavior: Clip.antiAlias,
                 ),
                 title: Text(
@@ -67,7 +51,7 @@ class _LibraryPageState extends State<LibraryPage> {
                 onTap: () async {
                   context.push(
                     PlayingScreen(
-                      song: music.toMediaItem,
+                      song: music,
                       queue: data.songs.map((e) => e.toMediaItem).toList(),
                     ),
                   );
