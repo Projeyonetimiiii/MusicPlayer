@@ -150,4 +150,12 @@ class MyData extends ChangeNotifier {
         color: Colors.black45,
       );
   }
+
+  List<MediaItem> getFavoriteSong() {
+    return [];
+  }
+
+  void removeFavoritedSong(MediaItem item){
+
+  }
 }
