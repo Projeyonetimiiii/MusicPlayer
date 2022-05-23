@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
@@ -148,6 +149,10 @@ extension MediaItemExt on MediaItem {
       "genre": this.genre,
       "extras": this.extras,
     };
+  }
+
+  String get toJson {
+    return jsonEncode(toMap);
   }
 
   Future<String?> get source async {

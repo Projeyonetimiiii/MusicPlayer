@@ -38,6 +38,7 @@ class _FavoritePageState extends State<FavoritePage> {
                     key: Key(mediItem.id),
                     onDismissed: (l) {
                       setState(() {
+                        favorisongs.removeAt(index);
                         context.myData.removeFavoritedSong(mediItem);
                       });
                     },

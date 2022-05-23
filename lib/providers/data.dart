@@ -9,7 +9,9 @@ import 'package:on_audio_query/on_audio_query.dart';
 import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/services/audios_bloc.dart';
 import 'package:onlinemusic/services/storage_bloc.dart';
+import 'package:onlinemusic/util/converter.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:onlinemusic/util/extensions.dart';
 
 class MyData extends ChangeNotifier {
   late StorageBloc _storageBloc;
@@ -152,10 +154,28 @@ class MyData extends ChangeNotifier {
   }
 
   List<MediaItem> getFavoriteSong() {
-    return [];
+    List<String> songJsons = favoriteBox!.get("songs", defaultValue: [])!;
+    return songJsons.map((e) => MediaItemConverter.jsonToMediaItem(e)).toList();
   }
 
-  void removeFavoritedSong(MediaItem item){
+  void removeFavoritedSong(MediaItem item) {
+    List<MediaItem> items = getFavoriteSong();
+    if (items.any((element) => element.id == item.id)) {
+      items.removeWhere((element) => element.id == item.id);
+      saveFavoriteSongs(items);
+    }
+  }
 
+  Future<void> saveFavoriteSongs(List<MediaItem> items) async {
+    List<String> value = items.map((e) => e.toJson).toList();
+    await favoriteBox!.put("songs", value);
+  }
+
+  void addFavoriteSong(MediaItem item) {
+    List<MediaItem> items = getFavoriteSong();
+    if (!items.any((element) => element.id == item.id)) {
+      items.add(item);
+      saveFavoriteSongs(items);
+    }
   }
 }

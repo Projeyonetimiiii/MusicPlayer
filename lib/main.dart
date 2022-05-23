@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 
 import 'views/splash.dart';
 
+Box<List<String>>? favoriteBox;
 Box<String>? cacheBox;
 late BackgroundAudioHandler handler;
 void main() async {
@@ -20,6 +21,7 @@ void main() async {
   await Firebase.initializeApp();
   await initHive();
   cacheBox = await openBox<String>("cache");
+  favoriteBox = await openBox<List<String>>("farovite");
   await initBackgroundService();
   runApp(const MyApp());
 }

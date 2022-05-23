@@ -191,7 +191,12 @@ class _PlayingScreenState extends State<PlayingScreen>
           child: StreamMediaItem(
             builder: (song) {
               if (song == null) return SizedBox();
-              return song.getImageWidget;
+              return GestureDetector(
+                onDoubleTap: () {
+                  myData.addFavoriteSong(song);
+                },
+                child: song.getImageWidget,
+              );
             },
           ),
         ),
