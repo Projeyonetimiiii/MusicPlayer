@@ -7,6 +7,9 @@ import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/playing_screen/widgets/seekbar.dart';
 import 'package:onlinemusic/views/playing_screen/widgets/stream_media_item.dart';
 import 'package:onlinemusic/views/queue_screen.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+
+import '../video_player_page.dart';
 
 class PlayingScreen extends StatefulWidget {
   final MediaItem? song;
@@ -27,6 +30,7 @@ class _PlayingScreenState extends State<PlayingScreen>
     with TickerProviderStateMixin {
   late bool isFavorite;
   late PageController pageController;
+  final YoutubeExplode yt = YoutubeExplode();
 
   MediaItem? get song => widget.song;
   MyData get myData => context.myData;
@@ -169,10 +173,29 @@ class _PlayingScreenState extends State<PlayingScreen>
               if (song?.isOnline == false) {
                 return SizedBox();
               }
-              return IconButton(
-                padding: EdgeInsets.zero,
-                onPressed: () {},
-                icon: Icon(Icons.person_search_rounded, size: 30),
+              return Row(
+                children: [
+                  if (song!.type.isVideo)
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () async {
+                        StreamManifest url =
+                            await yt.videos.streamsClient.getManifest(song.id);
+                        context.push(
+                          VideoPlayerPage(
+                              isLocal: true,
+                              url: url.muxed.bestQuality.url.toString()),
+                        );
+                      },
+                      icon: Icon(Icons.youtube_searched_for_rounded, size: 30),
+                    ),
+            
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () {},
+                    icon: Icon(Icons.person_search_rounded, size: 30),
+                  )
+                ],
               );
             },
           ),
