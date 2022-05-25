@@ -1,15 +1,14 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:on_video_query/on_video_query.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/video_player_page.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
-
-import '../models/folder.dart';
 import '../util/const.dart';
 
 class VideosDetails extends StatefulWidget {
-  final Folder folder;
+  final FolderVideos folder;
   VideosDetails({
     Key? key,
     required this.folder,
@@ -30,10 +29,10 @@ class _VideosDetailsState extends State<VideosDetails> {
         children: widget.folder.videos.map(
           (e) {
             return InkWell(
-              onTap: (){
-                 context.push( 
-                VideoPlayerPage(isLocal: true, url:e.path), 
-              ); 
+              onTap: () {
+                context.push(
+                  VideoPlayerPage(isLocal: true, url: e.path),
+                );
               },
               child: ListTile(
                 contentPadding: EdgeInsets.all(16),
@@ -57,8 +56,8 @@ class _VideosDetailsState extends State<VideosDetails> {
                   overflow: TextOverflow.ellipsis,
                   maxLines: 1,
                 ),
-                trailing: Text(
-                    Const.getDurationString(Duration(milliseconds: e.duration))),
+                trailing: Text(Const.getDurationString(
+                    Duration(milliseconds: e.duration))),
               ),
             );
           },

@@ -175,12 +175,12 @@ class _PlayingScreenState extends State<PlayingScreen>
               }
               return Row(
                 children: [
-                  if (song!.type.isVideo)
+                  if (song?.type.isVideo ?? true)
                     IconButton(
                       padding: EdgeInsets.zero,
                       onPressed: () async {
                         StreamManifest url =
-                            await yt.videos.streamsClient.getManifest(song.id);
+                            await yt.videos.streamsClient.getManifest(song!.id);
                         context.push(
                           VideoPlayerPage(
                               isLocal: true,
@@ -189,7 +189,6 @@ class _PlayingScreenState extends State<PlayingScreen>
                       },
                       icon: Icon(Icons.youtube_searched_for_rounded, size: 30),
                     ),
-            
                   IconButton(
                     padding: EdgeInsets.zero,
                     onPressed: () {},

@@ -60,6 +60,8 @@ dependencies:
   skeleton_animation: ^0.1.4
   video_thumbnail: ^0.5.0
   better_player: ^0.0.82
+  on_video_query:
+    git: https://github.com/OrtakProje-1/on_video_query.git
   
 
 
