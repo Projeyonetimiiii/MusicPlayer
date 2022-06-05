@@ -12,7 +12,8 @@ import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/enums.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/util/helper_functions.dart';
-import 'package:onlinemusic/views/message_screen/message_screen.dart';
+
+import '../views/chat/messages/message_screen.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -238,7 +239,7 @@ class AuthService {
               },
             );
             if (res == true) {
-              context.push(MessageScreen());
+              context.push(MessagesScreen(user: user,));
             }
           }
         }
