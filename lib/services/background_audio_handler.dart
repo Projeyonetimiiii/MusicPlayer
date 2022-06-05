@@ -2,6 +2,8 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:onlinemusic/services/listening_song_service.dart';
+import 'package:onlinemusic/services/user_status_service.dart';
+import 'package:onlinemusic/util/enums.dart';
 import 'package:onlinemusic/util/extensions.dart';
 
 class BackgroundAudioHandler extends BaseAudioHandler
@@ -9,6 +11,7 @@ class BackgroundAudioHandler extends BaseAudioHandler
   final AudioPlayer player = AudioPlayer();
   int index = -1;
   List<MediaItem> _effectiveQueue = [];
+  UserStatusService userStatusService = UserStatusService();
 
   bool get isPlaying => player.playing;
   Duration get position => player.position;
@@ -109,6 +112,7 @@ class BackgroundAudioHandler extends BaseAudioHandler
           ProgressiveAudioSource(Uri.parse(url), duration: mediaItem1.duration),
         );
         listeningSongService.listeningSong(mediaItem1);
+        userStatusService.updateConenctionType(ConnectionType.Ready);
       } on Exception catch (e) {
         debugPrint(e.toString());
       }
@@ -215,6 +219,7 @@ class BackgroundAudioHandler extends BaseAudioHandler
   Future<void> stop() async {
     await pause();
     await listeningSongService.deleteUserIdFromLastListenedSongId();
+    await userStatusService.updateConenctionType(ConnectionType.DontConnect);
     return super.stop();
   }
 }

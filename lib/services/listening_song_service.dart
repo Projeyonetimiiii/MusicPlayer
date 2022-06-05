@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:onlinemusic/main.dart';
+import 'package:onlinemusic/models/usermodel.dart';
+import 'package:onlinemusic/services/auth.dart';
 import 'package:onlinemusic/util/extensions.dart';
 
 class ListeningSongService {
@@ -52,8 +54,30 @@ class ListeningSongService {
     }
   }
 
-  Future<QuerySnapshot<Map<String, dynamic>>> getListenersFrom(String songId) {
-    return listeningReference.doc(songId).collection("userIds").get();
+  Stream<QuerySnapshot<Map<String, dynamic>>> getStreamListenersFrom(
+      String songId) {
+    return listeningReference.doc(songId).collection("userIds").snapshots();
+  }
+
+  Future<List<UserModel>> getFutureListenersFrom(String songId) async {
+    QuerySnapshot<Map<String, dynamic>> userDatas =
+        await listeningReference.doc(songId).collection("userIds").get();
+
+    List<String> userIds =
+        userDatas.docs.map((e) => (e.data()["userId"] as String)).toList();
+    List<UserModel> users = [];
+    for (var id in userIds) {
+      UserModel? user = await AuthService().getUserFromId(id);
+      if (user != null) {
+        users.add(user);
+      }
+    }
+    print(users);
+    users.removeWhere((element) {
+      return (element.id == FirebaseAuth.instance.currentUser!.uid) ||
+          (!(element.connectionType?.isReady ?? false));
+    });
+    return users;
   }
 }
 

@@ -1,17 +1,50 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:onlinemusic/main.dart';
+import 'package:onlinemusic/models/request_model.dart';
 import 'package:onlinemusic/models/usermodel.dart';
+import 'package:onlinemusic/services/user_status_service.dart';
 import 'package:onlinemusic/util/const.dart';
+import 'package:onlinemusic/util/enums.dart';
+import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/util/helper_functions.dart';
+import 'package:onlinemusic/views/message_screen/message_screen.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
+      _requestSubscription;
 
+  static StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
+      _resultSubscription;
   CollectionReference<Map<String, dynamic>> get usersReference =>
       _firestore.collection("Users");
+
+  CollectionReference<Map<String, dynamic>> userRequestsHistoryReference(
+      String id) {
+    return usersReference.doc(id).collection("requestHistory");
+  }
+
+  DocumentReference<Map<String, dynamic>> userRequestReference(String id) {
+    return usersReference.doc(id).collection("reguest").doc("request");
+  }
+
+  DocumentReference<Map<String, dynamic>> userRequestResultReference() {
+    return usersReference
+        .doc(_auth.currentUser!.uid)
+        .collection("reguestResult")
+        .doc("result");
+  }
+
+  DocumentReference<Map<String, dynamic>> userRequestResultReferenceFromId(
+      String id) {
+    return usersReference.doc(id).collection("reguestResult").doc("result");
+  }
 
   //giriş yap fonksiyonu
   Future<User?> signIn(
@@ -28,7 +61,9 @@ class AuthService {
     try {
       UserCredential userCredential = await _auth.signInWithEmailAndPassword(
           email: email, password: password);
-      print(userCredential);
+      if (userCredential.user != null) {
+        listen();
+      }
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
       print("Hata: " + e.code);
@@ -63,6 +98,7 @@ class AuthService {
 
   //çıkış yap fonksiyonu
   signOut() async {
+    stopListen();
     return await _auth.signOut();
   }
 
@@ -87,6 +123,7 @@ class AuthService {
         await userCredential.user!.updatePhotoURL(
           Const.kDefaultProfilePicture,
         );
+        listen();
         print(userCredential.user);
       }
     } on FirebaseException catch (e) {
@@ -119,6 +156,11 @@ class AuthService {
     return user;
   }
 
+  Stream<DocumentSnapshot<Map<String, dynamic>>> getUserStreamFromId(
+      String id) {
+    return usersReference.doc(id).snapshots();
+  }
+
   Future<UserModel?> getUserFromId(String id) async {
     DocumentSnapshot<Map<String, dynamic>> userData =
         await usersReference.doc(id).get();
@@ -131,5 +173,160 @@ class AuthService {
       debugPrint(e.toString());
     }
     return user;
+  }
+
+  Future<void> sendMatchRequest(String userId) async {
+    String curId = _auth.currentUser!.uid;
+    await UserStatusService().updateConenctionType(ConnectionType.Connecting);
+    await UserStatusService()
+        .updateConenctionTypeFromId(userId, ConnectionType.Connecting);
+    RequestModel requestModel = RequestModel(
+        senderId: curId, receiverId: userId, type: RequestType.Waiting);
+    await userRequestReference(userId).set(requestModel.toMap());
+  }
+
+  void listenRequestResult() {
+    _resultSubscription = userRequestResultReference().snapshots().listen(
+      (event) async {
+        if (event.data() == null) return;
+        RequestModel requestModel = RequestModel.fromMap(event.data()!);
+        bool isDenied = requestModel.type == RequestType.Denied;
+        bool isAccepted = requestModel.type == RequestType.Accepted;
+        print("result: " + requestModel.toString());
+        if (!isDenied && !isAccepted) {
+          return;
+        }
+        UserModel? user = await getUserFromId(requestModel.receiverId);
+        if (user != null) {
+          BuildContext? context = MyApp.navigatorKey.currentContext;
+          if (context != null) {
+            await event.reference.delete();
+            bool? res = await showDialog<bool>(
+              context: context,
+              builder: (_) {
+                return AlertDialog(
+                  title: Text("Eşleşme Sonucu"),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          backgroundImage: NetworkImage(user.image!),
+                        ),
+                        title: Text(user.userName ?? "User"),
+                        subtitle: Text(
+                          user.bio ?? "Biografi",
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text("Yukarıdaki kullanıcı eşleşme isteğinizi " +
+                          (isDenied ? "reddetti" : "kabul etti")),
+                    ],
+                  ),
+                  actions: [
+                    if (isAccepted)
+                      TextButton(
+                        onPressed: () {
+                          Navigator.pop(context, true);
+                        },
+                        child: Text("Mesaj At"),
+                      ),
+                  ],
+                );
+              },
+            );
+            if (res == true) {
+              context.push(MessageScreen());
+            }
+          }
+        }
+      },
+    );
+  }
+
+  void listen() {
+    print("Dinleme işlemi başladı");
+    if (_auth.currentUser != null) {
+      listenUserRequest();
+      listenRequestResult();
+    }
+  }
+
+  void stopListen() {
+    print("Dinleme işlemi kapandı");
+    _requestSubscription?.cancel();
+    _resultSubscription?.cancel();
+  }
+
+  void listenUserRequest() {
+    _requestSubscription = userRequestReference(_auth.currentUser!.uid)
+        .snapshots()
+        .listen((event) async {
+      if (event.data() == null) return;
+      RequestModel requestModel = RequestModel.fromMap(event.data()!);
+      print("request: " + requestModel.toString());
+      UserModel? user = await getUserFromId(requestModel.senderId);
+      if (user != null) {
+        BuildContext? context = MyApp.navigatorKey.currentContext;
+        if (context != null) {
+          showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) {
+                return AlertDialog(
+                  title: Text("Eşleşme İstegi"),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: CircleAvatar(
+                          backgroundImage: NetworkImage(user.image!),
+                        ),
+                        title: Text(user.userName ?? "User"),
+                        subtitle: Text(
+                          user.bio ?? "Biografi",
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Text("Yukarıdaki kullanıcı sizinle eşleşmek istiyor"),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                        onPressed: () async {
+                          await userRequestResultReferenceFromId(
+                                  requestModel.senderId)
+                              .set((requestModel..type = RequestType.Accepted)
+                                  .toMap());
+                          UserStatusService service = UserStatusService();
+                          service.connectUser(requestModel.senderId);
+                          UserStatusService()
+                              .updateConenctionType(ConnectionType.Ready);
+                          UserStatusService().updateConenctionTypeFromId(
+                              requestModel.senderId, ConnectionType.Ready);
+                          event.reference.delete();
+                          Navigator.pop(context);
+                        },
+                        child: Text("Eşleş")),
+                    TextButton(
+                        onPressed: () async {
+                          await UserStatusService()
+                              .updateConenctionType(ConnectionType.Ready);
+                          await UserStatusService().updateConenctionTypeFromId(
+                              requestModel.senderId, ConnectionType.Ready);
+                          await event.reference.delete();
+                          Navigator.pop(context);
+                        },
+                        child: Text("Eşleşme")),
+                  ],
+                );
+              });
+        }
+      }
+    });
   }
 }

@@ -1,9 +1,15 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:onlinemusic/main.dart';
+import 'package:onlinemusic/models/usermodel.dart';
 import 'package:onlinemusic/providers/data.dart';
+import 'package:onlinemusic/services/auth.dart';
+import 'package:onlinemusic/services/listening_song_service.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
+import 'package:onlinemusic/views/message_screen/message_screen.dart';
 import 'package:onlinemusic/views/playing_screen/widgets/seekbar.dart';
 import 'package:onlinemusic/views/playing_screen/widgets/stream_media_item.dart';
 import 'package:onlinemusic/views/queue_screen.dart';
@@ -79,56 +85,66 @@ class _PlayingScreenState extends State<PlayingScreen>
   Stack playingScreenBody(BuildContext context) {
     return Stack(
       children: [
+        Positioned(
+          top: 0,
+          bottom: 0,
+          left: 15.5,
+          child: VerticalDivider(
+            thickness: 1,
+            width: 1,
+          ),
+        ),
+        Positioned(
+          top: 0,
+          bottom: 0,
+          right: 15.5,
+          child: VerticalDivider(
+            thickness: 1,
+            width: 1,
+          ),
+        ),
         Positioned.fill(
           child: PageView(
             controller: pageController,
             children: [
-              ListView(
-                physics: NeverScrollableScrollPhysics(),
-                children: [
-                  SizedBox(
+              SafeArea(
+                child: SingleChildScrollView(
+                  physics: NeverScrollableScrollPhysics(),
+                  child: SizedBox(
                     height: MediaQuery.of(context).size.height -
                         MediaQuery.of(context).padding.top,
-                    child: Stack(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        SingleChildScrollView(
-                          physics: NeverScrollableScrollPhysics(),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                child: Column(
-                                  children: [
-                                    buildTopActions(),
-                                    buildImageWidget(),
-                                    SizedBox(
-                                      height: 20,
-                                    ),
-                                    buildTitleWidget(),
-                                  ],
-                                ),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 16),
-                                child: buildSliderWidget(),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 16),
-                                child: Column(
-                                  children: [
-                                    buildActionsWidget(),
-                                  ],
-                                ),
-                              ),
+                              buildTopActions(),
+                              buildImageWidget(),
                             ],
                           ),
                         ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              buildTitleWidget(),
+                              buildSliderWidget(),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: buildActionsWidget(),
+                        ),
+                        SizedBox(),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
               StreamBuilder<List<MediaItem>>(
                 stream: handler.queue,
@@ -154,27 +170,61 @@ class _PlayingScreenState extends State<PlayingScreen>
     );
   }
 
-  Padding buildTopActions() {
+  Widget buildTopActions() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
             padding: EdgeInsets.zero,
+            constraints: BoxConstraints.loose(Size.square(30)),
             onPressed: () {
               Navigator.pop(context);
             },
-            icon: Icon(Icons.keyboard_arrow_down_rounded, size: 40),
+            icon: Icon(Icons.keyboard_arrow_down_rounded, size: 30),
           ),
+          Spacer(),
           StreamMediaItem(
             builder: (song) {
-              if (song?.isOnline == false) {
-                return SizedBox();
-              }
               return Row(
                 children: [
+                  StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                    stream: AuthService().getUserStreamFromId(
+                        FirebaseAuth.instance.currentUser!.uid),
+                    builder: (c, snap) {
+                      if (!snap.hasData) {
+                        return SizedBox();
+                      }
+
+                      UserModel user = UserModel.fromMap(snap.data!.data()!);
+                      if (user.connectedUserId != null) {
+                        return StreamBuilder<
+                            DocumentSnapshot<Map<String, dynamic>>>(
+                          stream: AuthService()
+                              .getUserStreamFromId(user.connectedUserId!),
+                          builder: (c, snap) {
+                            if (!snap.hasData) {
+                              return SizedBox();
+                            }
+
+                            UserModel user =
+                                UserModel.fromMap(snap.data!.data()!);
+                            return InkWell(
+                              onTap: () {
+                                context.push(MessageScreen());
+                              },
+                              child: CircleAvatar(
+                                backgroundImage: NetworkImage(user.image!),
+                                radius: 14,
+                              ),
+                            );
+                          },
+                        );
+                      } else {
+                        return SizedBox();
+                      }
+                    },
+                  ),
                   if (song?.type.isVideo ?? true)
                     IconButton(
                       padding: EdgeInsets.zero,
@@ -189,11 +239,35 @@ class _PlayingScreenState extends State<PlayingScreen>
                       },
                       icon: Icon(Icons.youtube_searched_for_rounded, size: 30),
                     ),
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    onPressed: () {},
-                    icon: Icon(Icons.person_search_rounded, size: 30),
-                  )
+                  if (song?.isOnline == true)
+                    PopupMenuButton<MatchType>(
+                      onSelected: (type) async {
+                        if (type == MatchType.Random) {
+                          List<UserModel> users = await ListeningSongService()
+                              .getFutureListenersFrom(song!.id);
+                          if (users.isNotEmpty) {
+                            users.shuffle();
+                            print("Conencting User= " + users.first.toString());
+                            showUserDialog(users.first);
+                          }
+                        } else {
+                          showListeningUsers(song!.id);
+                        }
+                      },
+                      icon: Icon(Icons.person_search_rounded, size: 30),
+                      itemBuilder: (s) {
+                        return [
+                          PopupMenuItem(
+                            child: Text("Rastgele Eşleş"),
+                            value: MatchType.Random,
+                          ),
+                          PopupMenuItem(
+                            child: Text("Kendin Seç"),
+                            value: MatchType.YourSelect,
+                          ),
+                        ];
+                      },
+                    ),
                 ],
               );
             },
@@ -203,24 +277,78 @@ class _PlayingScreenState extends State<PlayingScreen>
     );
   }
 
-  Padding buildImageWidget() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: AspectRatio(
-        aspectRatio: 1,
-        child: Card(
-          elevation: 4,
-          child: StreamMediaItem(
-            builder: (song) {
-              if (song == null) return SizedBox();
-              return GestureDetector(
-                onDoubleTap: () {
-                  myData.addFavoriteSong(song);
+  void showListeningUsers(String songId) {
+    showModalBottomSheet(
+        context: context,
+        builder: (c) {
+          AuthService authService = AuthService();
+          return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: ListeningSongService().getStreamListenersFrom(songId),
+            builder: (c, snapshot) {
+              if (!snapshot.hasData) {
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+              return ListView.builder(
+                itemCount: snapshot.data!.docs.length,
+                itemBuilder: (c, i) {
+                  print(snapshot.data!.docs[i].id);
+                  return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                    stream: authService
+                        .getUserStreamFromId(snapshot.data!.docs[i].id),
+                    builder: (c, snap) {
+                      if (!snap.hasData) {
+                        return Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+                      if (snap.data == null) {
+                        return Text("null");
+                      }
+                      UserModel user = UserModel.fromMap(snap.data!.data()!);
+                      if (user.id == FirebaseAuth.instance.currentUser!.uid) {
+                        return SizedBox();
+                      }
+                      if (!(user.connectionType?.isReady ?? false)) {
+                        return SizedBox();
+                      }
+                      return ListTile(
+                        onTap: () {
+                          AuthService().sendMatchRequest(user.id!);
+                          Navigator.pop(context);
+                        },
+                        leading: CircleAvatar(
+                          backgroundImage: NetworkImage(user.image!),
+                        ),
+                        title: Text(user.userName ?? "User Name"),
+                        subtitle: Text(user.bio ?? "Biografi"),
+                      );
+                    },
+                  );
                 },
-                child: song.getImageWidget,
               );
             },
-          ),
+          );
+        });
+  }
+
+  AspectRatio buildImageWidget() {
+    return AspectRatio(
+      aspectRatio: 1,
+      child: Card(
+        margin: EdgeInsets.zero,
+        elevation: 4,
+        child: StreamMediaItem(
+          builder: (song) {
+            if (song == null) return SizedBox();
+            return GestureDetector(
+              onDoubleTap: () {
+                myData.addFavoriteSong(song);
+              },
+              child: song.getImageWidget,
+            );
+          },
         ),
       ),
     );
@@ -230,7 +358,6 @@ class _PlayingScreenState extends State<PlayingScreen>
     return StreamMediaItem(
       builder: (song) {
         return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             StreamBuilder<bool>(
               stream: handler.playbackState
@@ -241,6 +368,8 @@ class _PlayingScreenState extends State<PlayingScreen>
               builder: (context, snapshot) {
                 bool isShuffleMode = snapshot.data!;
                 return IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints.loose(Size.square(20)),
                   onPressed: () {
                     handler.setShuffleMode(isShuffleMode
                         ? AudioServiceShuffleMode.none
@@ -253,6 +382,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                 );
               },
             ),
+            Spacer(),
             Row(
               children: [
                 IconButton(
@@ -279,7 +409,10 @@ class _PlayingScreenState extends State<PlayingScreen>
                           handler.play();
                         }
                       },
-                      icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
+                      icon: Icon(
+                        isPlaying ? Icons.pause : Icons.play_arrow,
+                        size: 30,
+                      ),
                     );
                   },
                 ),
@@ -297,12 +430,15 @@ class _PlayingScreenState extends State<PlayingScreen>
                 ),
               ],
             ),
+            Spacer(),
             StreamBuilder<AudioServiceRepeatMode>(
               stream: handler.playbackState
                   .map((event) => event.repeatMode)
                   .distinct(),
               builder: (context, snapshot) {
                 return IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: BoxConstraints.loose(Size.square(20)),
                   onPressed: () {
                     myData.setRepeatMode();
                     setState(() {});
@@ -321,42 +457,39 @@ class _PlayingScreenState extends State<PlayingScreen>
 
   SizedBox buildSliderWidget() {
     return SizedBox(
-      height: 70,
+      height: 40,
       width: double.maxFinite,
       child: Stack(
         children: [
           Positioned(
             top: 0,
-            right: 0,
-            left: 0,
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  StreamBuilder<Duration>(
-                      stream: AudioService.position,
-                      builder: (context, snapshot) {
-                        return Text(
-                          Const.getDurationString(
-                              handler.playbackState.value.position),
-                        );
-                      }),
-                  StreamMediaItem(
-                    builder: (song) {
+            right: 6,
+            left: 6,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                StreamBuilder<Duration>(
+                    stream: AudioService.position,
+                    builder: (context, snapshot) {
                       return Text(
                         Const.getDurationString(
-                          song?.duration ?? Duration.zero,
-                        ),
+                            handler.playbackState.value.position),
                       );
-                    },
-                  ),
-                ],
-              ),
+                    }),
+                StreamMediaItem(
+                  builder: (song) {
+                    return Text(
+                      Const.getDurationString(
+                        song?.duration ?? Duration.zero,
+                      ),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
           Positioned(
-            top: 0,
+            top: 15,
             right: 0,
             left: 0,
             child: StreamMediaItem(
@@ -386,9 +519,9 @@ class _PlayingScreenState extends State<PlayingScreen>
     );
   }
 
-  Padding buildTitleWidget() {
+  Widget buildTitleWidget() {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       child: StreamMediaItem(
         builder: (song) {
           return SizedBox(
@@ -433,4 +566,42 @@ class _PlayingScreenState extends State<PlayingScreen>
       ),
     );
   }
+
+  void showUserDialog(UserModel user) {
+    showDialog(
+        context: context,
+        builder: (_) {
+          return AlertDialog(
+            title:
+                Text((user.userName ?? "User") + " ile eşleşmek ister misin?"),
+            content: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: CircleAvatar(
+                backgroundImage: NetworkImage(user.image!),
+              ),
+              title: Text(user.userName ?? "User"),
+              subtitle: Text(
+                user.bio ?? "Biografi",
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    AuthService().sendMatchRequest(user.id!);
+                    Navigator.pop(context);
+                  },
+                  child: Text("Eşleş")),
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("Eşleşme")),
+            ],
+          );
+        });
+  }
 }
+
+enum MatchType { Random, YourSelect }

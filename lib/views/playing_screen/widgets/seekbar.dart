@@ -35,12 +35,17 @@ class _SeekBarState extends State<SeekBar> {
       _dragValue = null;
     }
     return Stack(
+      alignment: Alignment.center,
       children: [
         SliderTheme(
           data: SliderThemeData(
             thumbShape: RoundSliderThumbShape(
-              enabledThumbRadius: 0,
+              enabledThumbRadius: 6,
               elevation: 0,
+            ),
+            thumbColor: Colors.transparent,
+            overlayShape: RoundSliderOverlayShape(
+              overlayRadius: 0,
             ),
             trackHeight: 2,
             activeTrackColor: Colors.blue.withOpacity(0.4),
@@ -58,8 +63,13 @@ class _SeekBarState extends State<SeekBar> {
           data: SliderThemeData(
             thumbShape: RoundSliderThumbShape(
               enabledThumbRadius: 6,
+              elevation: 0,
             ),
-            inactiveTrackColor: Colors.transparent,
+            overlayShape: RoundSliderOverlayShape(
+              overlayRadius: 0,
+            ),
+            trackHeight: 2,
+            inactiveTrackColor: Colors.blue.withOpacity(0.05),
           ),
           child: Slider(
             max: widget.duration.inMilliseconds.toDouble(),

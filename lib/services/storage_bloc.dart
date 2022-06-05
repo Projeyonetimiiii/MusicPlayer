@@ -20,8 +20,16 @@ class StorageBloc {
     return reference.child("audio");
   }
 
+  Reference get messageAudiosRef {
+    return reference.child("message_audio");
+  }
+
   Reference get audioImagesRef {
     return reference.child("audio_images");
+  }
+
+  Reference get messageImagesRef {
+    return reference.child("message_images");
   }
 
   Future<MediaReference> uploadAudio({
@@ -48,8 +56,23 @@ class StorageBloc {
   }
 
   // ref = MediaReference deki ref
-  Future<void> deleteAudio(String uid, String ref) async {
-    await audiosRef.child(uid).child(ref).delete();
+  Future<void> deleteAudio(String senderUid, String ref) async {
+    await audiosRef.child(senderUid).child(ref).delete();
+  }
+
+  // ref = MediaReference deki ref
+  Future<void> deleteMessageAudio(String senderUid, String ref) async {
+    await messageAudiosRef.child(senderUid).child(ref).delete();
+  }
+
+  // ref = MediaReference deki ref
+  Future<void> deleteAudioImage(String senderUid, String ref) async {
+    await audioImagesRef.child(senderUid).child(ref).delete();
+  }
+
+  // ref = MediaReference deki ref
+  Future<void> deleteMessageImage(String senderUid, String ref) async {
+    await messageImagesRef.child(senderUid).child(ref).delete();
   }
 
   void dispose() {}

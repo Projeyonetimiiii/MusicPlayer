@@ -139,255 +139,130 @@ class _YoutubeHomePageState extends State<HomePage> {
         ],
         automaticallyImplyLeading: false,
       ),
-      body: SafeArea(
-        child: ListView(
-          physics: BouncingScrollPhysics(),
-          padding: EdgeInsets.only(bottom: 8, top: 16),
-          children: [
-            headSongs.isNotEmpty
-                ? AnimatedCrossFade(
-                    firstChild: SizedBox(),
-                    secondChild: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        SizedBox(
-                          height: MediaQuery.of(context).size.width / 2 + 20,
-                          width: double.maxFinite,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: PageView.builder(
-                              key: const PageStorageKey("headMusics"),
-                              controller: _pageController,
-                              physics: BouncingScrollPhysics(),
-                              itemCount: headSongs.length,
-                              onPageChanged: (s) {
-                                _currentPageNotifier.value = s;
-                              },
-                              scrollDirection: Axis.horizontal,
-                              itemBuilder: (c, i) {
-                                return InkWell(
-                                  onTap: () async {
-                                    //? oynatma ekranına gidilecek
-                                  },
-                                  child: Stack(
-                                    children: [
-                                      Positioned.fill(
-                                        right: 5,
-                                        left: 5,
-                                        child: Card(
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12)),
-                                          shadowColor:
-                                              Const.kWhite.withOpacity(0.5),
-                                          elevation: 2,
-                                          child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            child: Image.network(
-                                              headSongs[i].imageQuality(false),
-                                              fit: BoxFit.cover,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        top: 0,
-                                        right: 9,
-                                        left: 9,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.vertical(
-                                              top: Radius.circular(
-                                                12,
-                                              ),
-                                            ),
-                                          ),
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 5,
-                                            vertical: 5,
-                                          ),
-                                          width: double.infinity,
-                                          child: Center(
-                                            child: Text(
-                                              headSongs[i].title ?? "",
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          bottom: -13,
-                          right: 0,
-                          left: 0,
-                          child: CirclePageIndicator(
-                            selectedSize: 8,
-                            selectedDotColor: Const.kWhite.withOpacity(0.7),
-                            dotColor: Const.kWhite.withOpacity(0.1),
-                            currentPageNotifier: _currentPageNotifier,
-                            itemCount: headSongs.length,
-                          ),
-                        ),
-                      ],
-                    ),
-                    crossFadeState: showHeadMusic
-                        ? CrossFadeState.showSecond
-                        : CrossFadeState.showFirst,
-                    duration: Duration(milliseconds: 400),
-                  )
-                : SizedBox(),
-            Column(
-              children: Const.genres.map((e) {
-                return getGenreWidget(e);
-              }).toList(),
-            ),
-            Column(
-              children: genres.map((e) {
-                return getYoutubeGenreWidget(e);
-              }).toList(),
-            ),
-          ],
-        ),
-      ),
+      body: getBody(),
     );
   }
 
   Widget getBody() {
-    return SafeArea(
-      child: ListView(
-        physics: BouncingScrollPhysics(),
-        padding: EdgeInsets.only(bottom: 8, top: 16),
-        children: [
-          headSongs.isNotEmpty
-              ? AnimatedCrossFade(
-                  firstChild: SizedBox(),
-                  secondChild: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      SizedBox(
-                        height: MediaQuery.of(context).size.width / 2 + 20,
-                        width: double.maxFinite,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: PageView.builder(
-                            key: const PageStorageKey("headMusics"),
-                            controller: _pageController,
-                            physics: BouncingScrollPhysics(),
-                            itemCount: headSongs.length,
-                            onPageChanged: (s) {
-                              _currentPageNotifier.value = s;
-                            },
-                            scrollDirection: Axis.horizontal,
-                            itemBuilder: (c, i) {
-                              return InkWell(
-                                onTap: () async {
-                                  //? oynatma ekranına gidilecek
-                                },
-                                child: Stack(
-                                  children: [
-                                    Positioned.fill(
-                                      right: 5,
-                                      left: 5,
-                                      child: Card(
-                                        shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12)),
-                                        shadowColor:
-                                            Const.kWhite.withOpacity(0.5),
-                                        elevation: 2,
-                                        child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          child: Image.network(
-                                            headSongs[i].imageQuality(false),
-                                            fit: BoxFit.cover,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      top: 0,
-                                      right: 9,
-                                      left: 9,
-                                      child: Container(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.vertical(
-                                            top: Radius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                        ),
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 5,
-                                          vertical: 5,
-                                        ),
-                                        width: double.infinity,
-                                        child: Center(
-                                          child: Text(
-                                            headSongs[i].title ?? "",
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        bottom: -13,
-                        right: 0,
-                        left: 0,
-                        child: CirclePageIndicator(
-                          selectedSize: 8,
-                          selectedDotColor: Const.kWhite.withOpacity(0.7),
-                          dotColor: Const.kWhite.withOpacity(0.1),
-                          currentPageNotifier: _currentPageNotifier,
+    return ListView(
+      physics: BouncingScrollPhysics(),
+      padding: EdgeInsets.only(bottom: 8, top: 16),
+      children: [
+        headSongs.isNotEmpty
+            ? AnimatedCrossFade(
+                firstChild: SizedBox(),
+                secondChild: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.width / 2 + 20,
+                      width: double.maxFinite,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: PageView.builder(
+                          key: const PageStorageKey("headMusics"),
+                          controller: _pageController,
+                          physics: BouncingScrollPhysics(),
                           itemCount: headSongs.length,
+                          onPageChanged: (s) {
+                            _currentPageNotifier.value = s;
+                          },
+                          scrollDirection: Axis.horizontal,
+                          itemBuilder: (c, i) {
+                            return InkWell(
+                              onTap: () async {
+                                //? oynatma ekranına gidilecek
+                              },
+                              child: Stack(
+                                children: [
+                                  Positioned.fill(
+                                    right: 5,
+                                    left: 5,
+                                    child: Card(
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12)),
+                                      shadowColor:
+                                          Const.kWhite.withOpacity(0.5),
+                                      elevation: 2,
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Image.network(
+                                          headSongs[i].imageQuality(false),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 0,
+                                    right: 9,
+                                    left: 9,
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.vertical(
+                                          top: Radius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                      ),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: 5,
+                                        vertical: 5,
+                                      ),
+                                      width: double.infinity,
+                                      child: Center(
+                                        child: Text(
+                                          headSongs[i].title ?? "",
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       ),
-                    ],
-                  ),
-                  crossFadeState: showHeadMusic
-                      ? CrossFadeState.showSecond
-                      : CrossFadeState.showFirst,
-                  duration: Duration(milliseconds: 400),
-                )
-              : SizedBox(),
-          Column(
-            children: Const.genres.map((e) {
-              return getGenreWidget(e);
-            }).toList(),
-          ),
-          Column(
-            children: genres.map((e) {
-              return getYoutubeGenreWidget(e);
-            }).toList(),
-          ),
-        ],
-      ),
+                    ),
+                    Positioned(
+                      bottom: -13,
+                      right: 0,
+                      left: 0,
+                      child: CirclePageIndicator(
+                        selectedSize: 8,
+                        selectedDotColor: Const.kWhite.withOpacity(0.7),
+                        dotColor: Const.kWhite.withOpacity(0.1),
+                        currentPageNotifier: _currentPageNotifier,
+                        itemCount: headSongs.length,
+                      ),
+                    ),
+                  ],
+                ),
+                crossFadeState: showHeadMusic
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
+                duration: Duration(milliseconds: 400),
+              )
+            : SizedBox(),
+        Column(
+          children: Const.genres.map((e) {
+            return getGenreWidget(e);
+          }).toList(),
+        ),
+        Column(
+          children: genres.map((e) {
+            return getYoutubeGenreWidget(e);
+          }).toList(),
+        ),
+      ],
     );
   }
 
@@ -437,11 +312,13 @@ class _YoutubeHomePageState extends State<HomePage> {
                           width: 124,
                           child: Stack(
                             children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  audio.image,
-                                  fit: BoxFit.cover,
+                              Positioned.fill(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.network(
+                                    audio.image,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
                               ),
                               Positioned(

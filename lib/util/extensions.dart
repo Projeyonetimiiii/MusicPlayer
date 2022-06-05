@@ -183,3 +183,7 @@ extension ListExt<T> on List<T> {
     return temp;
   }
 }
+
+extension ConnectionTypeExt on ConnectionType {
+  bool get isReady => this == ConnectionType.Ready;
+}
