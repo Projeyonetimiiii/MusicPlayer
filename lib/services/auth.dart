@@ -13,6 +13,7 @@ import 'package:onlinemusic/util/enums.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/util/helper_functions.dart';
 import 'package:onlinemusic/views/message_screen/message_screen.dart';
+import 'package:onlinemusic/widgets/my_overlay_notification.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -196,51 +197,35 @@ class AuthService {
         if (!isDenied && !isAccepted) {
           return;
         }
+        await event.reference.delete();
         UserModel? user = await getUserFromId(requestModel.receiverId);
         if (user != null) {
           BuildContext? context = MyApp.navigatorKey.currentContext;
-          if (context != null) {
-            await event.reference.delete();
-            bool? res = await showDialog<bool>(
-              context: context,
-              builder: (_) {
-                return AlertDialog(
-                  title: Text("Eşleşme Sonucu"),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: CircleAvatar(
-                          backgroundImage: NetworkImage(user.image!),
-                        ),
-                        title: Text(user.userName ?? "User"),
-                        subtitle: Text(
-                          user.bio ?? "Biografi",
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Text("Yukarıdaki kullanıcı eşleşme isteğinizi " +
-                          (isDenied ? "reddetti" : "kabul etti")),
-                    ],
-                  ),
-                  actions: [
-                    if (isAccepted)
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pop(context, true);
-                        },
-                        child: Text("Mesaj At"),
-                      ),
-                  ],
-                );
-              },
-            );
-            if (res == true) {
-              context.push(MessageScreen());
-            }
-          }
+          showMyOverlayNotification(
+            isDismissible: true,
+            duration: Duration(seconds: 5),
+            leading: CircleAvatar(
+              backgroundImage: NetworkImage(user.image!),
+            ),
+            message: (user.userName ?? "user") +
+                " eşleşme isteğinizi " +
+                (isDenied ? "reddetti" : "kabul etti"),
+            actionsBuilder: (entry) {
+              if (!isDenied && context != null) {
+                return [
+                  TextButton(
+                      onPressed: () {
+                        if (entry != null) {
+                          entry.dismiss();
+                        }
+                        context.push(MessageScreen());
+                      },
+                      child: Text("Mesaj At")),
+                ];
+              }
+              return null;
+            },
+          );
         }
       },
     );
@@ -269,63 +254,59 @@ class AuthService {
       print("request: " + requestModel.toString());
       UserModel? user = await getUserFromId(requestModel.senderId);
       if (user != null) {
-        BuildContext? context = MyApp.navigatorKey.currentContext;
-        if (context != null) {
-          showDialog(
-              context: context,
-              barrierDismissible: false,
-              builder: (_) {
-                return AlertDialog(
-                  title: Text("Eşleşme İstegi"),
-                  content: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: CircleAvatar(
-                          backgroundImage: NetworkImage(user.image!),
-                        ),
-                        title: Text(user.userName ?? "User"),
-                        subtitle: Text(
-                          user.bio ?? "Biografi",
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Text("Yukarıdaki kullanıcı sizinle eşleşmek istiyor"),
-                    ],
-                  ),
-                  actions: [
-                    TextButton(
-                        onPressed: () async {
-                          await userRequestResultReferenceFromId(
-                                  requestModel.senderId)
-                              .set((requestModel..type = RequestType.Accepted)
-                                  .toMap());
-                          UserStatusService service = UserStatusService();
-                          service.connectUser(requestModel.senderId);
-                          UserStatusService()
-                              .updateConenctionType(ConnectionType.Ready);
-                          UserStatusService().updateConenctionTypeFromId(
-                              requestModel.senderId, ConnectionType.Ready);
-                          event.reference.delete();
-                          Navigator.pop(context);
-                        },
-                        child: Text("Eşleş")),
-                    TextButton(
-                        onPressed: () async {
-                          await UserStatusService()
-                              .updateConenctionType(ConnectionType.Ready);
-                          await UserStatusService().updateConenctionTypeFromId(
-                              requestModel.senderId, ConnectionType.Ready);
-                          await event.reference.delete();
-                          Navigator.pop(context);
-                        },
-                        child: Text("Eşleşme")),
-                  ],
-                );
-              });
-        }
+        showMyOverlayNotification(
+          duration: Duration(seconds: 10),
+          leading: Padding(
+            padding: const EdgeInsets.all(5.0),
+            child: CircleAvatar(
+              backgroundImage: NetworkImage(user.image!),
+            ),
+          ),
+          message:
+              (user.userName ?? "user") + " size bir eşleşme isteği gönderdi",
+          actionsBuilder: (entry) {
+            return [
+              TextButton(
+                onPressed: () async {
+                  if (entry != null) {
+                    entry.dismiss();
+                  }
+                  await userRequestResultReferenceFromId(requestModel.senderId)
+                      .set((requestModel..type = RequestType.Accepted).toMap());
+                  UserStatusService service = UserStatusService();
+                  service.connectUser(requestModel.senderId);
+                  UserStatusService()
+                      .updateConenctionType(ConnectionType.Ready);
+                  UserStatusService().updateConenctionTypeFromId(
+                      requestModel.senderId, ConnectionType.Ready);
+                  event.reference.delete();
+                },
+                child: Text("Kabul Et"),
+              ),
+              TextButton(
+                onPressed: () async {
+                  if (entry != null) {
+                    entry.dismiss();
+                  }
+                  await UserStatusService()
+                      .updateConenctionType(ConnectionType.Ready);
+                  await UserStatusService().updateConenctionTypeFromId(
+                      requestModel.senderId, ConnectionType.Ready);
+                  await event.reference.delete();
+                },
+                child: Text("Reddet"),
+              ),
+            ];
+          },
+          onFinish: () async {
+            print("onFinish çalıştı");
+            await UserStatusService()
+                .updateConenctionType(ConnectionType.Ready);
+            await UserStatusService().updateConenctionTypeFromId(
+                requestModel.senderId, ConnectionType.Ready);
+            await event.reference.delete();
+          },
+        );
       }
     });
   }
