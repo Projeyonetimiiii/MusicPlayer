@@ -9,12 +9,12 @@ import 'package:onlinemusic/services/auth.dart';
 import 'package:onlinemusic/services/listening_song_service.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
-import 'package:onlinemusic/views/message_screen/message_screen.dart';
 import 'package:onlinemusic/views/playing_screen/widgets/seekbar.dart';
 import 'package:onlinemusic/views/playing_screen/widgets/stream_media_item.dart';
 import 'package:onlinemusic/views/queue_screen.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
+import '../chat/messages/message_screen.dart';
 import '../video_player_page.dart';
 
 class PlayingScreen extends StatefulWidget {
@@ -211,7 +211,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                                 UserModel.fromMap(snap.data!.data()!);
                             return InkWell(
                               onTap: () {
-                                context.push(MessageScreen());
+                                context.push(MessagesScreen(user: user,));
                               },
                               child: CircleAvatar(
                                 backgroundImage: NetworkImage(user.image!),
