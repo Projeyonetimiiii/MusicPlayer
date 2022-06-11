@@ -51,6 +51,44 @@ class StorageBloc {
     return MediaReference(ref: ref, downloadURL: downloadURL);
   }
 
+  Future<MediaReference> uploadMessageAudio({
+    required File file,
+    required String userUid,
+    int index = 0,
+    String? timeStamp,
+    String? ext,
+  }) async {
+    ext = ext ?? fileExt(file.path);
+    timeStamp = timeStamp ?? DateTime.now().millisecondsSinceEpoch.toString();
+    String ref = "$timeStamp-$index.$ext";
+    UploadTask task = messageAudiosRef
+        .child(userUid)
+        .child(ref)
+        .putFile(file, SettableMetadata(contentType: 'audio/$ext'));
+    await task.whenComplete(() => null);
+    String downloadURL = await task.snapshot.ref.getDownloadURL();
+    return MediaReference(ref: ref, downloadURL: downloadURL);
+  }
+
+  Future<MediaReference> uploadMessageImage({
+    required File file,
+    required String userUid,
+    int index = 0,
+    String? timeStamp,
+    String? ext,
+  }) async {
+    ext = ext ?? fileExt(file.path);
+    timeStamp = timeStamp ?? DateTime.now().millisecondsSinceEpoch.toString();
+    String ref = "$timeStamp-$index.$ext";
+    UploadTask task = messageImagesRef
+        .child(userUid)
+        .child(ref)
+        .putFile(file, SettableMetadata(contentType: 'image/$ext'));
+    await task.whenComplete(() => null);
+    String downloadURL = await task.snapshot.ref.getDownloadURL();
+    return MediaReference(ref: ref, downloadURL: downloadURL);
+  }
+
   static String fileExt(String name) {
     return name.split(".").last;
   }

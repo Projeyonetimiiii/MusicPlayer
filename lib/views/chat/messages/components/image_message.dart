@@ -8,6 +8,7 @@ class ImageMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isMee = message.senderId == FirebaseAuth.instance.currentUser!.uid;
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.60, // 55% of total width
       child: AspectRatio(
@@ -20,9 +21,6 @@ class ImageMessage extends StatelessWidget {
                 Expanded(
                   child: Padding(
                     padding: EdgeInsets.only(
-                        top: 2,
-                        right: 2,
-                        left: 2,
                         bottom: message.message!.isNotEmpty ? 0 : 2),
                     child: InkWell(
                       child: getImageWidget(
@@ -37,12 +35,13 @@ class ImageMessage extends StatelessWidget {
                   Container(
                     padding: EdgeInsets.all(5),
                     width: double.maxFinite,
+                    color: isMee ? Colors.blue : Colors.grey.shade400,
                     child: Text(
                       message.message!,
                       textAlign: TextAlign.left,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.green,
+                        color: isMee ? Colors.white : Colors.black,
                       ),
                     ),
                   ),

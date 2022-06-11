@@ -6,8 +6,6 @@ import 'package:flutter/foundation.dart';
 import 'package:onlinemusic/models/media_reference.dart';
 import 'package:onlinemusic/util/enums.dart';
 
-import '../../../enums/enums.dart';
-
 class ChatMessage {
   final String? message;
   final String? senderId;
@@ -85,7 +83,7 @@ class ChatMessage {
       isRemoved: map['isRemoved'] != null ? map['isRemoved'] as bool : null,
       images: map['images'] != null
           ? List<MediaReference?>.from(
-              (map['images'] as List<int>).map<MediaReference?>(
+              (map['images'] as List<dynamic>).map<MediaReference?>(
                 (x) => MediaReference?.fromMap(x as Map<String, dynamic>),
               ),
             )

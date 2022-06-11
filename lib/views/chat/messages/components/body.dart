@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:onlinemusic/models/usermodel.dart';
+import 'package:onlinemusic/services/messages_service.dart';
 import 'package:onlinemusic/views/chat/models/chat_message.dart';
 import 'package:flutter/material.dart';
 
@@ -7,7 +9,7 @@ import 'chat_input_field.dart';
 import 'message.dart';
 
 class Body extends StatelessWidget {
-  final String rUid;
+  final UserModel rUser;
   final List<ChatMessage>? selectedMessage;
   final ValueChanged<ChatMessage>? longPressed;
   final ValueChanged<ChatMessage>? removeSelected;
@@ -15,7 +17,7 @@ class Body extends StatelessWidget {
   final ScrollController? controller;
 
   Body({
-    required this.rUid,
+    required this.rUser,
     this.longPressed,
     this.selectedMessage,
     this.removeSelected,
@@ -27,14 +29,15 @@ class Body extends StatelessWidget {
   Widget build(BuildContext context) {
     bool select = selectedMessage!.isNotEmpty;
     return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-    
+      stream: messagesService.getSortedMessageStream(
+          FirebaseAuth.instance.currentUser!.uid, rUser.id!),
       builder: (context, snap) {
         if (!snap.hasData) {
-          return loading(rUid);
+          return loading(rUser.id!);
         }
 
         if (snap.data!.docs.isEmpty) {
-          return empty(rUid, context);
+          return empty(rUser.id!, context);
         }
 
         List<ChatMessage> messages =
@@ -44,7 +47,7 @@ class Body extends StatelessWidget {
           children: [
             buildMessageList(messages, select),
             ChatInputField(
-              rUid: rUid,
+              rUser: rUser,
             ),
           ],
         );
@@ -80,7 +83,8 @@ class Body extends StatelessWidget {
             return GestureDetector(
               onLongPress: () {
                 print("Long pressed isSelect= " + isSelected.toString());
-                if (!(message.isRemoved ?? true) && message.senderId == myUid) {
+                if (!(message.isRemoved ?? false) &&
+                    message.senderId == myUid) {
                   if (!isSelected)
                     longPressed!(message);
                   else
@@ -88,7 +92,8 @@ class Body extends StatelessWidget {
                 }
               },
               onTap: () {
-                if (!(message.isRemoved ?? true) && message.senderId == myUid) {
+                if (!(message.isRemoved ?? false) &&
+                    message.senderId == myUid) {
                   if (select) {
                     if (isSelected) {
                       removeSelected!(message);
@@ -98,11 +103,14 @@ class Body extends StatelessWidget {
                   }
                 }
               },
-              child: Message(
-                message: message,
-                isSelected: isSelected,
-                nextMessage: nextMessage,
-                prevMessage: prevMessage,
+              child: Container(
+                color: isSelected ? Colors.grey.shade200 : null,
+                child: Message(
+                  message: message,
+                  isSelected: isSelected,
+                  nextMessage: nextMessage,
+                  prevMessage: prevMessage,
+                ),
               ),
             );
           }),
@@ -131,7 +139,7 @@ class Body extends StatelessWidget {
           ),
         ),
         ChatInputField(
-          rUid: uid,
+          rUser: rUser,
         ),
       ],
     );
@@ -146,7 +154,7 @@ class Body extends StatelessWidget {
           ),
         ),
         ChatInputField(
-          rUid: uid,
+          rUser: rUser,
         ),
       ],
     );

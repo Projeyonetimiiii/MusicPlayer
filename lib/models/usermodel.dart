@@ -11,6 +11,8 @@ class UserModel {
   String? bio;
   String? connectedUserId;
   ConnectionType? connectionType;
+  bool? isOnline;
+  DateTime? lastSeen;
   UserModel({
     this.image,
     this.email,
@@ -19,6 +21,8 @@ class UserModel {
     this.bio,
     this.connectedUserId,
     this.connectionType,
+    this.isOnline,
+    this.lastSeen,
   });
 
   UserModel copyWith({
@@ -29,6 +33,8 @@ class UserModel {
     String? bio,
     String? connectedUserId,
     ConnectionType? connectionType,
+    bool? isOnline,
+    DateTime? lastSeen,
   }) {
     return UserModel(
       image: image ?? this.image,
@@ -38,6 +44,8 @@ class UserModel {
       bio: bio ?? this.bio,
       connectedUserId: connectedUserId ?? this.connectedUserId,
       connectionType: connectionType ?? this.connectionType,
+      isOnline: isOnline ?? this.isOnline,
+      lastSeen: lastSeen ?? this.lastSeen,
     );
   }
 
@@ -50,6 +58,8 @@ class UserModel {
       'bio': bio,
       'connectedUserId': connectedUserId,
       'connectionType': connectionType?.index,
+      'isOnline': isOnline,
+      'lastSeen': lastSeen?.millisecondsSinceEpoch,
     };
   }
 
@@ -64,8 +74,12 @@ class UserModel {
           ? map['connectedUserId'] as String
           : null,
       connectionType: map['connectionType'] != null
-          ? ConnectionType.values[map['connectionType'] as int]
+          ? ConnectionType.values[map['connectionType']]
           : null,
+      isOnline: map['isOnline'] != null ? map['isOnline'] as bool : false,
+      lastSeen: map['lastSeen'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['lastSeen'] as int)
+          : DateTime.now(),
     );
   }
 
@@ -76,7 +90,7 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(image: $image, email: $email, userName: $userName, id: $id, bio: $bio, connectedUserId: $connectedUserId, connectionType: $connectionType)';
+    return 'UserModel(image: $image, email: $email, userName: $userName, id: $id, bio: $bio, connectedUserId: $connectedUserId, connectionType: $connectionType, isOnline: $isOnline, lastSeen: $lastSeen)';
   }
 
   @override
@@ -90,7 +104,9 @@ class UserModel {
         other.id == id &&
         other.bio == bio &&
         other.connectedUserId == connectedUserId &&
-        other.connectionType == connectionType;
+        other.connectionType == connectionType &&
+        other.isOnline == isOnline &&
+        other.lastSeen == lastSeen;
   }
 
   @override
@@ -101,6 +117,8 @@ class UserModel {
         id.hashCode ^
         bio.hashCode ^
         connectedUserId.hashCode ^
-        connectionType.hashCode;
+        connectionType.hashCode ^
+        isOnline.hashCode ^
+        lastSeen.hashCode;
   }
 }

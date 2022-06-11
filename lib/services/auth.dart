@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/models/request_model.dart';
 import 'package:onlinemusic/models/usermodel.dart';
@@ -24,6 +25,19 @@ class AuthService {
 
   static StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
       _resultSubscription;
+
+  late UserStatusService statusService;
+
+  static AuthService? _instance;
+
+  factory AuthService() {
+    return _instance ??= AuthService._();
+  }
+
+  AuthService._() {
+    statusService = UserStatusService();
+  }
+
   CollectionReference<Map<String, dynamic>> get usersReference =>
       _firestore.collection("Users");
 
@@ -202,6 +216,8 @@ class AuthService {
         UserModel? user = await getUserFromId(requestModel.receiverId);
         if (user != null) {
           BuildContext? context = MyApp.navigatorKey.currentContext;
+          Vibrate.feedback(
+              isDenied ? FeedbackType.warning : FeedbackType.success);
           showMyOverlayNotification(
             isDismissible: true,
             duration: Duration(seconds: 5),
@@ -239,6 +255,8 @@ class AuthService {
     if (_auth.currentUser != null) {
       listenUserRequest();
       listenRequestResult();
+      statusService.userConnectStatus(true);
+      statusService.listenBlockedUsers();
     }
   }
 
@@ -246,6 +264,8 @@ class AuthService {
     print("Dinleme işlemi kapandı");
     _requestSubscription?.cancel();
     _resultSubscription?.cancel();
+    statusService.userConnectStatus(false);
+    statusService.stopListenBlockedUsers();
   }
 
   void listenUserRequest() {
@@ -257,6 +277,7 @@ class AuthService {
       print("request: " + requestModel.toString());
       UserModel? user = await getUserFromId(requestModel.senderId);
       if (user != null) {
+        Vibrate.feedback(FeedbackType.selection);
         showMyOverlayNotification(
           duration: Duration(seconds: 10),
           leading: Padding(

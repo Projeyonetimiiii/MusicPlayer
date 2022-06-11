@@ -36,4 +36,8 @@ class Const {
   static String getDurationString(Duration duration) {
     return duration.toString().split(".").first.split(":").sublist(1).join(":");
   }
+
+  static String getDateTimeString(DateTime time) {
+    return time.toString().split(".").first;
+  }
 }

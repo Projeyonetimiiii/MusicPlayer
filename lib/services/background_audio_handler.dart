@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
@@ -12,6 +14,7 @@ class BackgroundAudioHandler extends BaseAudioHandler
   int index = -1;
   List<MediaItem> _effectiveQueue = [];
   UserStatusService userStatusService = UserStatusService();
+  Timer? _sleepTimer;
 
   bool get isPlaying => player.playing;
   Duration get position => player.position;
@@ -123,6 +126,22 @@ class BackgroundAudioHandler extends BaseAudioHandler
         player.stop();
       }
     }
+  }
+
+  @override
+  Future customAction(String name, [Map<String, dynamic>? extras]) {
+    if (name == 'sleepTimer') {
+      _sleepTimer?.cancel();
+      if (extras?['time'] != null &&
+          extras!['time'].runtimeType == int &&
+          extras['time'] > 0 as bool) {
+        _sleepTimer = Timer(Duration(minutes: extras['time'] as int), () {
+          stop();
+        });
+      }
+    }
+
+    return super.customAction(name, extras);
   }
 
   @override

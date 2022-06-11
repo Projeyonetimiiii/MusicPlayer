@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:onlinemusic/views/chat/models/chat_message.dart';
 
@@ -12,6 +13,7 @@ class TextMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isMee = message.senderId == FirebaseAuth.instance.currentUser!.uid;
     return Container(
       constraints: BoxConstraints(
         maxWidth: MediaQuery.of(context).size.width * 0.65,
@@ -21,12 +23,14 @@ class TextMessage extends StatelessWidget {
         vertical: 8,
       ),
       decoration: BoxDecoration(
-        color: Colors.green,
+        color: isMee ? Colors.blue : Colors.grey.shade300,
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        message.message ?? "",
+        (message.message ?? ""),
         style: TextStyle(
           fontWeight: FontWeight.bold,
+          color: isMee ? Colors.white : Colors.black,
           fontStyle:
               message.isRemoved ?? true ? FontStyle.italic : FontStyle.normal,
         ),

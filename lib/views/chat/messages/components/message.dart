@@ -1,8 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:onlinemusic/util/enums.dart';
+import 'package:onlinemusic/views/chat/messages/components/audio_message.dart';
+import 'package:onlinemusic/views/chat/messages/components/image_message.dart';
 import 'package:onlinemusic/views/chat/models/chat_message.dart';
 import 'package:flutter/material.dart';
-import '../../../../enums/enums.dart';
 import 'text_message.dart';
 
 class Message extends StatelessWidget {
@@ -19,22 +20,26 @@ class Message extends StatelessWidget {
   final ChatMessage? prevMessage;
   final ChatMessage? nextMessage;
   Widget messageContaint(ChatMessage message) {
-    // switch (message.messageType) {
-    // case ChatMessageType.text:
-    return TextMessage(
-      message: message,
-      nextMessage: nextMessage,
-      prevMessage: prevMessage,
-    );
-    //   case ChatMessageType.audio:
-    //     return AudioMessage(message: message,key: PageStorageKey(message.audio!.ref,));
-    //   case ChatMessageType.video:
-    //     return VideoMessage(message: message,);
-    //   case ChatMessageType.image:
-    //     return ImageMessage(message: message);
-    //   default:
-    //     return FileMessage(message: message);
-    // }
+    switch (message.messageType) {
+      case ChatMessageType.Text:
+        return TextMessage(
+          message: message,
+          nextMessage: nextMessage,
+          prevMessage: prevMessage,
+        );
+      case ChatMessageType.Audio:
+        return AudioMessage(
+          message: message,
+          key: PageStorageKey(
+            message.audio!.ref,
+          ),
+        );
+
+      default:
+        return ImageMessage(
+          message: message,
+        );
+    }
   }
 
   @override

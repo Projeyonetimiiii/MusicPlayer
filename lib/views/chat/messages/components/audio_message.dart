@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/views/chat/models/chat_message.dart';
-import 'package:provider/provider.dart';
 
 class AudioMessage extends StatefulWidget {
   final ChatMessage? message;
@@ -77,107 +77,115 @@ class _AudioMessageState extends State<AudioMessage> {
 
   @override
   Widget build(BuildContext context) {
+    bool isMee =
+        widget.message!.senderId == FirebaseAuth.instance.currentUser!.uid;
     return Container(
       width: MediaQuery.of(context).size.width * 0.60,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
-        color: Colors.white,
+        color: isMee ? Colors.blue : Colors.grey.shade400,
       ),
       child: Stack(
         children: [
           Container(
             padding: EdgeInsets.all(8),
-            child: Row(
+            child: Column(
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.white.withOpacity(0.4),
-                  ),
-                  child: Center(
-                    child: Icon(Icons.audiotrack_rounded),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: InkWell(
-                    onLongPress: () {},
-                    borderRadius: BorderRadius.circular(90),
-                    onTap: () {
-                      try {
-                        if (isPlaying) {
-                          _player.pause();
-                        } else {
-                          _player.play();
-                        }
-                        if (mounted)
-                          setState(() {
-                            sliderScroll = false;
-                          });
-                      } catch (e) {}
-                    },
-                    child: Icon(
-                      isPlaying
-                          ? Icons.pause_rounded
-                          : Icons.play_arrow_rounded,
-                      size: 30,
-                      color: Colors.white,
+                Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.white.withOpacity(0.4),
+                      ),
+                      child: Center(
+                        child: Icon(Icons.audiotrack_rounded),
+                      ),
                     ),
-                  ),
-                ),
-                Expanded(
-                  child: StreamBuilder<Duration>(
-                      initialData: Duration.zero,
-                      stream: _player.positionStream,
-                      builder: (context, pos) {
-                        return Padding(
-                          padding: const EdgeInsets.only(left: 3),
-                          child: SliderTheme(
-                            data: SliderThemeData(
-                              overlayShape:
-                                  RoundSliderOverlayShape(overlayRadius: 13),
-                              thumbShape: RoundSliderThumbShape(
-                                disabledThumbRadius: 12,
-                                enabledThumbRadius: 7,
+                    Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: InkWell(
+                        onLongPress: () {},
+                        borderRadius: BorderRadius.circular(90),
+                        onTap: () {
+                          try {
+                            if (isPlaying) {
+                              _player.pause();
+                            } else {
+                              _player.play();
+                            }
+                            if (mounted)
+                              setState(() {
+                                sliderScroll = false;
+                              });
+                          } catch (e) {}
+                        },
+                        child: Icon(
+                          isPlaying
+                              ? Icons.pause_rounded
+                              : Icons.play_arrow_rounded,
+                          size: 30,
+                          color: isMee ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: StreamBuilder<Duration>(
+                          initialData: Duration.zero,
+                          stream: _player.positionStream,
+                          builder: (context, pos) {
+                            return Padding(
+                              padding: const EdgeInsets.only(left: 3),
+                              child: SliderTheme(
+                                data: SliderThemeData(
+                                  overlayShape: RoundSliderOverlayShape(
+                                      overlayRadius: 13),
+                                  thumbShape: RoundSliderThumbShape(
+                                    disabledThumbRadius: 12,
+                                    enabledThumbRadius: 7,
+                                  ),
+                                ),
+                                child: Slider(
+                                  value: getValue(pos)!,
+                                  max: millisecond,
+                                  min: 0,
+                                  activeColor:
+                                      isMee ? Colors.white : Colors.black,
+                                  inactiveColor: Colors.black12,
+                                  onChanged: (i) {
+                                    if (mounted)
+                                      setState(() {
+                                        scrollSliderValue = i;
+                                      });
+                                  },
+                                  onChangeStart: (i) {
+                                    if (mounted)
+                                      setState(() {
+                                        sliderScroll = true;
+                                      });
+                                  },
+                                  onChangeEnd: (d) {
+                                    if (mounted)
+                                      setState(() {
+                                        sliderScroll = false;
+                                      });
+                                    _player.seek(
+                                        Duration(milliseconds: d.toInt()));
+                                  },
+                                ),
                               ),
-                            ),
-                            child: Slider(
-                              value: getValue(pos)!,
-                              max: millisecond,
-                              min: 0,
-                              activeColor: Colors.white,
-                              inactiveColor: Colors.white,
-                              onChanged: (i) {
-                                if (mounted)
-                                  setState(() {
-                                    scrollSliderValue = i;
-                                  });
-                              },
-                              onChangeStart: (i) {
-                                if (mounted)
-                                  setState(() {
-                                    sliderScroll = true;
-                                  });
-                              },
-                              onChangeEnd: (d) {
-                                if (mounted)
-                                  setState(() {
-                                    sliderScroll = false;
-                                  });
-                                _player.seek(Duration(milliseconds: d.toInt()));
-                              },
-                            ),
-                          ),
-                        );
-                      }),
+                            );
+                          }),
+                    ),
+                    // Text(
+                    //   "0.37",
+                    //   style: TextStyle(
+                    //       fontSize: 12, color: message.senderUid.isEmpty ? Colors.white : null),
+                    // ),
+                  ],
                 ),
-                // Text(
-                //   "0.37",
-                //   style: TextStyle(
-                //       fontSize: 12, color: message.senderUid.isEmpty ? Colors.white : null),
-                // ),
               ],
             ),
           ),
@@ -186,7 +194,10 @@ class _AudioMessageState extends State<AudioMessage> {
             right: 3,
             child: Text(
               getDuration(sliderScroll ? scrollSliderValue : millisecond),
-              style: TextStyle(fontSize: 13),
+              style: TextStyle(
+                fontSize: 13,
+                color: isMee ? Colors.white : Colors.black,
+              ),
             ),
           ),
         ],
@@ -205,11 +216,7 @@ class _AudioMessageState extends State<AudioMessage> {
   }
 
   String getDuration(double millis) {
-    DateTime time = DateTime.fromMillisecondsSinceEpoch(millis.toInt());
-    int second = (time.second % 60);
-    int minute = (time.minute % 60);
-    return (minute < 10 ? "0" + minute.toString() : minute).toString() +
-        ":" +
-        ((second < 10 ? "0" + second.toString() : second)).toString();
+    Duration time = Duration(milliseconds: millis.toInt());
+    return Const.getDurationString(time);
   }
 }
