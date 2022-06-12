@@ -26,7 +26,8 @@ class MyOverlayNotification extends StatelessWidget {
   Widget build(BuildContext context) {
     return SlideDismissible(
       key: ValueKey(duration),
-      direction: isDismissible ? DismissDirection.horizontal : null,
+      direction:
+          isDismissible ? DismissDirection.horizontal : DismissDirection.none,
       child: Material(
         color: Colors.white,
         elevation: 4,
@@ -42,7 +43,12 @@ class MyOverlayNotification extends StatelessWidget {
                     child: Row(
                       children: [
                         if (leading != null) ...[
-                          leading!,
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                            ),
+                            child: leading!,
+                          ),
                         ],
                         Expanded(
                           child: Padding(

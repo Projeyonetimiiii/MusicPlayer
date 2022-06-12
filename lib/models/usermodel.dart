@@ -1,6 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
+import 'package:onlinemusic/models/connected_song_model.dart';
 import 'package:onlinemusic/util/enums.dart';
 
 class UserModel {
@@ -10,6 +11,7 @@ class UserModel {
   String? id;
   String? bio;
   String? connectedUserId;
+  ConnectedSongModel? connectedSongModel;
   ConnectionType? connectionType;
   bool? isOnline;
   DateTime? lastSeen;
@@ -20,6 +22,7 @@ class UserModel {
     this.id,
     this.bio,
     this.connectedUserId,
+    this.connectedSongModel,
     this.connectionType,
     this.isOnline,
     this.lastSeen,
@@ -32,6 +35,7 @@ class UserModel {
     String? id,
     String? bio,
     String? connectedUserId,
+    ConnectedSongModel? connectedSongUserId,
     ConnectionType? connectionType,
     bool? isOnline,
     DateTime? lastSeen,
@@ -43,6 +47,7 @@ class UserModel {
       id: id ?? this.id,
       bio: bio ?? this.bio,
       connectedUserId: connectedUserId ?? this.connectedUserId,
+      connectedSongModel: connectedSongUserId ?? this.connectedSongModel,
       connectionType: connectionType ?? this.connectionType,
       isOnline: isOnline ?? this.isOnline,
       lastSeen: lastSeen ?? this.lastSeen,
@@ -57,6 +62,7 @@ class UserModel {
       'id': id,
       'bio': bio,
       'connectedUserId': connectedUserId,
+      'connectedSongModel': connectedSongModel?.toMap(),
       'connectionType': connectionType?.index,
       'isOnline': isOnline,
       'lastSeen': lastSeen?.millisecondsSinceEpoch,
@@ -73,13 +79,16 @@ class UserModel {
       connectedUserId: map['connectedUserId'] != null
           ? map['connectedUserId'] as String
           : null,
+      connectedSongModel: map['connectedSongModel'] != null
+          ? ConnectedSongModel.fromMap(map['connectedSongModel'])
+          : null,
       connectionType: map['connectionType'] != null
           ? ConnectionType.values[map['connectionType']]
           : null,
-      isOnline: map['isOnline'] != null ? map['isOnline'] as bool : false,
+      isOnline: map['isOnline'] != null ? map['isOnline'] as bool : null,
       lastSeen: map['lastSeen'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['lastSeen'] as int)
-          : DateTime.now(),
+          : null,
     );
   }
 
@@ -90,7 +99,7 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(image: $image, email: $email, userName: $userName, id: $id, bio: $bio, connectedUserId: $connectedUserId, connectionType: $connectionType, isOnline: $isOnline, lastSeen: $lastSeen)';
+    return 'UserModel(image: $image, email: $email, userName: $userName, id: $id, bio: $bio, connectedUserId: $connectedUserId, ConnectedSongModel: $connectedSongModel, connectionType: $connectionType, isOnline: $isOnline, lastSeen: $lastSeen)';
   }
 
   @override
@@ -104,6 +113,7 @@ class UserModel {
         other.id == id &&
         other.bio == bio &&
         other.connectedUserId == connectedUserId &&
+        other.connectedSongModel == connectedSongModel &&
         other.connectionType == connectionType &&
         other.isOnline == isOnline &&
         other.lastSeen == lastSeen;
@@ -117,6 +127,7 @@ class UserModel {
         id.hashCode ^
         bio.hashCode ^
         connectedUserId.hashCode ^
+        connectedSongModel.hashCode ^
         connectionType.hashCode ^
         isOnline.hashCode ^
         lastSeen.hashCode;

@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:onlinemusic/models/blocked_details.dart';
+import 'package:onlinemusic/models/connected_song_model.dart';
 import 'package:onlinemusic/models/usermodel.dart';
+import 'package:onlinemusic/services/connected_song_service.dart';
 import 'package:onlinemusic/util/enums.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -98,17 +100,6 @@ class UserStatusService {
     }
   }
 
-  Future<void> userConnectStatus(bool isOnline) async {
-    try {
-      await _firestore.collection("Users").doc(_auth.currentUser!.uid).set({
-        "isOnline": isOnline,
-        if (!isOnline) "lastSeen": DateTime.now().millisecondsSinceEpoch,
-      }, SetOptions(merge: true));
-    } catch (e) {
-      print("hata ******************* " + e.toString());
-    }
-  }
-
   Future<void> disconnectUser(String connectUserId) async {
     try {
       await _firestore.collection("Users").doc(_auth.currentUser!.uid).set({
@@ -116,6 +107,50 @@ class UserStatusService {
       }, SetOptions(merge: true));
       await _firestore.collection("Users").doc(connectUserId).set({
         "connectedUserId": null,
+      }, SetOptions(merge: true));
+      connectedSongService.disconnectSong();
+    } catch (e) {
+      print("hata ******************* " + e.toString());
+    }
+  }
+
+  Future<void> connectUserSong(String connectedSongUserId) async {
+    try {
+      await _firestore.collection("Users").doc(_auth.currentUser!.uid).set({
+        "connectedSongModel":
+            ConnectedSongModel(isAdmin: false, userId: connectedSongUserId)
+                .toMap(),
+      }, SetOptions(merge: true));
+      await _firestore.collection("Users").doc(connectedSongUserId).set({
+        "connectedSongModel":
+            ConnectedSongModel(isAdmin: true, userId: _auth.currentUser!.uid)
+                .toMap(),
+      }, SetOptions(merge: true));
+      connectedSongService.startListen();
+    } catch (e) {
+      print("hata ******************* " + e.toString());
+    }
+  }
+
+  Future<void> disconnectUserSong(String connectedSongUserId) async {
+    try {
+      await _firestore.collection("Users").doc(_auth.currentUser!.uid).set({
+        "connectedSongModel": null,
+      }, SetOptions(merge: true));
+      await _firestore.collection("Users").doc(connectedSongUserId).set({
+        "connectedSongModel": null,
+      }, SetOptions(merge: true));
+      connectedSongService.disconnectSong(uid: connectedSongUserId);
+    } catch (e) {
+      print("hata ******************* " + e.toString());
+    }
+  }
+
+  Future<void> userConnectStatus(bool isOnline) async {
+    try {
+      await _firestore.collection("Users").doc(_auth.currentUser!.uid).set({
+        "isOnline": isOnline,
+        if (!isOnline) "lastSeen": DateTime.now().millisecondsSinceEpoch,
       }, SetOptions(merge: true));
     } catch (e) {
       print("hata ******************* " + e.toString());

@@ -8,12 +8,14 @@ import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/models/request_model.dart';
 import 'package:onlinemusic/models/usermodel.dart';
+import 'package:onlinemusic/services/connected_song_service.dart';
 import 'package:onlinemusic/services/user_status_service.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/enums.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/util/helper_functions.dart';
 import 'package:onlinemusic/widgets/my_overlay_notification.dart';
+import 'package:rxdart/rxdart.dart';
 
 import '../views/chat/messages/message_screen.dart';
 
@@ -28,6 +30,10 @@ class AuthService {
 
   late UserStatusService statusService;
 
+  late BehaviorSubject<UserModel?> currentUser;
+
+  StreamSubscription? currentUserSubscription;
+
   static AuthService? _instance;
 
   factory AuthService() {
@@ -36,6 +42,7 @@ class AuthService {
 
   AuthService._() {
     statusService = UserStatusService();
+    currentUser = BehaviorSubject.seeded(null);
   }
 
   CollectionReference<Map<String, dynamic>> get usersReference =>
@@ -191,14 +198,39 @@ class AuthService {
     return user;
   }
 
-  Future<void> sendMatchRequest(String userId) async {
+  Future<void> sendUserMatchRequest(String userId) async {
     String curId = _auth.currentUser!.uid;
     await UserStatusService().updateConenctionType(ConnectionType.Connecting);
     await UserStatusService()
         .updateConenctionTypeFromId(userId, ConnectionType.Connecting);
     RequestModel requestModel = RequestModel(
-        senderId: curId, receiverId: userId, type: RequestType.Waiting);
+      senderId: curId,
+      receiverId: userId,
+      requestType: RequestType.User,
+      resultType: ResultType.Waiting,
+    );
     await userRequestReference(userId).set(requestModel.toMap());
+    showMyOverlayNotification(
+      duration: Duration(seconds: 2),
+      message: "İstek gönderildi",
+      isDismissible: true,
+    );
+  }
+
+  Future<void> sendSongMatchRequest(String userId) async {
+    String curId = _auth.currentUser!.uid;
+    RequestModel requestModel = RequestModel(
+      senderId: curId,
+      receiverId: userId,
+      requestType: RequestType.Song,
+      resultType: ResultType.Waiting,
+    );
+    await userRequestReference(userId).set(requestModel.toMap());
+    showMyOverlayNotification(
+      duration: Duration(seconds: 2),
+      message: "İstek gönderildi",
+      isDismissible: true,
+    );
   }
 
   void listenRequestResult() {
@@ -206,18 +238,22 @@ class AuthService {
       (event) async {
         if (event.data() == null) return;
         RequestModel requestModel = RequestModel.fromMap(event.data()!);
-        bool isDenied = requestModel.type == RequestType.Denied;
-        bool isAccepted = requestModel.type == RequestType.Accepted;
+        bool isDenied = requestModel.resultType == ResultType.Denied;
+        bool isAccepted = requestModel.resultType == ResultType.Accepted;
         print("result: " + requestModel.toString());
+        await event.reference.delete();
         if (!isDenied && !isAccepted) {
           return;
         }
-        await event.reference.delete();
         UserModel? user = await getUserFromId(requestModel.receiverId);
         if (user != null) {
           BuildContext? context = MyApp.navigatorKey.currentContext;
-          Vibrate.feedback(
-              isDenied ? FeedbackType.warning : FeedbackType.success);
+          if (!requestModel.requestType.isUser) {
+            if (requestModel.resultType == ResultType.Accepted) {
+              connectedSongService.connectSong(requestModel.receiverId);
+            }
+          }
+          Vibrate.vibrate();
           showMyOverlayNotification(
             isDismissible: true,
             duration: Duration(seconds: 5),
@@ -228,7 +264,9 @@ class AuthService {
                 " eşleşme isteğinizi " +
                 (isDenied ? "reddetti" : "kabul etti"),
             actionsBuilder: (entry) {
-              if (!isDenied && context != null) {
+              if (!isDenied &&
+                  context != null &&
+                  requestModel.requestType == RequestType.User) {
                 return [
                   TextButton(
                       onPressed: () {
@@ -250,13 +288,24 @@ class AuthService {
     );
   }
 
+  void listenCurrentUser() {
+    currentUserSubscription =
+        getUserStreamFromId(FirebaseAuth.instance.currentUser!.uid)
+            .listen((event) {
+      if (event.data() != null) {
+        currentUser.add(UserModel.fromMap(event.data()!));
+      }
+    });
+  }
+
   void listen() {
-    print("Dinleme işlemi başladı");
     if (_auth.currentUser != null) {
+      print("Dinleme işlemi başladı");
       listenUserRequest();
       listenRequestResult();
       statusService.userConnectStatus(true);
       statusService.listenBlockedUsers();
+      listenCurrentUser();
     }
   }
 
@@ -266,72 +315,93 @@ class AuthService {
     _resultSubscription?.cancel();
     statusService.userConnectStatus(false);
     statusService.stopListenBlockedUsers();
+    currentUserSubscription?.cancel();
   }
 
   void listenUserRequest() {
-    _requestSubscription = userRequestReference(_auth.currentUser!.uid)
-        .snapshots()
-        .listen((event) async {
-      if (event.data() == null) return;
-      RequestModel requestModel = RequestModel.fromMap(event.data()!);
-      print("request: " + requestModel.toString());
-      UserModel? user = await getUserFromId(requestModel.senderId);
-      if (user != null) {
-        Vibrate.feedback(FeedbackType.selection);
-        showMyOverlayNotification(
-          duration: Duration(seconds: 10),
-          leading: Padding(
-            padding: const EdgeInsets.all(5.0),
-            child: CircleAvatar(
+    _requestSubscription =
+        userRequestReference(_auth.currentUser!.uid).snapshots().listen(
+      (event) async {
+        if (event.data() == null) return;
+        RequestModel requestModel = RequestModel.fromMap(event.data()!);
+        print("request: " + requestModel.toString());
+        UserModel? user = await getUserFromId(requestModel.senderId);
+        event.reference.delete();
+        if (user != null) {
+          Vibrate.vibrate();
+          showMyOverlayNotification(
+            isDismissible: false,
+            duration: Duration(seconds: 10),
+            leading: CircleAvatar(
               backgroundImage: NetworkImage(user.image!),
             ),
-          ),
-          message:
-              (user.userName ?? "user") + " size bir eşleşme isteği gönderdi",
-          actionsBuilder: (entry) {
-            return [
-              TextButton(
-                onPressed: () async {
-                  if (entry != null) {
-                    entry.dismiss();
-                  }
-                  await userRequestResultReferenceFromId(requestModel.senderId)
-                      .set((requestModel..type = RequestType.Accepted).toMap());
-                  UserStatusService service = UserStatusService();
-                  service.connectUser(requestModel.senderId);
-                  UserStatusService()
-                      .updateConenctionType(ConnectionType.Ready);
-                  UserStatusService().updateConenctionTypeFromId(
-                      requestModel.senderId, ConnectionType.Ready);
-                  event.reference.delete();
-                },
-                child: Text("Kabul Et"),
-              ),
-              TextButton(
-                onPressed: () async {
-                  if (entry != null) {
-                    entry.dismiss();
-                  }
-                  await UserStatusService()
-                      .updateConenctionType(ConnectionType.Ready);
-                  await UserStatusService().updateConenctionTypeFromId(
-                      requestModel.senderId, ConnectionType.Ready);
-                  await event.reference.delete();
-                },
-                child: Text("Reddet"),
-              ),
-            ];
-          },
-          onFinish: () async {
-            print("onFinish çalıştı");
-            await UserStatusService()
-                .updateConenctionType(ConnectionType.Ready);
-            await UserStatusService().updateConenctionTypeFromId(
-                requestModel.senderId, ConnectionType.Ready);
-            await event.reference.delete();
-          },
-        );
-      }
-    });
+            message: (user.userName ?? "user") +
+                _getRequestType(requestModel.requestType),
+            actionsBuilder: (entry) {
+              return [
+                TextButton(
+                  onPressed: () async {
+                    if (entry != null) {
+                      entry.dismiss();
+                    }
+                    await userRequestResultReferenceFromId(
+                            requestModel.senderId)
+                        .set((requestModel..resultType = ResultType.Accepted)
+                            .toMap());
+                    UserStatusService service = UserStatusService();
+                    if (requestModel.requestType.isUser) {
+                      service.connectUser(requestModel.senderId);
+                      service.updateConenctionType(ConnectionType.Connected);
+                      service.updateConenctionTypeFromId(
+                          requestModel.senderId, ConnectionType.Connected);
+                    } else {
+                      service.connectUserSong(requestModel.senderId);
+                    }
+                  },
+                  child: Text("Kabul Et"),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if (entry != null) {
+                      entry.dismiss();
+                    }
+                    await userRequestResultReferenceFromId(
+                            requestModel.senderId)
+                        .set((requestModel..resultType = ResultType.Denied)
+                            .toMap());
+                    if (requestModel.requestType.isUser) {
+                      await UserStatusService()
+                          .updateConenctionType(ConnectionType.Ready);
+                      await UserStatusService().updateConenctionTypeFromId(
+                          requestModel.senderId, ConnectionType.Ready);
+                    }
+                  },
+                  child: Text("Reddet"),
+                ),
+              ];
+            },
+            onFinish: () async {
+              print("onFinish çalıştı");
+              await userRequestResultReferenceFromId(requestModel.senderId)
+                  .set((requestModel..resultType = ResultType.Denied).toMap());
+              if (requestModel.requestType.isUser) {
+                await UserStatusService()
+                    .updateConenctionType(ConnectionType.Ready);
+                await UserStatusService().updateConenctionTypeFromId(
+                    requestModel.senderId, ConnectionType.Ready);
+              }
+            },
+          );
+        }
+      },
+    );
+  }
+
+  String _getRequestType(RequestType requestType) {
+    if (requestType == RequestType.User) {
+      return " size bir eşleşme isteği gönderdi";
+    } else {
+      return " müziğini sizinle eşleştirmek istiyor";
+    }
   }
 }

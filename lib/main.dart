@@ -2,6 +2,8 @@ import 'package:audio_service/audio_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:onlinemusic/services/connected_song_service.dart';
+import 'package:onlinemusic/services/user_status_service.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
@@ -63,12 +65,18 @@ class MyApp extends StatelessWidget {
         ),
         changeLifecycle: (state) {
           if (state == AppLifecycleState.paused) {
+            appIsRunnig = false;
             AuthService().stopListen();
             if (!handler.isPlaying) {
               listeningSongService.deleteUserIdFromLastListenedSongId();
+              if (connectedSongService.userId != null) {
+                UserStatusService()
+                    .disconnectUserSong(connectedSongService.userId!);
+              }
             }
           }
           if (state == AppLifecycleState.resumed) {
+            appIsRunnig = true;
             AuthService().listen();
             if (handler.mediaItem.value != null) {
               if (handler.mediaItem.value!.isOnline) {
@@ -81,6 +89,8 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+bool appIsRunnig = true;
 
 Future<Box<E>> openBox<E>(String s) async {
   return await Hive.openBox<E>(s);

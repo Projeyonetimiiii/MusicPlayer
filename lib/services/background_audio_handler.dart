@@ -3,6 +3,9 @@ import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:onlinemusic/main.dart';
+import 'package:onlinemusic/services/auth.dart';
+import 'package:onlinemusic/services/connected_song_service.dart';
 import 'package:onlinemusic/services/listening_song_service.dart';
 import 'package:onlinemusic/services/user_status_service.dart';
 import 'package:onlinemusic/util/enums.dart';
@@ -40,6 +43,14 @@ class BackgroundAudioHandler extends BaseAudioHandler
   }
 
   void skipItem({int skip = 1}) async {
+    if (!connectedSongService.isAdmin) {
+      return;
+    }
+    if (connectedSongService.controller.value != null) {
+      if (!(connectedSongService.controller.value!.isReady ?? false)) {
+        return;
+      }
+    }
     if (repeatMode == AudioServiceRepeatMode.one) {
       await player.seek(Duration.zero);
       player.play();
@@ -97,7 +108,11 @@ class BackgroundAudioHandler extends BaseAudioHandler
   }
 
   @override
-  Future<void> seek(Duration position) => player.seek(position);
+  Future<void> seek(Duration position) async {
+    if (connectedSongService.isAdmin) {
+      player.seek(position);
+    }
+  }
 
   Future<void> updatePlayingMediaItem(MediaItem mediaItem1) async {
     mediaItem.add(mediaItem1);
@@ -115,7 +130,9 @@ class BackgroundAudioHandler extends BaseAudioHandler
           ProgressiveAudioSource(Uri.parse(url), duration: mediaItem1.duration),
         );
         listeningSongService.listeningSong(mediaItem1);
-        userStatusService.updateConenctionType(ConnectionType.Ready);
+        if (AuthService().currentUser.value?.connectedUserId == null) {
+          userStatusService.updateConenctionType(ConnectionType.Ready);
+        }
       } on Exception catch (e) {
         debugPrint(e.toString());
       }
@@ -148,7 +165,16 @@ class BackgroundAudioHandler extends BaseAudioHandler
   Future<void> skipToQueueItem(int index) async {
     if (index < queue.value.length && index > -1) {
       await playMediaItem(queue.value[index]);
-      play();
+      print("userID: " +
+          (AuthService().currentUser.value?.id ?? "") +
+          "\nisAdmin: " +
+          connectedSongService.isAdmin.toString() +
+          "\nisConencted: " +
+          connectedSongService.isConnectedSong.toString() +
+          "   backgroundAudiohandler skipToQueueItem()");
+      if (!connectedSongService.isConnectedSong) {
+        play();
+      }
     }
     return super.skipToQueueItem(index);
   }
@@ -206,17 +232,20 @@ class BackgroundAudioHandler extends BaseAudioHandler
   }) {
     final playing = player.playing;
     playbackState.add(playbackState.value.copyWith(
-      controls: [
-        MediaControl.skipToPrevious,
-        playing ? MediaControl.pause : MediaControl.play,
-        MediaControl.skipToNext
-      ],
+      controls: connectedSongService.isAdmin
+          ? [
+              MediaControl.skipToPrevious,
+              playing ? MediaControl.pause : MediaControl.play,
+              MediaControl.skipToNext
+            ]
+          : [],
       systemActions: const {
         MediaAction.seek,
         MediaAction.seekForward,
         MediaAction.seekBackward,
       },
-      androidCompactActionIndices: const [0, 1, 2],
+      androidCompactActionIndices:
+          connectedSongService.isAdmin ? const [0, 1, 2] : [],
       processingState: const {
         ProcessingState.idle: AudioProcessingState.idle,
         ProcessingState.loading: AudioProcessingState.loading,
@@ -237,8 +266,13 @@ class BackgroundAudioHandler extends BaseAudioHandler
   @override
   Future<void> stop() async {
     await pause();
-    await listeningSongService.deleteUserIdFromLastListenedSongId();
-    await userStatusService.updateConenctionType(ConnectionType.DontConnect);
+    if (!appIsRunnig) {
+      await listeningSongService.deleteUserIdFromLastListenedSongId();
+      await userStatusService.updateConenctionType(ConnectionType.DontConnect);
+      if (connectedSongService.userId != null) {
+        UserStatusService().disconnectUserSong(connectedSongService.userId!);
+      }
+    }
     return super.stop();
   }
 }

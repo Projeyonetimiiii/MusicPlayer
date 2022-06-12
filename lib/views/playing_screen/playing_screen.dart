@@ -4,10 +4,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:onlinemusic/main.dart';
+import 'package:onlinemusic/models/connected_controller.dart';
+import 'package:onlinemusic/models/connected_song_model.dart';
 import 'package:onlinemusic/models/usermodel.dart';
 import 'package:onlinemusic/providers/data.dart';
 import 'package:onlinemusic/services/auth.dart';
+import 'package:onlinemusic/services/connected_song_service.dart';
 import 'package:onlinemusic/services/listening_song_service.dart';
+import 'package:onlinemusic/services/messages_service.dart';
 import 'package:onlinemusic/services/user_status_service.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/enums.dart';
@@ -17,6 +21,7 @@ import 'package:onlinemusic/views/playing_screen/widgets/seekbar.dart';
 import 'package:onlinemusic/views/playing_screen/widgets/stream_media_item.dart';
 import 'package:onlinemusic/views/profile_screen.dart';
 import 'package:onlinemusic/views/queue_screen.dart';
+import 'package:onlinemusic/widgets/my_overlay_notification.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import '../chat/messages/message_screen.dart';
@@ -70,13 +75,24 @@ class _PlayingScreenState extends State<PlayingScreen>
   }
 
   void setMediaItem({MediaItem? mediaItem, bool updateQueue = false}) async {
-    if (updateQueue) {
-      await this.updateQueue();
-    }
-    MediaItem? newItem = mediaItem ?? song;
-    if (newItem != null) {
-      await handler.playMediaItem(newItem);
-      await handler.play();
+    if (connectedSongService.isAdmin) {
+      if (updateQueue) {
+        await this.updateQueue();
+      }
+      MediaItem? newItem = mediaItem ?? song;
+      if (newItem != null) {
+        await handler.playMediaItem(newItem);
+        print("userID: " +
+            (AuthService().currentUser.value?.id ?? "") +
+            "\nisAdmin: " +
+            connectedSongService.isAdmin.toString() +
+            "\nisConnected: " +
+            connectedSongService.isConnectedSong.toString() +
+            "   playingScreen setMediaItem()");
+        if (!connectedSongService.isConnectedSong) {
+          await handler.play();
+        }
+      }
     }
   }
 
@@ -84,11 +100,80 @@ class _PlayingScreenState extends State<PlayingScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      body: playingScreenBody(context),
+      body: StreamBuilder<ConnectedSongModel?>(
+        stream: connectedSongService.connectSongModel,
+        initialData: connectedSongService.connectSongModel.value,
+        builder: (context, snapshot) {
+          return Stack(
+            children: [
+              playingScreenBody(context, connectedSongService.isAdmin),
+              if (snapshot.data?.isAdmin == true) ...[
+                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                  stream: connectedSongService.getConnectedSongStreamFromDocId(
+                    messagesService.getDoc(AuthService().currentUser.value!.id,
+                        snapshot.data!.userId),
+                  ),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return SizedBox(
+                        width: 1,
+                        height: 1,
+                      );
+                    }
+                    ConnectedController controller =
+                        ConnectedController.fromMap(snapshot.data!.data()!);
+                    if (controller.isReady == false) {
+                      return isLoadingWidget;
+                    }
+                    return SizedBox(
+                      width: 1,
+                      height: 1,
+                    );
+                  },
+                ),
+              ]
+            ],
+          );
+        },
+      ),
     );
   }
 
-  PageView playingScreenBody(BuildContext context) {
+  Widget get isLoadingWidget {
+    print("loading widget cağırıldı");
+    try {
+      handler.pause();
+    } on Exception catch (_) {}
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black38,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Diğer kullanıcının ayarları yapılıyor lütfen bekleyiniz",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 17,
+                ),
+              ),
+              SizedBox(
+                height: 12,
+              ),
+              Center(
+                  child: CircularProgressIndicator(
+                color: Colors.white,
+              )),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  PageView playingScreenBody(BuildContext context, bool isAdmin) {
     return PageView(
       controller: pageController,
       children: [
@@ -117,13 +202,25 @@ class _PlayingScreenState extends State<PlayingScreen>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         buildTitleWidget(),
-                        buildSliderWidget(),
+                        AbsorbPointer(
+                          absorbing: !isAdmin,
+                          child: Opacity(
+                            opacity: isAdmin ? 1 : 0.6,
+                            child: buildSliderWidget(),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: buildActionsWidget(),
+                    child: AbsorbPointer(
+                      absorbing: !isAdmin,
+                      child: Opacity(
+                        opacity: isAdmin ? 1 : 0.6,
+                        child: buildActionsWidget(),
+                      ),
+                    ),
                   ),
                   SizedBox(),
                 ],
@@ -138,7 +235,9 @@ class _PlayingScreenState extends State<PlayingScreen>
             return QueuePage(
               queue: snapshot.data ?? [],
               changeItem: (newSong) {
-                setMediaItem(mediaItem: newSong);
+                if (isAdmin) {
+                  setMediaItem(mediaItem: newSong);
+                }
                 pageController.animateToPage(
                   0,
                   duration: Duration(milliseconds: 350),
@@ -172,16 +271,15 @@ class _PlayingScreenState extends State<PlayingScreen>
               builder: (song) {
                 return Row(
                   children: [
-                    StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                      stream: AuthService().getUserStreamFromId(
-                          FirebaseAuth.instance.currentUser!.uid),
+                    StreamBuilder<UserModel?>(
+                      stream: AuthService().currentUser,
+                      initialData: AuthService().currentUser.value,
                       builder: (c, snap) {
                         Widget? child;
                         if (!snap.hasData) {
                           child = SizedBox();
                         } else {
-                          UserModel user =
-                              UserModel.fromMap(snap.data!.data()!);
+                          UserModel user = snap.data!;
 
                           child = StreamBuilder<
                               DocumentSnapshot<Map<String, dynamic>>>(
@@ -275,25 +373,27 @@ class _PlayingScreenState extends State<PlayingScreen>
                                           ],
                                         ),
                                       ),
-                                    PopupMenuItem(
-                                      value: PopupEnum.Timer,
-                                      textStyle: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.black,
+                                    if (!connectedSongService.isConnectedSong ||
+                                        connectedSongService.isAdmin)
+                                      PopupMenuItem(
+                                        value: PopupEnum.Timer,
+                                        textStyle: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.black,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.timer_sharp,
+                                              size: 14,
+                                            ),
+                                            const SizedBox(
+                                              width: 10,
+                                            ),
+                                            Text("Zamanlayıcı Kur"),
+                                          ],
+                                        ),
                                       ),
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.timer_sharp,
-                                            size: 14,
-                                          ),
-                                          const SizedBox(
-                                            width: 10,
-                                          ),
-                                          Text("Zamanlayıcı Kur"),
-                                        ],
-                                      ),
-                                    ),
                                     if (userPopupMenuItem != null) ...[
                                       PopupMenuItem(
                                         value: PopupEnum.Message,
@@ -314,25 +414,48 @@ class _PlayingScreenState extends State<PlayingScreen>
                                           ],
                                         ),
                                       ),
-                                      PopupMenuItem(
-                                        value: PopupEnum.SongMatch,
-                                        textStyle: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black,
+                                      if (user.connectedSongModel == null &&
+                                          (song?.isOnline ?? true) &&
+                                          (connectedUser?.isOnline ?? false))
+                                        PopupMenuItem(
+                                          value: PopupEnum.SongMatch,
+                                          textStyle: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.audiotrack_rounded,
+                                                size: 14,
+                                              ),
+                                              const SizedBox(
+                                                width: 10,
+                                              ),
+                                              Text("Müziği Eşleştir"),
+                                            ],
+                                          ),
                                         ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.audiotrack_rounded,
-                                              size: 14,
-                                            ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
-                                            Text("Müziği Eşleştir"),
-                                          ],
+                                      if (user.connectedSongModel != null)
+                                        PopupMenuItem(
+                                          value: PopupEnum.SongUnMatch,
+                                          textStyle: TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.audiotrack_rounded,
+                                                size: 14,
+                                              ),
+                                              const SizedBox(
+                                                width: 10,
+                                              ),
+                                              Text("Müziğin Eşleşmesini Bitir"),
+                                            ],
+                                          ),
                                         ),
-                                      ),
                                       MyPopupMenuDivider(
                                         tickness: 2,
                                         height: 2,
@@ -428,7 +551,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                       }
                       return ListTile(
                         onTap: () {
-                          AuthService().sendMatchRequest(user.id!);
+                          AuthService().sendUserMatchRequest(user.id!);
                           Navigator.pop(context);
                         },
                         leading: CircleAvatar(
@@ -705,7 +828,7 @@ class _PlayingScreenState extends State<PlayingScreen>
             actions: [
               TextButton(
                   onPressed: () {
-                    AuthService().sendMatchRequest(user.id!);
+                    AuthService().sendUserMatchRequest(user.id!);
                     Navigator.pop(context);
                   },
                   child: Text("Eşleş")),
@@ -788,6 +911,8 @@ class _PlayingScreenState extends State<PlayingScreen>
       context: context,
       builder: (context) {
         return SimpleDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: Center(
             child: Text(
               "Zaman seçin",
@@ -804,11 +929,11 @@ class _PlayingScreenState extends State<PlayingScreen>
                 width: 200,
                 child: CupertinoTheme(
                   data: CupertinoThemeData(
-                    primaryColor: Theme.of(context).colorScheme.secondary,
+                    primaryColor: Colors.black,
                     textTheme: CupertinoTextThemeData(
                       dateTimePickerTextStyle: TextStyle(
                         fontSize: 16,
-                        color: Theme.of(context).colorScheme.secondary,
+                        color: Colors.black,
                       ),
                     ),
                   ),
@@ -877,7 +1002,11 @@ class _PlayingScreenState extends State<PlayingScreen>
               await ListeningSongService().getFutureListenersFrom(song!.id);
           if (users.isNotEmpty) {
             if (users.length < 1) {
-              //! sadece kendi dinliyor
+              showMyOverlayNotification(
+                duration: Duration(seconds: 2),
+                message: "Hiç kimse yok",
+                isDismissible: true,
+              );
               return;
             }
             users.shuffle();
@@ -904,10 +1033,10 @@ class _PlayingScreenState extends State<PlayingScreen>
         if (user != null) context.push(ProfileScreen(userModel: user));
         break;
       case PopupEnum.SongMatch:
-        // showUnMatchDialog(user);
+        if (user != null) AuthService().sendSongMatchRequest(user.id!);
         break;
       case PopupEnum.SongUnMatch:
-        if (user != null) showUnMatchDialog(user);
+        if (user != null) UserStatusService().disconnectUserSong(user.id!);
         break;
       case PopupEnum.ViewVideo:
         StreamManifest url =

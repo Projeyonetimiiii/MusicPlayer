@@ -187,3 +187,7 @@ extension ListExt<T> on List<T> {
 extension ConnectionTypeExt on ConnectionType {
   bool get isReady => this == ConnectionType.Ready;
 }
+
+extension RequestTypeExt on RequestType {
+  bool get isUser => this == RequestType.User;
+}

@@ -37,26 +37,31 @@ class _SeekBarState extends State<SeekBar> {
     return Stack(
       alignment: Alignment.center,
       children: [
-        SliderTheme(
-          data: SliderThemeData(
-            thumbShape: RoundSliderThumbShape(
-              enabledThumbRadius: 6,
-              elevation: 0,
-            ),
-            thumbColor: Colors.transparent,
-            overlayShape: RoundSliderOverlayShape(
-              overlayRadius: 0,
-            ),
-            trackHeight: 2,
-            activeTrackColor: Colors.blue.withOpacity(0.4),
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 6,
           ),
-          child: Slider(
-            max: widget.duration.inMilliseconds.toDouble(),
-            value: min(
-              widget.bufferedPosition.inMilliseconds.toDouble(),
-              widget.duration.inMilliseconds.toDouble(),
+          child: SliderTheme(
+            data: SliderThemeData(
+              thumbShape: RoundSliderThumbShape(
+                enabledThumbRadius: 0,
+                elevation: 0,
+              ),
+              thumbColor: Colors.transparent,
+              overlayShape: RoundSliderOverlayShape(
+                overlayRadius: 0,
+              ),
+              trackHeight: 2,
+              activeTrackColor: Colors.blue.withOpacity(0.4),
             ),
-            onChanged: (value) {},
+            child: Slider(
+              max: widget.duration.inMilliseconds.toDouble(),
+              value: min(
+                widget.bufferedPosition.inMilliseconds.toDouble(),
+                widget.duration.inMilliseconds.toDouble(),
+              ),
+              onChanged: (value) {},
+            ),
           ),
         ),
         SliderTheme(
@@ -73,7 +78,7 @@ class _SeekBarState extends State<SeekBar> {
           ),
           child: Slider(
             max: widget.duration.inMilliseconds.toDouble(),
-            value: value,
+            value: value.clamp(0, widget.duration.inMilliseconds.toDouble()),
             onChanged: (value) {
               if (!_dragging) {
                 _dragging = true;
