@@ -74,7 +74,7 @@ class YouTubeServices {
     List<HeadMusic> headMusics =
         finalHeadResult.map((e) => HeadMusic.fromMap(e)).toList();
 
-    return YoutubeMusics(headMusics: headMusics, genres: genres);
+    return YoutubeMusics(headSongs: headMusics, genres: genres);
   }
 
   List formatVideoItems(List itemsList) {
@@ -235,7 +235,7 @@ class YouTubeServices {
   }
 
   Future<List<Video>> fetchSearchResults(String query) async {
-    final List<Video> searchResults = await yt.search.getVideos(query);
+    final List<Video> searchResults = await yt.search.search(query);
 
     return searchResults;
   }

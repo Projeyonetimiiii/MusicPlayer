@@ -1,23 +1,25 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hive/hive.dart';
+import 'package:onlinemusic/providers/data.dart';
+import 'package:onlinemusic/services/auth.dart';
+import 'package:onlinemusic/services/background_audio_handler.dart';
 import 'package:onlinemusic/services/connected_song_service.dart';
+import 'package:onlinemusic/services/listening_song_service.dart';
 import 'package:onlinemusic/services/user_status_service.dart';
+import 'package:onlinemusic/util/const.dart';
+import 'package:onlinemusic/util/extensions.dart';
+import 'package:onlinemusic/widgets/app_lifecycle.dart';
 import 'package:overlay_support/overlay_support.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
-import 'package:onlinemusic/providers/data.dart';
-import 'package:onlinemusic/services/auth.dart';
-import 'package:onlinemusic/services/background_audio_handler.dart';
-import 'package:onlinemusic/services/listening_song_service.dart';
-import 'package:onlinemusic/util/extensions.dart';
-import 'package:onlinemusic/widgets/app_lifecycle.dart';
-
 import 'views/splash.dart';
 
-Box<List<String>>? favoriteBox;
+Box<List<String>>? songsBox;
 Box<String>? cacheBox;
 late BackgroundAudioHandler handler;
 void main() async {
@@ -25,7 +27,7 @@ void main() async {
   await Firebase.initializeApp();
   await initHive();
   cacheBox = await openBox<String>("cache");
-  favoriteBox = await openBox<List<String>>("farovite");
+  songsBox = await openBox<List<String>>("songs");
   await initBackgroundService();
   AuthService().listen();
   runApp(
@@ -37,6 +39,7 @@ Future<void> initBackgroundService() async {
   handler = await AudioService.init(
     builder: () => BackgroundAudioHandler(),
     config: AudioServiceConfig(
+      androidNotificationIcon: "drawable/ic_notification",
       androidNotificationChannelName: "Müzik",
       androidNotificationChannelDescription: "Müzik Bildirimi",
     ),
@@ -56,10 +59,44 @@ class MyApp extends StatelessWidget {
         child: OverlaySupport.global(
           child: MaterialApp(
             navigatorKey: navigatorKey,
-            title: "online Music",
-            color: Colors.black,
+            title: "Music Player",
+            color: Const.kBackground,
             debugShowCheckedModeBanner: false,
-            themeMode: ThemeMode.dark,
+            localizationsDelegates: [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: [Locale("tr")],
+            locale: Locale("tr"),
+            theme: ThemeData.light().copyWith(
+              brightness: Brightness.light,
+              textSelectionTheme: TextSelectionThemeData(
+                cursorColor: Const.kBackground,
+                selectionHandleColor: Const.kBackground,
+                selectionColor: Const.kBackground.withOpacity(0.1),
+              ),
+              textButtonTheme: TextButtonThemeData(
+                style: TextButton.styleFrom(
+                  primary: Const.kBackground,
+                ),
+              ),
+              scaffoldBackgroundColor: Colors.grey.shade200,
+              appBarTheme: AppBarTheme(
+                elevation: 0,
+                backgroundColor: Const.kBackground,
+                systemOverlayStyle: SystemUiOverlayStyle.light,
+                toolbarTextStyle:
+                    TextTheme().bodyText2?.copyWith(color: Colors.white),
+                titleTextStyle: TextStyle(
+                  color: Colors.white,
+                  fontSize: 17,
+                ),
+                iconTheme: IconThemeData(
+                  color: Colors.white,
+                ),
+              ),
+            ),
             home: SplashScreen(),
           ),
         ),

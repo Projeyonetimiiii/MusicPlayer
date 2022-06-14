@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:onlinemusic/views/login_screen.dart';
+import 'package:onlinemusic/views/auth/login_screen.dart';
 
 import 'root_app.dart';
 

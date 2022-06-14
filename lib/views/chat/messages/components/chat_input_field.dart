@@ -1,10 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:image_pickers/image_pickers.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:onlinemusic/models/blocked_details.dart';
 import 'package:onlinemusic/models/media_reference.dart';
 import 'package:onlinemusic/models/usermodel.dart';
@@ -34,6 +33,7 @@ class _ChatInputFieldState extends State<ChatInputField>
   String? docId;
   bool didIBlock = false;
   bool didHeBlock = false;
+  bool isSending = false;
   @override
   Widget build(BuildContext context) {
     docId = messagesService.getDoc(
@@ -159,21 +159,27 @@ class _ChatInputFieldState extends State<ChatInputField>
                                 IconButton(
                                   icon: Icon(Icons.send),
                                   onPressed: () async {
-                                    if (this.message.text.trim().isNotEmpty) {
-                                      String senderId = FirebaseAuth
-                                          .instance.currentUser!.uid;
-                                      ChatMessage message = ChatMessage(
-                                        message: this.message.text.trim(),
-                                        messageStatus: MessageStatus.Sended,
-                                        messageTime: DateTime.now()
-                                            .millisecondsSinceEpoch,
-                                        senderId: senderId,
-                                        messageType: ChatMessageType.Text,
-                                        receiverId: widget.rUser.id,
-                                      );
-                                      await messagesService.addMessage(
-                                          senderId, widget.rUser.id!, message);
-                                      this.message.clear();
+                                    if (!isSending) {
+                                      isSending = true;
+                                      if (this.message.text.trim().isNotEmpty) {
+                                        String senderId = FirebaseAuth
+                                            .instance.currentUser!.uid;
+                                        ChatMessage message = ChatMessage(
+                                          message: this.message.text.trim(),
+                                          messageStatus: MessageStatus.Sended,
+                                          messageTime: DateTime.now()
+                                              .millisecondsSinceEpoch,
+                                          senderId: senderId,
+                                          messageType: ChatMessageType.Text,
+                                          receiverId: widget.rUser.id,
+                                        );
+                                        await messagesService.addMessage(
+                                            senderId,
+                                            widget.rUser.id!,
+                                            message);
+                                        this.message.clear();
+                                      }
+                                      isSending = false;
                                     }
                                   },
                                 ),
@@ -327,18 +333,17 @@ class _ChatInputFieldState extends State<ChatInputField>
                     ),
                     dosyaTipleri("Kamera", Icons.camera_alt_outlined,
                         imagePicker: true, onPressed: () async {
-                      Media? image = await getImagesPickerCamera();
+                      XFile? image = await getImagesPickerCamera();
                       PlatformFile imagesPlat;
                       if (image != null) {
                         int size = 0;
                         try {
-                          File file = File(image.path!);
-                          size = await file.length();
+                          size = await image.length();
                         } on Exception catch (_) {}
                         imagesPlat = PlatformFile(
                           size: size,
                           path: image.path,
-                          name: image.path ?? "MediaName",
+                          name: image.name,
                         );
                         Navigator.pop(
                           context,

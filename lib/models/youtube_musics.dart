@@ -6,10 +6,10 @@ import 'package:onlinemusic/models/youtube_genre.dart';
 
 class YoutubeMusics {
   List<YoutubeGenre>? genres;
-  List<HeadMusic>? headMusics;
+  List<HeadMusic>? headSongs;
   YoutubeMusics({
     this.genres,
-    this.headMusics,
+    this.headSongs,
   });
 
   YoutubeMusics copyWith({
@@ -18,14 +18,14 @@ class YoutubeMusics {
   }) {
     return YoutubeMusics(
       genres: playlists ?? this.genres,
-      headMusics: headMusics ?? this.headMusics,
+      headSongs: headMusics ?? this.headSongs,
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
       'playlists': genres?.map((x) => x.toMap()).toList(),
-      'headMusics': headMusics?.map((x) => x.toMap()).toList(),
+      'headMusics': headSongs?.map((x) => x.toMap()).toList(),
     };
   }
 
@@ -35,7 +35,7 @@ class YoutubeMusics {
           ? List<YoutubeGenre>.from(map['genres']
               ?.map((x) => YoutubeGenre.fromMap(Map<String, dynamic>.from(x))))
           : null,
-      headMusics: map['headMusics'] != null
+      headSongs: map['headMusics'] != null
           ? List<HeadMusic>.from(map['headMusics']
               ?.map((x) => HeadMusic.fromMap(Map<String, dynamic>.from(x))))
           : null,
@@ -49,7 +49,7 @@ class YoutubeMusics {
 
   @override
   String toString() =>
-      'MusicsModel(playlists: $genres, headMusics: $headMusics)';
+      'MusicsModel(playlists: $genres, headMusics: $headSongs)';
 
   @override
   bool operator ==(Object other) {
@@ -57,9 +57,9 @@ class YoutubeMusics {
 
     return other is YoutubeMusics &&
         listEquals(other.genres, genres) &&
-        listEquals(other.headMusics, headMusics);
+        listEquals(other.headSongs, headSongs);
   }
 
   @override
-  int get hashCode => genres.hashCode ^ headMusics.hashCode;
+  int get hashCode => genres.hashCode ^ headSongs.hashCode;
 }

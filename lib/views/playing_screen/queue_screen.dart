@@ -76,26 +76,32 @@ class _QueuePageState extends State<QueuePage> {
                       return ListTile(
                         key: Key(song.id.toString()),
                         contentPadding: const EdgeInsets.symmetric(
-                            vertical: 8, horizontal: 12),
+                            vertical: 6, horizontal: 12),
                         onTap: () {
                           if (widget.changeItem != null) {
                             widget.changeItem!(song);
                           }
                         },
-                        leading: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: SizedBox(
-                            width: 100,
-                            child: AspectRatio(
-                              aspectRatio: 16 / 9,
-                              child: song.getImageWidget,
+                        leading: Material(
+                          elevation: 10,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: SizedBox(
+                              width: 90,
+                              child: AspectRatio(
+                                aspectRatio: 16 / 9,
+                                child: song.getImageWidget,
+                              ),
                             ),
                           ),
                         ),
                         trailing: playingSong?.id == song.id
                             ? Icon(
                                 Icons.bar_chart_rounded,
-                                color: Theme.of(context).colorScheme.secondary,
+                                color: Const.kBackground,
                               )
                             : Text(
                                 Const.getDurationString(
@@ -105,7 +111,16 @@ class _QueuePageState extends State<QueuePage> {
                           song.title,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 14),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          song.artist ?? "Artist",
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 13),
                         ),
                       );
                     },

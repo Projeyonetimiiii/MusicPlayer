@@ -28,11 +28,7 @@ class CustomSwitchListTile extends StatefulWidget {
     this.focusNode,
     this.enableFeedback,
     this.hoverColor,
-  })  : assert(value != null),
-        assert(isThreeLine != null),
-        assert(!isThreeLine || subtitle != null),
-        assert(selected != null),
-        assert(autofocus != null),
+  })  : assert(!isThreeLine || subtitle != null),
         super(key: key);
 
   final bool value;

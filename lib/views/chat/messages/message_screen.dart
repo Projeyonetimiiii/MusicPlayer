@@ -9,7 +9,8 @@ import 'package:onlinemusic/services/user_status_service.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/chat/models/chat_message.dart';
-import 'package:onlinemusic/views/profile_screen.dart';
+import 'package:onlinemusic/views/profile_screen/profile_screen.dart';
+import 'package:onlinemusic/widgets/custom_back_button.dart';
 
 import 'components/body.dart';
 
@@ -43,6 +44,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
+          titleSpacing: 0,
+          leading: CustomBackButton(),
           title: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
               stream: AuthService().getUserStreamFromId(widget.user.id!),
               builder: (context, snapshot) {
@@ -54,30 +57,16 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 return Row(
                   children: [
                     Center(
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          Container(
-                            width: 45,
-                            height: 45,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(5),
-                              color: Colors.white,
-                              image: DecorationImage(
-                                image: NetworkImage(widget.user.image!),
-                              ),
-                            ),
+                      child: Container(
+                        width: 35,
+                        height: 35,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white,
+                          image: DecorationImage(
+                            image: NetworkImage(widget.user.image!),
                           ),
-                          Positioned(
-                            bottom: -5,
-                            right: -5,
-                            child: CircleAvatar(
-                              radius: 5,
-                              backgroundColor:
-                                  isOnline ? Colors.green : Colors.grey,
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                     SizedBox(
@@ -146,6 +135,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
                       .any((e) => e.blockedUid == widget.user.id!);
 
                   return PopupMenuButton<int>(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     onSelected: (v) {
                       UserStatusService service = UserStatusService();
                       if (v == 0) {

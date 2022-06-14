@@ -12,18 +12,39 @@ class LibraryPage extends StatefulWidget {
 }
 
 class _LibraryPageState extends State<LibraryPage> {
+  late MyData data;
+
+  @override
+  void initState() {
+    data = context.myData;
+    data.addListener(_listener);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    data.removeListener(_listener);
+    super.dispose();
+  }
+
+  void _listener() {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
-    MyData data = context.myData;
     return Scaffold(
       appBar: AppBar(
         title: Text("Cihaz"),
       ),
       body: ListView.builder(
+          padding: EdgeInsets.only(
+            bottom: 130,
+          ),
           physics: BouncingScrollPhysics(),
           itemCount: data.songs.length,
           itemBuilder: (context, int index) {
-            MediaItem music = data.songs[index].toMediaItem;
+            MediaItem music = data.songs[index];
             return Padding(
               padding: const EdgeInsets.only(
                 left: 5.0,
@@ -49,10 +70,10 @@ class _LibraryPageState extends State<LibraryPage> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 onTap: () async {
-                  context.push(
+                  context.pushOpaque(
                     PlayingScreen(
                       song: music,
-                      queue: data.songs.map((e) => e.toMediaItem).toList(),
+                      queue: data.songs,
                     ),
                   );
                 },

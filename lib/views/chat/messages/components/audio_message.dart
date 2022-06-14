@@ -46,9 +46,7 @@ class _AudioMessageState extends State<AudioMessage> {
           millisecond = dur!.inMilliseconds.toDouble();
         });
       listenPlayer();
-    } on Exception catch (e) {
-      // TODO
-    }
+    } on Exception catch (_) {}
   }
 
   listenPlayer() {
@@ -79,128 +77,134 @@ class _AudioMessageState extends State<AudioMessage> {
   Widget build(BuildContext context) {
     bool isMee =
         widget.message!.senderId == FirebaseAuth.instance.currentUser!.uid;
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.60,
-      decoration: BoxDecoration(
+    return Material(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
-        color: isMee ? Colors.blue : Colors.grey.shade400,
       ),
-      child: Stack(
-        children: [
-          Container(
-            padding: EdgeInsets.all(8),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: Colors.white.withOpacity(0.4),
-                      ),
-                      child: Center(
-                        child: Icon(Icons.audiotrack_rounded),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: InkWell(
-                        onLongPress: () {},
-                        borderRadius: BorderRadius.circular(90),
-                        onTap: () {
-                          try {
-                            if (isPlaying) {
-                              _player.pause();
-                            } else {
-                              _player.play();
-                            }
-                            if (mounted)
-                              setState(() {
-                                sliderScroll = false;
-                              });
-                          } catch (e) {}
-                        },
-                        child: Icon(
-                          isPlaying
-                              ? Icons.pause_rounded
-                              : Icons.play_arrow_rounded,
-                          size: 30,
-                          color: isMee ? Colors.white : Colors.black,
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.60,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          color: isMee ? Colors.blue : Colors.grey.shade400,
+        ),
+        child: Stack(
+          children: [
+            Container(
+              padding: EdgeInsets.all(8),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white.withOpacity(0.4),
+                        ),
+                        child: Center(
+                          child: Icon(Icons.audiotrack_rounded),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: StreamBuilder<Duration>(
-                          initialData: Duration.zero,
-                          stream: _player.positionStream,
-                          builder: (context, pos) {
-                            return Padding(
-                              padding: const EdgeInsets.only(left: 3),
-                              child: SliderTheme(
-                                data: SliderThemeData(
-                                  overlayShape: RoundSliderOverlayShape(
-                                      overlayRadius: 13),
-                                  thumbShape: RoundSliderThumbShape(
-                                    disabledThumbRadius: 12,
-                                    enabledThumbRadius: 7,
+                      Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child: InkWell(
+                          onLongPress: () {},
+                          borderRadius: BorderRadius.circular(90),
+                          onTap: () {
+                            try {
+                              if (isPlaying) {
+                                _player.pause();
+                              } else {
+                                _player.play();
+                              }
+                              if (mounted)
+                                setState(() {
+                                  sliderScroll = false;
+                                });
+                            } catch (e) {}
+                          },
+                          child: Icon(
+                            isPlaying
+                                ? Icons.pause_rounded
+                                : Icons.play_arrow_rounded,
+                            size: 30,
+                            color: isMee ? Colors.white : Colors.black,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: StreamBuilder<Duration>(
+                            initialData: Duration.zero,
+                            stream: _player.positionStream,
+                            builder: (context, pos) {
+                              return Padding(
+                                padding: const EdgeInsets.only(left: 3),
+                                child: SliderTheme(
+                                  data: SliderThemeData(
+                                    overlayShape: RoundSliderOverlayShape(
+                                        overlayRadius: 13),
+                                    thumbShape: RoundSliderThumbShape(
+                                      disabledThumbRadius: 12,
+                                      enabledThumbRadius: 7,
+                                    ),
+                                  ),
+                                  child: Slider(
+                                    value: getValue(pos)!,
+                                    max: millisecond,
+                                    min: 0,
+                                    activeColor:
+                                        isMee ? Colors.white : Colors.black,
+                                    inactiveColor: Colors.black12,
+                                    onChanged: (i) {
+                                      if (mounted)
+                                        setState(() {
+                                          scrollSliderValue = i;
+                                        });
+                                    },
+                                    onChangeStart: (i) {
+                                      if (mounted)
+                                        setState(() {
+                                          sliderScroll = true;
+                                        });
+                                    },
+                                    onChangeEnd: (d) {
+                                      if (mounted)
+                                        setState(() {
+                                          sliderScroll = false;
+                                        });
+                                      _player.seek(
+                                          Duration(milliseconds: d.toInt()));
+                                    },
                                   ),
                                 ),
-                                child: Slider(
-                                  value: getValue(pos)!,
-                                  max: millisecond,
-                                  min: 0,
-                                  activeColor:
-                                      isMee ? Colors.white : Colors.black,
-                                  inactiveColor: Colors.black12,
-                                  onChanged: (i) {
-                                    if (mounted)
-                                      setState(() {
-                                        scrollSliderValue = i;
-                                      });
-                                  },
-                                  onChangeStart: (i) {
-                                    if (mounted)
-                                      setState(() {
-                                        sliderScroll = true;
-                                      });
-                                  },
-                                  onChangeEnd: (d) {
-                                    if (mounted)
-                                      setState(() {
-                                        sliderScroll = false;
-                                      });
-                                    _player.seek(
-                                        Duration(milliseconds: d.toInt()));
-                                  },
-                                ),
-                              ),
-                            );
-                          }),
-                    ),
-                    // Text(
-                    //   "0.37",
-                    //   style: TextStyle(
-                    //       fontSize: 12, color: message.senderUid.isEmpty ? Colors.white : null),
-                    // ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          Positioned(
-            bottom: 1,
-            right: 3,
-            child: Text(
-              getDuration(sliderScroll ? scrollSliderValue : millisecond),
-              style: TextStyle(
-                fontSize: 13,
-                color: isMee ? Colors.white : Colors.black,
+                              );
+                            }),
+                      ),
+                      // Text(
+                      //   "0.37",
+                      //   style: TextStyle(
+                      //       fontSize: 12, color: message.senderUid.isEmpty ? Colors.white : null),
+                      // ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            Positioned(
+              bottom: 1,
+              right: 3,
+              child: Text(
+                getDuration(sliderScroll ? scrollSliderValue : millisecond),
+                style: TextStyle(
+                  fontSize: 13,
+                  color: isMee ? Colors.white : Colors.black,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

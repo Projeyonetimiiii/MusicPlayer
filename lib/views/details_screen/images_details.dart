@@ -260,7 +260,6 @@ class _ImagesDetailState extends State<ImagesDetail>
                                   scrollDirection: Axis.horizontal,
                                   itemCount: files!.length,
                                   itemBuilder: (c, i) {
-                                    PlatformFile file = files![i];
                                     return GestureDetector(
                                       onTap: () async {
                                         setState(() {

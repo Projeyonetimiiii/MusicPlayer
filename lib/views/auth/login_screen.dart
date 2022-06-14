@@ -1,8 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:onlinemusic/services/auth.dart';
+import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/root_app.dart';
+import 'package:onlinemusic/widgets/custom_textfield.dart';
 
 import 'register_screen.dart';
 
@@ -42,67 +44,37 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Text("Welcome to the",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 20,
-                                    color: Colors.black)),
+                            child: Text(
+                              "Müzik Player'a",
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Const.kBackground,
+                              ),
+                            ),
                           ),
                           Align(
                             alignment: Alignment.center,
-                            child: Text("Music listening platform",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 20,
-                                    color: Colors.black)),
-                          ),
-                          SizedBox(height: 30),
-                          Material(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
-                            child: TextField(
-                              controller: _emailController,
+                            child: Text(
+                              "Hoş Geldiniz",
                               style: TextStyle(
-                                color: Colors.black,
-                              ),
-                              cursorColor: Colors.black,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: InputDecoration(
-                                prefixIcon: Icon(
-                                  Icons.mail,
-                                  color: Colors.black,
-                                ),
-                                hintText: 'E-Mail',
-                                prefixText: ' ',
-                                hintStyle: TextStyle(color: Colors.black),
-                                border: InputBorder.none,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 20,
+                                color: Const.kBackground,
                               ),
                             ),
+                          ),
+                          SizedBox(height: 30),
+                          CustomTextField(
+                            controller: _emailController,
+                            hintText: 'Eposta',
                           ),
                           SizedBox(
                             height: size.height * 0.02,
                           ),
-                          Material(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
-                            child: TextField(
-                              controller: _passwordController,
-                              style: TextStyle(
-                                color: Colors.black,
-                              ),
-                              cursorColor: Colors.black,
-                              keyboardType: TextInputType.emailAddress,
-                              decoration: InputDecoration(
-                                prefixIcon: Icon(
-                                  Icons.lock,
-                                  color: Colors.black,
-                                ),
-                                hintText: 'password',
-                                prefixText: ' ',
-                                hintStyle: TextStyle(color: Colors.black),
-                                border: InputBorder.none,
-                              ),
-                            ),
+                          CustomTextField(
+                            obscureText: true,
+                            controller: _passwordController,
+                            hintText: 'Şifre',
                           ),
                           SizedBox(
                             height: size.height * 0.08,
@@ -127,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 padding: const EdgeInsets.all(5.0),
                                 child: Center(
                                   child: Text(
-                                    "Sign In",
+                                    "Giriş Yap",
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 20,
@@ -144,54 +116,24 @@ class _LoginScreenState extends State<LoginScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                "Don't have an account? ",
-                                style: TextStyle(color: Colors.black),
+                                "Hesabın Yok mu? ",
+                                style: TextStyle(
+                                  color: Const.kBackground,
+                                ),
                               ),
                               InkWell(
                                 onTap: () {
                                   context.pushAndRemoveUntil(RegisterScreen());
                                 },
                                 child: Text(
-                                  "Sign up",
+                                  "Kayıt ol",
                                   style: TextStyle(
-                                    color: Colors.black,
+                                    color: Const.kBackground,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
                             ],
-                          ),
-                          SizedBox(
-                            height: 20,
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              MyDivider(),
-                              Text(
-                                "Or",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                ),
-                              ),
-                              MyDivider(),
-                            ],
-                          ),
-                          TextButton(
-                            child: Text(
-                              "Sign in with Google",
-                              style: TextStyle(
-                                  fontSize: 14, fontWeight: FontWeight.bold),
-                            ),
-                            onPressed: () async {
-                              User? user = await _authService.signIn(
-                                _emailController.text,
-                                _passwordController.text,
-                              );
-                              if (user != null) {
-                                context.pushAndRemoveUntil(RootApp());
-                              }
-                            },
                           ),
                         ],
                       ),

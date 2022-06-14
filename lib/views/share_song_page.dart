@@ -8,6 +8,7 @@ import 'package:onlinemusic/models/genre.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/category_sheet.dart';
+import 'package:onlinemusic/widgets/custom_back_button.dart';
 import 'package:onlinemusic/widgets/custom_textfield.dart';
 
 import '../providers/data.dart';
@@ -53,6 +54,7 @@ class _ShareSongPageState extends State<ShareSongPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Müzik Paylaş"),
+        leading: CustomBackButton(),
       ),
       body: PageView(
         physics: NeverScrollableScrollPhysics(),
@@ -69,7 +71,7 @@ class _ShareSongPageState extends State<ShareSongPage> {
               physics: BouncingScrollPhysics(),
               itemCount: data.songs.length,
               itemBuilder: (context, int index) {
-                MediaItem music = data.songs[index].toMediaItem;
+                MediaItem music = data.songs[index];
                 return Padding(
                   padding: const EdgeInsets.only(
                     left: 5.0,
@@ -146,6 +148,7 @@ class _ShareSongPageState extends State<ShareSongPage> {
                             child: TextButton(
                               style: TextButton.styleFrom(
                                 backgroundColor: Colors.grey.shade300,
+                                primary: Const.kBackground,
                                 shape: RoundedRectangleBorder(),
                               ),
                               onPressed: () {
@@ -161,28 +164,42 @@ class _ShareSongPageState extends State<ShareSongPage> {
                         ],
                       ),
                     ),
-                    RawMaterialButton(
-                      onPressed: () async {
-                        selectGenre();
-                      },
-                      child: genres.isEmpty
-                          ? Text("Tür Seçiniz*")
-                          : Wrap(
-                              direction: Axis.horizontal,
-                              children: genres.map((e) {
-                                return Container(
-                                  margin: EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(0),
-                                    color: Colors.grey.shade300,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(e.name),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
+                    Padding(
+                      padding: const EdgeInsets.all(5.0),
+                      child: RawMaterialButton(
+                        fillColor: Colors.grey.shade300,
+                        elevation: 0,
+                        focusElevation: 0,
+                        hoverElevation: 0,
+                        highlightElevation: 0,
+                        onPressed: () async {
+                          selectGenre();
+                        },
+                        child: genres.isEmpty
+                            ? Text(
+                                "Tür Seçiniz*",
+                                style: TextStyle(
+                                  color: Const.kBackground,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : Wrap(
+                                direction: Axis.horizontal,
+                                children: genres.map((e) {
+                                  return Container(
+                                    margin: EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(0),
+                                      color: Colors.grey.shade300,
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(e.name),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                      ),
                     ),
                     CustomTextField(
                       hintText: "Başlık",
@@ -202,6 +219,7 @@ class _ShareSongPageState extends State<ShareSongPage> {
                     Expanded(
                       child: IconLoadingButton(
                         elevation: 0,
+                        color: Const.kBackground,
                         width: MediaQuery.of(context).size.width - 10,
                         height: 45,
                         loaderSize: 45,
@@ -218,6 +236,13 @@ class _ShareSongPageState extends State<ShareSongPage> {
                             }
                             await shareAudio(data);
                             controller.success();
+                            Future.delayed(Duration(milliseconds: 500), () {
+                              pageController.animateToPage(
+                                0,
+                                curve: Curves.linear,
+                                duration: Duration(milliseconds: 350),
+                              );
+                            });
                           } on Exception catch (e) {
                             debugPrint(e.toString());
                             controller.error();

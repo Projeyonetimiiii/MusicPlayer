@@ -8,6 +8,7 @@ import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/models/request_model.dart';
 import 'package:onlinemusic/models/usermodel.dart';
+import 'package:onlinemusic/services/audios_bloc.dart';
 import 'package:onlinemusic/services/connected_song_service.dart';
 import 'package:onlinemusic/services/user_status_service.dart';
 import 'package:onlinemusic/util/const.dart';
@@ -122,7 +123,7 @@ class AuthService {
   //çıkış yap fonksiyonu
   signOut() async {
     stopListen();
-    return await _auth.signOut();
+    await _auth.signOut();
   }
 
   //kayıt ol fonksiyonu
@@ -306,6 +307,7 @@ class AuthService {
       statusService.userConnectStatus(true);
       statusService.listenBlockedUsers();
       listenCurrentUser();
+      AudiosBloc().listenAudios();
     }
   }
 
@@ -316,6 +318,7 @@ class AuthService {
     statusService.userConnectStatus(false);
     statusService.stopListenBlockedUsers();
     currentUserSubscription?.cancel();
+    AudiosBloc().stopListen();
   }
 
   void listenUserRequest() {

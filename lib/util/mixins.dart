@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:image_pickers/image_pickers.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:onlinemusic/models/media_reference.dart';
 import 'package:onlinemusic/models/usermodel.dart';
 import 'package:onlinemusic/services/storage_bloc.dart';
@@ -25,12 +25,8 @@ mixin PickerMixin {
     return audio?.files ?? [];
   }
 
-  Future<Media?> getImagesPickerCamera() async {
-    Media? media = await ImagePickers.openCamera(
-      cameraMimeType: CameraMimeType.photo,
-    );
-
-    return media;
+  Future<XFile?> getImagesPickerCamera() async {
+    return ImagePicker().pickImage(source: ImageSource.camera);
   }
 }
 

@@ -17,7 +17,7 @@ class MyData extends ChangeNotifier {
   late StorageBloc _storageBloc;
   late AudiosBloc _audiosBloc;
   List<MapEntry<int, String>> songsImage = [];
-  List<SongModel> songs = [];
+  List<MediaItem> songs = [];
 
   bool? isEmpty;
 
@@ -29,11 +29,10 @@ class MyData extends ChangeNotifier {
   StorageBloc get sB => _storageBloc;
   AudiosBloc get aB => _audiosBloc;
 
-  void dispose() {}
-
   Future<void> init() async {
     _storageBloc = StorageBloc();
     _audiosBloc = AudiosBloc();
+    getSongsFromHive();
     getMusics();
   }
 
@@ -52,10 +51,25 @@ class MyData extends ChangeNotifier {
                 song.artist,
                 default_image: true))!));
       }
-      songs = songsModel;
+      songs = songsModel.map((e) => e.toMediaItem).toList();
+      saveSongs();
       notifyListeners();
     } else {
       print("İzin Verilmedi");
+    }
+  }
+
+  void saveSongs() {
+    songsBox!.put("localSongs", songs.map((e) => e.toJson).toList());
+  }
+
+  void getSongsFromHive() {
+    List<String>? songJsons = songsBox!.get(
+      "localSongs",
+    );
+    if (songJsons != null) {
+      songs =
+          songJsons.map((e) => MediaItemConverter.jsonToMediaItem(e)).toList();
     }
   }
 
@@ -64,12 +78,6 @@ class MyData extends ChangeNotifier {
   }
 
   Future<String?> saveImage(MediaItem song) async {
-    // Uint8List? bytes = getBytesFromSongId(song.id);
-    // if (bytes != null) {
-    //   String? path = await getFilePathFromBytes(bytes, song.title, song.artist);
-    //   print(path);
-    //   return path;
-    // }
     return getImagePathFromSongId(int.parse(song.id));
   }
 
@@ -154,7 +162,7 @@ class MyData extends ChangeNotifier {
   }
 
   List<MediaItem> getFavoriteSong() {
-    List<String> songJsons = favoriteBox!.get("songs", defaultValue: [])!;
+    List<String> songJsons = songsBox!.get("songs", defaultValue: [])!;
     return songJsons.map((e) => MediaItemConverter.jsonToMediaItem(e)).toList();
   }
 
@@ -168,7 +176,7 @@ class MyData extends ChangeNotifier {
 
   Future<void> saveFavoriteSongs(List<MediaItem> items) async {
     List<String> value = items.map((e) => e.toJson).toList();
-    await favoriteBox!.put("songs", value);
+    await songsBox!.put("songs", value);
   }
 
   void addFavoriteSong(MediaItem item) {

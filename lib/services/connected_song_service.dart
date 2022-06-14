@@ -144,13 +144,10 @@ class ConnectedSongService {
               processSub = handler.playbackState.listen(
                 (value) async {
                   if (value.processingState == AudioProcessingState.ready) {
-                    print("1 dakika bekle");
-                    Future.delayed(Duration(minutes: 1), () async {
-                      await updateController(
-                        connectedController.copyWith(isReady: true),
-                        docId,
-                      );
-                    });
+                    await updateController(
+                      connectedController.copyWith(isReady: true),
+                      docId,
+                    );
                     processSub?.cancel();
                     processSub = null;
                   }

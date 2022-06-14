@@ -1,8 +1,10 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/models/connected_controller.dart';
 import 'package:onlinemusic/models/connected_song_model.dart';
@@ -19,8 +21,8 @@ import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/playing_screen/widgets/my_popup_divider.dart';
 import 'package:onlinemusic/views/playing_screen/widgets/seekbar.dart';
 import 'package:onlinemusic/views/playing_screen/widgets/stream_media_item.dart';
-import 'package:onlinemusic/views/profile_screen.dart';
-import 'package:onlinemusic/views/queue_screen.dart';
+import 'package:onlinemusic/views/profile_screen/profile_screen.dart';
+import 'package:onlinemusic/views/playing_screen/queue_screen.dart';
 import 'package:onlinemusic/widgets/my_overlay_notification.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
@@ -56,6 +58,7 @@ class _PlayingScreenState extends State<PlayingScreen>
   void initState() {
     super.initState();
     PlayingScreen.isRunning = true;
+    isFavorite = myData.getFavoriteSong().any((element) => element == song);
     pageController = PageController();
     setMediaItem(updateQueue: true);
   }
@@ -98,43 +101,54 @@ class _PlayingScreenState extends State<PlayingScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      body: StreamBuilder<ConnectedSongModel?>(
-        stream: connectedSongService.connectSongModel,
-        initialData: connectedSongService.connectSongModel.value,
-        builder: (context, snapshot) {
-          return Stack(
-            children: [
-              playingScreenBody(context, connectedSongService.isAdmin),
-              if (snapshot.data?.isAdmin == true) ...[
-                StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                  stream: connectedSongService.getConnectedSongStreamFromDocId(
-                    messagesService.getDoc(AuthService().currentUser.value!.id,
-                        snapshot.data!.userId),
-                  ),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
+    return Dismissible(
+      key: ValueKey("playing"),
+      direction: DismissDirection.down,
+      background: Container(color: Colors.transparent),
+      behavior: HitTestBehavior.translucent,
+      onDismissed: (s) {
+        Navigator.pop(context);
+      },
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        body: StreamBuilder<ConnectedSongModel?>(
+          stream: connectedSongService.connectSongModel,
+          initialData: connectedSongService.connectSongModel.value,
+          builder: (context, snapshot) {
+            return Stack(
+              children: [
+                playingScreenBody(context, connectedSongService.isAdmin),
+                if (snapshot.data?.isAdmin == true) ...[
+                  StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                    stream:
+                        connectedSongService.getConnectedSongStreamFromDocId(
+                      messagesService.getDoc(
+                          AuthService().currentUser.value!.id,
+                          snapshot.data!.userId),
+                    ),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return SizedBox(
+                          width: 1,
+                          height: 1,
+                        );
+                      }
+                      ConnectedController controller =
+                          ConnectedController.fromMap(snapshot.data!.data()!);
+                      if (controller.isReady == false) {
+                        return isLoadingWidget;
+                      }
                       return SizedBox(
                         width: 1,
                         height: 1,
                       );
-                    }
-                    ConnectedController controller =
-                        ConnectedController.fromMap(snapshot.data!.data()!);
-                    if (controller.isReady == false) {
-                      return isLoadingWidget;
-                    }
-                    return SizedBox(
-                      width: 1,
-                      height: 1,
-                    );
-                  },
-                ),
-              ]
-            ],
-          );
-        },
+                    },
+                  ),
+                ]
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -184,24 +198,25 @@ class _PlayingScreenState extends State<PlayingScreen>
               height: MediaQuery.of(context).size.height -
                   MediaQuery.of(context).padding.top,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        buildTopActions(),
-                        buildImageWidget(),
-                      ],
-                    ),
+                    child: buildTopActions(),
                   ),
+                  buildImageWidget(),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: buildTitleWidget(),
+                  ),
+                  Container(
+                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                    margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        buildTitleWidget(),
                         AbsorbPointer(
                           absorbing: !isAdmin,
                           child: Opacity(
@@ -209,20 +224,16 @@ class _PlayingScreenState extends State<PlayingScreen>
                             child: buildSliderWidget(),
                           ),
                         ),
+                        AbsorbPointer(
+                          absorbing: !isAdmin,
+                          child: Opacity(
+                            opacity: isAdmin ? 1 : 0.6,
+                            child: buildActionsWidget(),
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: AbsorbPointer(
-                      absorbing: !isAdmin,
-                      child: Opacity(
-                        opacity: isAdmin ? 1 : 0.6,
-                        child: buildActionsWidget(),
-                      ),
-                    ),
-                  ),
-                  SizedBox(),
                 ],
               ),
             ),
@@ -269,6 +280,57 @@ class _PlayingScreenState extends State<PlayingScreen>
             Spacer(),
             StreamMediaItem(
               builder: (song) {
+                isFavorite =
+                    myData.getFavoriteSong().any((element) => element == song);
+                Widget? favoriteChild;
+                Widget? listenerCount;
+
+                if (song != null) {
+                  listenerCount =
+                      StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                    stream: ListeningSongService().getStreamListenersFrom(
+                      song.id,
+                    ),
+                    builder: (c, snap) {
+                      if (snap.hasData) {
+                        if (snap.data!.docs.isNotEmpty) {
+                          return Text(
+                              snap.data!.docs.length.toString() + " Dinleyici");
+                        }
+                      }
+                      return SizedBox();
+                    },
+                  );
+                } else {
+                  listenerCount = SizedBox();
+                }
+
+                if (isFavorite) {
+                  favoriteChild = Text(
+                    "Favori Müziğim",
+                    style: TextStyle(
+                      color: Const.kBackground,
+                      fontSize: 14,
+                    ),
+                  );
+                } else {
+                  favoriteChild = SizedBox();
+                }
+                return AnimatedSwitcher(
+                  duration: Duration(milliseconds: 500),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (!(favoriteChild is SizedBox)) favoriteChild,
+                      if (!(listenerCount is SizedBox)) listenerCount,
+                    ],
+                  ),
+                );
+              },
+            ),
+            Spacer(),
+            StreamMediaItem(
+              builder: (song) {
                 return Row(
                   children: [
                     StreamBuilder<UserModel?>(
@@ -307,9 +369,12 @@ class _PlayingScreenState extends State<PlayingScreen>
                                       Text(connectedUser.userName!),
                                       Spacer(),
                                       CircleAvatar(
+                                        backgroundColor: Colors.grey.shade300,
                                         radius: 14,
                                         backgroundImage:
-                                            NetworkImage(connectedUser.image!),
+                                            CachedNetworkImageProvider(
+                                          connectedUser.image!,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -338,7 +403,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                                             children: [
                                               Icon(
                                                 Icons.person_add_alt_rounded,
-                                                size: 14,
+                                                size: 16,
                                               ),
                                               const SizedBox(
                                                 width: 10,
@@ -347,7 +412,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                                               Spacer(),
                                               Icon(
                                                 Icons.arrow_forward_ios_rounded,
-                                                size: 14,
+                                                size: 16,
                                               ),
                                             ],
                                           ),
@@ -364,7 +429,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                                           children: [
                                             Icon(
                                               Icons.videocam,
-                                              size: 14,
+                                              size: 16,
                                             ),
                                             const SizedBox(
                                               width: 10,
@@ -385,7 +450,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                                           children: [
                                             Icon(
                                               Icons.timer_sharp,
-                                              size: 14,
+                                              size: 16,
                                             ),
                                             const SizedBox(
                                               width: 10,
@@ -405,7 +470,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                                           children: [
                                             Icon(
                                               Icons.message_rounded,
-                                              size: 14,
+                                              size: 16,
                                             ),
                                             const SizedBox(
                                               width: 10,
@@ -427,7 +492,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                                             children: [
                                               Icon(
                                                 Icons.audiotrack_rounded,
-                                                size: 14,
+                                                size: 16,
                                               ),
                                               const SizedBox(
                                                 width: 10,
@@ -447,7 +512,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                                             children: [
                                               Icon(
                                                 Icons.audiotrack_rounded,
-                                                size: 14,
+                                                size: 16,
                                               ),
                                               const SizedBox(
                                                 width: 10,
@@ -457,9 +522,9 @@ class _PlayingScreenState extends State<PlayingScreen>
                                           ),
                                         ),
                                       MyPopupMenuDivider(
-                                        tickness: 2,
-                                        height: 2,
-                                        color: Colors.green,
+                                        tickness: 3,
+                                        height: 3,
+                                        color: Colors.grey.shade200,
                                       ),
                                       userPopupMenuItem,
                                       PopupMenuItem(
@@ -569,22 +634,42 @@ class _PlayingScreenState extends State<PlayingScreen>
         });
   }
 
-  AspectRatio buildImageWidget() {
-    return AspectRatio(
-      aspectRatio: 1,
-      child: Card(
-        margin: EdgeInsets.zero,
-        elevation: 4,
-        child: StreamMediaItem(
-          builder: (song) {
-            if (song == null) return SizedBox();
-            return GestureDetector(
-              onDoubleTap: () {
-                myData.addFavoriteSong(song);
-              },
-              child: song.getImageWidget,
-            );
-          },
+  Widget buildImageWidget() {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.only(
+          bottom: 10,
+          right: 16,
+          left: 16,
+        ),
+        child: Card(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          margin: EdgeInsets.zero,
+          elevation: 8,
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width - 32,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: StreamMediaItem(
+                builder: (song) {
+                  if (song == null) return SizedBox();
+                  return GestureDetector(
+                    onDoubleTap: () {
+                      if (isFavorite) {
+                        myData.removeFavoritedSong(song);
+                      } else {
+                        myData.addFavoriteSong(song);
+                      }
+                      setState(() {});
+                    },
+                    child: song.getImageWidget,
+                  );
+                },
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -594,6 +679,7 @@ class _PlayingScreenState extends State<PlayingScreen>
     return StreamMediaItem(
       builder: (song) {
         return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             StreamBuilder<bool>(
               stream: handler.playbackState
@@ -604,21 +690,18 @@ class _PlayingScreenState extends State<PlayingScreen>
               builder: (context, snapshot) {
                 bool isShuffleMode = snapshot.data!;
                 return IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: BoxConstraints.loose(Size.square(20)),
                   onPressed: () {
                     handler.setShuffleMode(isShuffleMode
                         ? AudioServiceShuffleMode.none
                         : AudioServiceShuffleMode.all);
                     setState(() {});
                   },
-                  icon: Icon(Icons.shuffle),
+                  icon: Icon(Icons.shuffle_rounded),
                   iconSize: 20,
                   color: isShuffleMode ? Colors.black : Colors.black54,
                 );
               },
             ),
-            Spacer(),
             Row(
               children: [
                 IconButton(
@@ -628,33 +711,61 @@ class _PlayingScreenState extends State<PlayingScreen>
                           await handler.skipToPrevious();
                           handler.play();
                         },
-                  icon: Icon(Icons.skip_previous),
-                ),
-                SizedBox(
-                  width: 6,
+                  icon: Icon(Icons.skip_previous_rounded, size: 35),
                 ),
                 StreamBuilder<bool>(
-                  stream: handler.playingStream,
-                  builder: (context, snapshot) {
-                    bool isPlaying = snapshot.data ?? false;
-                    return IconButton(
-                      onPressed: () async {
-                        if (isPlaying) {
-                          handler.pause();
-                        } else {
-                          handler.play();
-                        }
-                      },
-                      icon: Icon(
-                        isPlaying ? Icons.pause : Icons.play_arrow,
-                        size: 30,
-                      ),
-                    );
-                  },
-                ),
-                SizedBox(
-                  width: 6,
-                ),
+                    stream: handler.player.processingStateStream
+                        .map((event) => event == ProcessingState.ready)
+                        .distinct(),
+                    initialData: false,
+                    builder: (context, snapshot) {
+                      bool isReady = snapshot.data!;
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          Container(
+                            width: 65,
+                            height: 65,
+                            padding: EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: Const.kWhite,
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            child: StreamBuilder<bool>(
+                              stream: handler.playingStream,
+                              builder: (context, snapshot) {
+                                bool isPlaying = snapshot.data ?? false;
+                                return IconButton(
+                                  padding: EdgeInsets.zero,
+                                  onPressed: () async {
+                                    if (isPlaying) {
+                                      handler.pause();
+                                    } else {
+                                      handler.play();
+                                    }
+                                  },
+                                  icon: Icon(
+                                    isPlaying
+                                        ? Icons.pause_rounded
+                                        : Icons.play_arrow_rounded,
+                                    size: 45,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          if (!isReady) ...[
+                            SizedBox(
+                              width: 65,
+                              height: 65,
+                              child: CircularProgressIndicator(
+                                color: Const.kBackground,
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+                    }),
                 IconButton(
                   onPressed: !handler.hasNext
                       ? null
@@ -662,19 +773,19 @@ class _PlayingScreenState extends State<PlayingScreen>
                           await handler.skipToNext();
                           handler.play();
                         },
-                  icon: Icon(Icons.skip_next),
+                  icon: Icon(
+                    Icons.skip_next_rounded,
+                    size: 35,
+                  ),
                 ),
               ],
             ),
-            Spacer(),
             StreamBuilder<AudioServiceRepeatMode>(
               stream: handler.playbackState
                   .map((event) => event.repeatMode)
                   .distinct(),
               builder: (context, snapshot) {
                 return IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: BoxConstraints.loose(Size.square(20)),
                   onPressed: () {
                     myData.setRepeatMode();
                     setState(() {});
@@ -693,14 +804,14 @@ class _PlayingScreenState extends State<PlayingScreen>
 
   SizedBox buildSliderWidget() {
     return SizedBox(
-      height: 40,
+      height: 50,
       width: double.maxFinite,
       child: Stack(
         children: [
           Positioned(
             top: 0,
-            right: 6,
-            left: 6,
+            right: 16,
+            left: 16,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -710,6 +821,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                       return Text(
                         Const.getDurationString(
                             handler.playbackState.value.position),
+                        style: TextStyle(fontSize: 12),
                       );
                     }),
                 StreamMediaItem(
@@ -718,6 +830,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                       Const.getDurationString(
                         song?.duration ?? Duration.zero,
                       ),
+                      style: TextStyle(fontSize: 12),
                     );
                   },
                 ),
@@ -725,9 +838,9 @@ class _PlayingScreenState extends State<PlayingScreen>
             ),
           ),
           Positioned(
-            top: 15,
-            right: 0,
-            left: 0,
+            top: 20,
+            right: 16,
+            left: 10,
             child: StreamMediaItem(
               builder: (song) {
                 return StreamBuilder<Duration>(
@@ -755,51 +868,69 @@ class _PlayingScreenState extends State<PlayingScreen>
     );
   }
 
-  Widget buildTitleWidget() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: StreamMediaItem(
-        builder: (song) {
-          return SizedBox(
-            width: double.maxFinite,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Hero(
-                  tag: "title",
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Text(
-                      song?.title ?? "Title",
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+  StreamMediaItem buildTitleWidget() {
+    return StreamMediaItem(
+      builder: (song) {
+        return Container(
+          width: double.maxFinite,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Hero(
+                tag: "title",
+                child: Material(
+                  color: Colors.transparent,
+                  child: Text(
+                    song?.title.trim() ?? "Title",
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        overflow: TextOverflow.ellipsis),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Hero(
+                    tag: "artist",
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Text(
+                        song?.artist ?? "Artist",
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Const.kBackground,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                SizedBox(
-                  height: 10,
-                ),
-                Hero(
-                  tag: "artist",
-                  child: Material(
-                    color: Colors.transparent,
-                    child: Text(
-                      song?.artist ?? "Artist",
-                      style: TextStyle(
-                        fontSize: 13,
-                      ),
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      if (isFavorite) {
+                        myData.removeFavoritedSong(song!);
+                      } else {
+                        myData.addFavoriteSong(song!);
+                      }
+                      setState(() {});
+                    },
+                    icon: Icon(
+                      isFavorite
+                          ? Icons.favorite
+                          : Icons.favorite_border_rounded,
+                      color:
+                          isFavorite ? Colors.redAccent : Colors.grey.shade400,
                     ),
                   ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -911,6 +1042,7 @@ class _PlayingScreenState extends State<PlayingScreen>
       context: context,
       builder: (context) {
         return SimpleDialog(
+          backgroundColor: Colors.grey.shade200,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           title: Center(
@@ -918,7 +1050,7 @@ class _PlayingScreenState extends State<PlayingScreen>
               "Zaman seçin",
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.secondary,
+                color: Const.kBackground,
               ),
             ),
           ),
@@ -929,11 +1061,11 @@ class _PlayingScreenState extends State<PlayingScreen>
                 width: 200,
                 child: CupertinoTheme(
                   data: CupertinoThemeData(
-                    primaryColor: Colors.black,
+                    primaryColor: Const.kBackground,
                     textTheme: CupertinoTextThemeData(
-                      dateTimePickerTextStyle: TextStyle(
+                      pickerTextStyle: TextStyle(
                         fontSize: 16,
-                        color: Colors.black,
+                        color: Const.kBackground,
                       ),
                     ),
                   ),
@@ -951,7 +1083,7 @@ class _PlayingScreenState extends State<PlayingScreen>
               children: [
                 TextButton(
                   style: TextButton.styleFrom(
-                    primary: Theme.of(context).colorScheme.secondary,
+                    primary: Const.kBackground.withOpacity(0.7),
                   ),
                   onPressed: () {
                     Navigator.pop(context);
@@ -962,13 +1094,6 @@ class _PlayingScreenState extends State<PlayingScreen>
                   width: 10,
                 ),
                 TextButton(
-                  style: TextButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
-                    primary:
-                        Theme.of(context).colorScheme.secondary == Colors.white
-                            ? Colors.black
-                            : Colors.white,
-                  ),
                   onPressed: () {
                     sleepTimer(_time.inMinutes);
                     Navigator.pop(context);

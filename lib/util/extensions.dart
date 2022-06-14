@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:onlinemusic/main.dart';
@@ -16,6 +17,13 @@ import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 extension BuildContextExt on BuildContext {
   Future<T?> push<T>(Widget page) {
     return Navigator.push(this, MaterialPageRoute(builder: (_) => page));
+  }
+
+  Future<T?> pushOpaque<T>(Widget page) {
+    return Navigator.of(this).push(PageRouteBuilder(
+      opaque: false,
+      pageBuilder: (_, __, ___) => page,
+    ));
   }
 
   Future<T?> pushAndRemoveUntil<T>(Widget page) {
@@ -99,10 +107,13 @@ extension MediaItemExt on MediaItem {
       fit: BoxFit.cover,
     );
     if (isOnline) {
-      return Image.network(
-        artUri!.toString(),
+      return CachedNetworkImage(
+        imageUrl: artUri!.toString(),
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) {
+        errorWidget: (_, __, ___) {
+          return errorWidget;
+        },
+        placeholder: (c, i) {
           return errorWidget;
         },
       );
@@ -114,27 +125,6 @@ extension MediaItemExt on MediaItem {
           return errorWidget;
         },
       );
-      // int? id = int.tryParse(this.id);
-
-      // if (id == null) {
-      //   return errorWidget;
-      // }
-      // return FutureBuilder<Uint8List?>(
-      //   future: OnAudioQuery.platform.queryArtwork(id, ArtworkType.AUDIO),
-      //   builder: (c, snap) {
-      //     if (!snap.hasData) {
-      //       return errorWidget;
-      //     } else {
-      //       return Image.memory(
-      //         snap.data!,
-      //         fit: BoxFit.cover,
-      //         errorBuilder: (_, __, ___) {
-      //           return errorWidget;
-      //         },
-      //       );
-      //     }
-      //   },
-      // );
     }
   }
 

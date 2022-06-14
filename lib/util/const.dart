@@ -10,6 +10,8 @@ class Const {
       "https://firebasestorage.googleapis.com/v0/b/onlinemusicnew-22821.appspot.com/o/audio_images%2Fdefault_audio_image.png?alt=media&token=571a469a-2e3d-46e3-84f0-a351c5308f0d";
 
   static const Color kWhite = Colors.white;
+  static const Color kBackground = Color(0xFF02001D);
+  // static const Color kBackground1 = Color(0xFF02001D);
 
   static List<Genre> genres = [
     Genre(id: 1, name: "Rock"),

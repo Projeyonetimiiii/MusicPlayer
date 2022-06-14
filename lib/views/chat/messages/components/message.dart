@@ -53,25 +53,21 @@ class Message extends StatelessWidget {
       child: Row(
         mainAxisAlignment:
             isMee ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Row(
-            children: [
-              if (isMee) ...[
-                Text(getTime(message.messageTime!)),
-                SizedBox(
-                  width: 5,
-                )
-              ],
-              messageContaint(message),
-              if (!isMee) ...[
-                SizedBox(
-                  width: 5,
-                ),
-                Text(getTime(message.messageTime!)),
-              ],
-            ],
-          ),
-          // if (isMee) MessageStatusDot(status: message.messageStatus)
+          if (isMee) ...[
+            Text(getTime(message.messageTime!)),
+            SizedBox(
+              width: 5,
+            )
+          ],
+          messageContaint(message),
+          if (!isMee) ...[
+            SizedBox(
+              width: 5,
+            ),
+            Text(getTime(message.messageTime!)),
+          ],
         ],
       ),
     );
@@ -80,41 +76,5 @@ class Message extends StatelessWidget {
   String getTime(int millis) {
     DateTime time = DateTime.fromMillisecondsSinceEpoch(millis);
     return time.hour.toString() + ":" + time.minute.toString();
-  }
-}
-
-class MessageStatusDot extends StatelessWidget {
-  final MessageStatus? status;
-
-  const MessageStatusDot({Key? key, this.status}) : super(key: key);
-  @override
-  Widget build(BuildContext context) {
-    Color dotColor(MessageStatus? status) {
-      switch (status) {
-        case MessageStatus.Sended:
-          return Colors.black;
-        case MessageStatus.Waiting:
-          return Colors.grey;
-        case MessageStatus.Viewed:
-          return Colors.blue;
-        default:
-          return Colors.transparent;
-      }
-    }
-
-    return Container(
-      margin: EdgeInsets.only(left: 8),
-      height: 12,
-      width: 12,
-      decoration: BoxDecoration(
-        color: dotColor(status),
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        status == MessageStatus.Sended ? Icons.close : Icons.done,
-        size: 8,
-        color: Theme.of(context).scaffoldBackgroundColor,
-      ),
-    );
   }
 }

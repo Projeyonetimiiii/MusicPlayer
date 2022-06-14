@@ -1,7 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:onlinemusic/models/usermodel.dart';
 import 'package:onlinemusic/services/auth.dart';
+import 'package:onlinemusic/services/messages_service.dart';
+import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/chat/components/chat_card.dart';
 import 'package:onlinemusic/views/chat/messages/message_screen.dart';
@@ -24,12 +27,18 @@ class _ChatsScreenState extends State<ChatsScreen> {
             width: 40,
             height: 40,
             margin: EdgeInsets.only(left: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              image: DecorationImage(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(5),
+              child: CachedNetworkImage(
+                imageUrl: FirebaseAuth.instance.currentUser!.photoURL!,
                 fit: BoxFit.cover,
-                image:
-                    NetworkImage(FirebaseAuth.instance.currentUser!.photoURL!),
+                placeholder: (c, i) {
+                  return Container(
+                    width: 40,
+                    height: 40,
+                    color: Colors.white24,
+                  );
+                },
               ),
             ),
           ),
@@ -40,18 +49,21 @@ class _ChatsScreenState extends State<ChatsScreen> {
         ),
       ),
       body: StreamBuilder<List<Chat>>(
-       
+        stream: messagesService.lastMessagesStream,
+        initialData: messagesService.lastMessagesStream?.value ?? [],
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return Center(
-              child: Text("Yükleniyor..."),
+              child: CircularProgressIndicator(
+                color: Const.kBackground,
+              ),
             );
           }
 
           List<Chat> chats = snapshot.data ?? [];
           if (chats.isEmpty) {
             return Center(
-              child: Text("Yokki..."),
+              child: Text("Hiç Mesajınız Yok"),
             );
           }
           return ListView.builder(

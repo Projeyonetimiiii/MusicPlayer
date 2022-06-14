@@ -1,20 +1,20 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:on_audio_query/on_audio_query.dart';
 import 'package:onlinemusic/models/audio.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 class SearchService {
-  static List<SongModel> fetchMusicFromQuery(
+  static List<MediaItem> fetchMusicFromQuery(
       String query, BuildContext context) {
 //cihaz daki müzikleri ara
-    List<SongModel> songs = [];
+    List<MediaItem> songs = [];
     if (query.isEmpty) {
       return context.myData.songs;
     }
-    for (SongModel i in context.myData.songs) {
-      if (i.displayNameWOExt.toLowerCase().contains(query)) {
+    for (MediaItem i in context.myData.songs) {
+      if ((i.title + (i.artist ?? "")).toLowerCase().contains(query)) {
         songs.add(i);
       }
     }
@@ -52,7 +52,7 @@ class SearchService {
     }
     final YoutubeExplode yt = YoutubeExplode();
 
-    final List<Video> searchResults = await yt.search.getVideos(query);
+    final List<Video> searchResults = await yt.search.search(query);
 
     return searchResults;
   }

@@ -1,18 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:overlay_support/overlay_support.dart';
+import 'package:onlinemusic/widgets/my_overlay_notification.dart';
 
 void showErrorNotification({
   String description = "description",
 }) {
-  showSimpleNotification(
-    Text(
-      description,
-      maxLines: 2,
-      style: TextStyle(
-        color: Colors.white70,
-      ),
-    ),
-    background: Colors.red.shade400,
-    slideDismissDirection: DismissDirection.horizontal,
+  showMyOverlayNotification(
+    message: description,
+    isDismissible: true,
+    duration: Duration(seconds: 2),
   );
 }

@@ -14,25 +14,31 @@ class TextMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     bool isMee = message.senderId == FirebaseAuth.instance.currentUser!.uid;
-    return Container(
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width * 0.65,
-      ),
-      padding: EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 8,
-      ),
-      decoration: BoxDecoration(
-        color: isMee ? Colors.blue : Colors.grey.shade300,
+    return Material(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
-        (message.message ?? ""),
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: isMee ? Colors.white : Colors.black,
-          fontStyle:
-              message.isRemoved ?? true ? FontStyle.italic : FontStyle.normal,
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.65,
+        ),
+        padding: EdgeInsets.symmetric(
+          horizontal: 8,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
+          color: isMee ? Colors.blue : Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          (message.message ?? ""),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isMee ? Colors.white : Colors.black,
+            fontStyle:
+                message.isRemoved ?? true ? FontStyle.italic : FontStyle.normal,
+          ),
         ),
       ),
     );
