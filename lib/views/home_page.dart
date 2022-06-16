@@ -17,7 +17,7 @@ import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/playing_screen/playing_screen.dart';
 import 'package:onlinemusic/views/playlist_screen.dart';
 import 'package:onlinemusic/views/profile_screen/profile_screen.dart';
-import 'package:onlinemusic/views/search_page.dart';
+import 'package:onlinemusic/views/search_screen.dart';
 import 'package:onlinemusic/views/users_screen.dart';
 import 'package:onlinemusic/views/yt_playlist_screen.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -225,6 +225,7 @@ class _YoutubeHomePageState extends State<HomePage> {
                                 ));
                               }
                             },
+                            textAlignVertical: TextAlignVertical.center,
                             textInputAction: TextInputAction.search,
                             cursorColor: Const.kBackground,
                             cursorWidth: 0.5,
@@ -237,7 +238,7 @@ class _YoutubeHomePageState extends State<HomePage> {
                             ),
                             decoration: InputDecoration(
                               isDense: true,
-                              contentPadding: EdgeInsets.only(left: 20, top: 9),
+                              isCollapsed: true,
                               border: InputBorder.none,
                               hintText: "Müzik ara",
                               hintStyle: TextStyle(

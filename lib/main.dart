@@ -20,7 +20,7 @@ import 'package:provider/provider.dart';
 import 'views/splash.dart';
 
 Box<List<String>>? songsBox;
-Box<String>? cacheBox;
+Box? cacheBox;
 late BackgroundAudioHandler handler;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +31,7 @@ void main() async {
   );
   await Firebase.initializeApp();
   await initHive();
-  cacheBox = await openBox<String>("cache");
+  cacheBox = await openBox("cache");
   songsBox = await openBox<List<String>>("songs");
   await initBackgroundService();
   AuthService().listen();
