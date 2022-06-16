@@ -21,3 +21,6 @@
 <img src="https://user-images.githubusercontent.com/36763418/173834712-78f3387b-73b8-4bb8-843d-8b107160647e.png" width="32%">
 <img src="https://user-images.githubusercontent.com/36763418/173834900-37303d87-d116-474d-b873-8071c8d3bbce.png" width="32%">
 <img src="https://user-images.githubusercontent.com/36763418/173835211-2df06169-7347-4015-a443-3e039881fcfb.png" width="32%">
+
+### Örnek Video
+![Örnek Video](https://github.com/Projeyonetimiiii/MusicPlayer/blob/Master/video/example_video.gif)
