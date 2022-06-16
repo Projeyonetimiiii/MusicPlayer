@@ -49,14 +49,17 @@ class Message extends StatelessWidget {
       color: isSelected
           ? Colors.grey.shade200.withOpacity(0.2)
           : Colors.transparent,
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       child: Row(
         mainAxisAlignment:
             isMee ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (isMee) ...[
-            Text(getTime(message.messageTime!)),
+            Text(
+              getTime(message.messageTime!),
+              style: timeStyle,
+            ),
             SizedBox(
               width: 5,
             )
@@ -66,11 +69,18 @@ class Message extends StatelessWidget {
             SizedBox(
               width: 5,
             ),
-            Text(getTime(message.messageTime!)),
+            Text(
+              getTime(message.messageTime!),
+              style: timeStyle,
+            ),
           ],
         ],
       ),
     );
+  }
+
+  TextStyle get timeStyle {
+    return TextStyle(fontSize: 12, color: Colors.black54);
   }
 
   String getTime(int millis) {

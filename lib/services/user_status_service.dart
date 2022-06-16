@@ -7,6 +7,7 @@ import 'package:onlinemusic/models/connected_song_model.dart';
 import 'package:onlinemusic/models/usermodel.dart';
 import 'package:onlinemusic/services/connected_song_service.dart';
 import 'package:onlinemusic/util/enums.dart';
+import 'package:onlinemusic/widgets/my_overlay_notification.dart';
 import 'package:rxdart/rxdart.dart';
 
 class UserStatusService {
@@ -83,7 +84,7 @@ class UserStatusService {
           .doc(_auth.currentUser!.uid)
           .set(userModel.toMap(), SetOptions(merge: true));
     } catch (e) {
-      print("hata ******************* " + e.toString());
+      print("hata " + e.toString());
     }
   }
 
@@ -96,7 +97,7 @@ class UserStatusService {
         "connectedUserId": _auth.currentUser!.uid,
       }, SetOptions(merge: true));
     } catch (e) {
-      print("hata ******************* " + e.toString());
+      print("hata " + e.toString());
     }
   }
 
@@ -104,13 +105,15 @@ class UserStatusService {
     try {
       await _firestore.collection("Users").doc(_auth.currentUser!.uid).set({
         "connectedUserId": null,
+        "connectionType": ConnectionType.Ready.index,
       }, SetOptions(merge: true));
       await _firestore.collection("Users").doc(connectUserId).set({
         "connectedUserId": null,
+        "connectionType": ConnectionType.Ready.index,
       }, SetOptions(merge: true));
       connectedSongService.disconnectSong();
     } catch (e) {
-      print("hata ******************* " + e.toString());
+      print("hata " + e.toString());
     }
   }
 
@@ -128,7 +131,7 @@ class UserStatusService {
       }, SetOptions(merge: true));
       connectedSongService.startListen();
     } catch (e) {
-      print("hata ******************* " + e.toString());
+      print("hata  " + e.toString());
     }
   }
 
@@ -142,7 +145,7 @@ class UserStatusService {
       }, SetOptions(merge: true));
       connectedSongService.disconnectSong(uid: connectedSongUserId);
     } catch (e) {
-      print("hata ******************* " + e.toString());
+      print("hata  " + e.toString());
     }
   }
 
@@ -153,7 +156,7 @@ class UserStatusService {
         if (!isOnline) "lastSeen": DateTime.now().millisecondsSinceEpoch,
       }, SetOptions(merge: true));
     } catch (e) {
-      print("hata ******************* " + e.toString());
+      print("hata  " + e.toString());
     }
   }
 
@@ -164,7 +167,7 @@ class UserStatusService {
         "connectionType": newType.index,
       }, SetOptions(merge: true));
     } catch (e) {
-      print("hata ******************* " + e.toString());
+      print("hata  " + e.toString());
     }
   }
 
@@ -174,7 +177,7 @@ class UserStatusService {
         "connectionType": newType.index,
       }, SetOptions(merge: true));
     } catch (e) {
-      print("hata ******************* " + e.toString());
+      print("hata  " + e.toString());
     }
   }
 }

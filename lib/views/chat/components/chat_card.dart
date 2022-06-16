@@ -74,16 +74,6 @@ class ChatCard extends StatelessWidget {
                               ),
                             ),
                           ),
-                          Positioned(
-                            bottom: -2,
-                            right: -2,
-                            child: CircleAvatar(
-                              radius: 5,
-                              backgroundColor: (user.isOnline ?? false)
-                                  ? Colors.green
-                                  : Colors.red,
-                            ),
-                          ),
                         ],
                       ),
                     ],

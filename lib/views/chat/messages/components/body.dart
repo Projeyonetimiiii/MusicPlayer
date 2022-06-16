@@ -82,7 +82,6 @@ class Body extends StatelessWidget {
 
             return GestureDetector(
               onLongPress: () {
-                print("Long pressed isSelect= " + isSelected.toString());
                 if (!(message.isRemoved ?? false) &&
                     message.senderId == myUid) {
                   if (!isSelected)
@@ -104,7 +103,7 @@ class Body extends StatelessWidget {
                 }
               },
               child: Container(
-                color: isSelected ? Colors.grey.shade200 : null,
+                color: isSelected ? Colors.grey.shade400 : null,
                 child: Message(
                   message: message,
                   isSelected: isSelected,

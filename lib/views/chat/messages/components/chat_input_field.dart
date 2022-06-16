@@ -224,12 +224,8 @@ class _ChatInputFieldState extends State<ChatInputField>
                               ),
                               TextButton(
                                   style: TextButton.styleFrom(
-                                      shape: StadiumBorder(
-                                        side: BorderSide(
-                                          color: Colors.white30,
-                                        ),
-                                      ),
-                                      primary: Colors.white),
+                                    shape: StadiumBorder(),
+                                  ),
                                   onPressed: () async {
                                     UserStatusService()
                                         .deleteBlockedUser(widget.rUser.id!);
@@ -266,7 +262,10 @@ class _ChatInputFieldState extends State<ChatInputField>
           );
           return mediaRef != null
               ? SenderMediaMessage(
-                  type: ChatMessageType.Audio, message: "", refs: [mediaRef])
+                  type: ChatMessageType.Audio,
+                  message: filesTyper.files!.first.name,
+                  refs: [mediaRef],
+                )
               : null;
         } else
           return null;

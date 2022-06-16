@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -23,17 +24,13 @@ import '../views/chat/messages/message_screen.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
-      _requestSubscription;
-
-  static StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>?
-      _resultSubscription;
+  StreamSubscription? _requestSubscription;
+  StreamSubscription? _resultSubscription;
+  StreamSubscription? currentUserSubscription;
 
   late UserStatusService statusService;
 
   late BehaviorSubject<UserModel?> currentUser;
-
-  StreamSubscription? currentUserSubscription;
 
   static AuthService? _instance;
 
@@ -90,7 +87,6 @@ class AuthService {
       }
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
-      print("Hata: " + e.code);
       if (e.code == "network-request-failed") {
         //! bağlantı hatası
         showErrorNotification(
@@ -148,7 +144,6 @@ class AuthService {
           Const.kDefaultProfilePicture,
         );
         listen();
-        print(userCredential.user);
       }
     } on FirebaseException catch (e) {
       if (e.code == "email-already-in-use") {
@@ -234,18 +229,24 @@ class AuthService {
     );
   }
 
+  bool showingResult = false;
+
   void listenRequestResult() {
     _resultSubscription = userRequestResultReference().snapshots().listen(
       (event) async {
-        if (event.data() == null) return;
+        if (event.data() == null) {
+          await event.reference.delete();
+          return;
+        }
         RequestModel requestModel = RequestModel.fromMap(event.data()!);
         bool isDenied = requestModel.resultType == ResultType.Denied;
         bool isAccepted = requestModel.resultType == ResultType.Accepted;
-        print("result: " + requestModel.toString());
         await event.reference.delete();
         if (!isDenied && !isAccepted) {
           return;
         }
+        if (showingResult) return;
+        showingResult = true;
         UserModel? user = await getUserFromId(requestModel.receiverId);
         if (user != null) {
           BuildContext? context = MyApp.navigatorKey.currentContext;
@@ -255,15 +256,29 @@ class AuthService {
             }
           }
           Vibrate.vibrate();
+
+          // showingResult 5 saniye sonra true ise false yap, kullanıcı dismissible yaparsa showingResult değeri true kalır
+          Future.delayed(
+            Duration(seconds: 5),
+            () {
+              if (showingResult) {
+                showingResult = false;
+              }
+            },
+          );
           showMyOverlayNotification(
             isDismissible: true,
             duration: Duration(seconds: 5),
             leading: CircleAvatar(
-              backgroundImage: NetworkImage(user.image!),
+              backgroundColor: Colors.white,
+              backgroundImage: CachedNetworkImageProvider(user.image!),
             ),
             message: (user.userName ?? "user") +
                 " eşleşme isteğinizi " +
                 (isDenied ? "reddetti" : "kabul etti"),
+            onFinish: () {
+              showingResult = false;
+            },
             actionsBuilder: (entry) {
               if (!isDenied &&
                   context != null &&
@@ -274,6 +289,7 @@ class AuthService {
                         if (entry != null) {
                           entry.dismiss();
                         }
+                        showingResult = false;
                         context.push(MessagesScreen(
                           user: user,
                         ));
@@ -284,6 +300,8 @@ class AuthService {
               return null;
             },
           );
+        } else {
+          showingResult = false;
         }
       },
     );
@@ -294,14 +312,22 @@ class AuthService {
         getUserStreamFromId(FirebaseAuth.instance.currentUser!.uid)
             .listen((event) {
       if (event.data() != null) {
-        currentUser.add(UserModel.fromMap(event.data()!));
+        UserModel user = UserModel.fromMap(event.data()!);
+        if (user.connectedUserId == null &&
+            currentUser.value?.connectedUserId != null) {
+          showMyOverlayNotification(
+            duration: Duration(seconds: 2),
+            message: "Kullanıcı eşleşme bitirildi",
+            isDismissible: true,
+          );
+        }
+        currentUser.add(user);
       }
     });
   }
 
   void listen() {
     if (_auth.currentUser != null) {
-      print("Dinleme işlemi başladı");
       listenUserRequest();
       listenRequestResult();
       statusService.userConnectStatus(true);
@@ -312,7 +338,6 @@ class AuthService {
   }
 
   void stopListen() {
-    print("Dinleme işlemi kapandı");
     _requestSubscription?.cancel();
     _resultSubscription?.cancel();
     statusService.userConnectStatus(false);
@@ -321,22 +346,31 @@ class AuthService {
     AudiosBloc().stopListen();
   }
 
+  bool showingRequest = false;
+
   void listenUserRequest() {
     _requestSubscription =
         userRequestReference(_auth.currentUser!.uid).snapshots().listen(
       (event) async {
-        if (event.data() == null) return;
+        if (event.data() == null) {
+          await event.reference.delete();
+          return;
+        }
         RequestModel requestModel = RequestModel.fromMap(event.data()!);
-        print("request: " + requestModel.toString());
+        await event.reference.delete();
+
+        if (showingRequest) return;
+
+        showingRequest = true;
         UserModel? user = await getUserFromId(requestModel.senderId);
-        event.reference.delete();
         if (user != null) {
           Vibrate.vibrate();
           showMyOverlayNotification(
             isDismissible: false,
             duration: Duration(seconds: 10),
             leading: CircleAvatar(
-              backgroundImage: NetworkImage(user.image!),
+              backgroundColor: Colors.white,
+              backgroundImage: CachedNetworkImageProvider(user.image!),
             ),
             message: (user.userName ?? "user") +
                 _getRequestType(requestModel.requestType),
@@ -353,13 +387,15 @@ class AuthService {
                             .toMap());
                     UserStatusService service = UserStatusService();
                     if (requestModel.requestType.isUser) {
-                      service.connectUser(requestModel.senderId);
-                      service.updateConenctionType(ConnectionType.Connected);
-                      service.updateConenctionTypeFromId(
+                      await service.connectUser(requestModel.senderId);
+                      await service
+                          .updateConenctionType(ConnectionType.Connected);
+                      await service.updateConenctionTypeFromId(
                           requestModel.senderId, ConnectionType.Connected);
                     } else {
-                      service.connectUserSong(requestModel.senderId);
+                      await service.connectUserSong(requestModel.senderId);
                     }
+                    showingRequest = false;
                   },
                   child: Text("Kabul Et"),
                 ),
@@ -378,13 +414,13 @@ class AuthService {
                       await UserStatusService().updateConenctionTypeFromId(
                           requestModel.senderId, ConnectionType.Ready);
                     }
+                    showingRequest = false;
                   },
                   child: Text("Reddet"),
                 ),
               ];
             },
             onFinish: () async {
-              print("onFinish çalıştı");
               await userRequestResultReferenceFromId(requestModel.senderId)
                   .set((requestModel..resultType = ResultType.Denied).toMap());
               if (requestModel.requestType.isUser) {
@@ -393,8 +429,11 @@ class AuthService {
                 await UserStatusService().updateConenctionTypeFromId(
                     requestModel.senderId, ConnectionType.Ready);
               }
+              showingRequest = false;
             },
           );
+        } else {
+          showingRequest = false;
         }
       },
     );

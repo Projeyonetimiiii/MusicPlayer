@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:audio_service/audio_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -50,6 +53,7 @@ class _PlayingScreenState extends State<PlayingScreen>
   late PageController pageController;
   final YoutubeExplode yt = YoutubeExplode();
   GlobalKey popupKey = GlobalKey();
+  StreamSubscription? controllerSubscription;
 
   MediaItem? get song => widget.song;
   MyData get myData => context.myData;
@@ -57,8 +61,10 @@ class _PlayingScreenState extends State<PlayingScreen>
   @override
   void initState() {
     super.initState();
+    listenConnectedController();
     PlayingScreen.isRunning = true;
-    isFavorite = myData.getFavoriteSong().any((element) => element == song);
+    isFavorite =
+        myData.getFavoriteSong().any((element) => element.id == song?.id);
     pageController = PageController();
     setMediaItem(updateQueue: true);
   }
@@ -68,6 +74,8 @@ class _PlayingScreenState extends State<PlayingScreen>
     PlayingScreen.isRunning = false;
     super.dispose();
   }
+
+  void listenConnectedController() {}
 
   Future<void> updateQueue() async {
     if (widget.queue != null) {
@@ -85,13 +93,6 @@ class _PlayingScreenState extends State<PlayingScreen>
       MediaItem? newItem = mediaItem ?? song;
       if (newItem != null) {
         await handler.playMediaItem(newItem);
-        print("userID: " +
-            (AuthService().currentUser.value?.id ?? "") +
-            "\nisAdmin: " +
-            connectedSongService.isAdmin.toString() +
-            "\nisConnected: " +
-            connectedSongService.isConnectedSong.toString() +
-            "   playingScreen setMediaItem()");
         if (!connectedSongService.isConnectedSong) {
           await handler.play();
         }
@@ -114,39 +115,21 @@ class _PlayingScreenState extends State<PlayingScreen>
         body: StreamBuilder<ConnectedSongModel?>(
           stream: connectedSongService.connectSongModel,
           initialData: connectedSongService.connectSongModel.value,
-          builder: (context, snapshot) {
-            return Stack(
-              children: [
-                playingScreenBody(context, connectedSongService.isAdmin),
-                if (snapshot.data?.isAdmin == true) ...[
-                  StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                    stream:
-                        connectedSongService.getConnectedSongStreamFromDocId(
-                      messagesService.getDoc(
-                          AuthService().currentUser.value!.id,
-                          snapshot.data!.userId),
-                    ),
-                    builder: (context, snapshot) {
-                      if (!snapshot.hasData) {
-                        return SizedBox(
-                          width: 1,
-                          height: 1,
-                        );
-                      }
-                      ConnectedController controller =
-                          ConnectedController.fromMap(snapshot.data!.data()!);
-                      if (controller.isReady == false) {
-                        return isLoadingWidget;
-                      }
-                      return SizedBox(
-                        width: 1,
-                        height: 1,
-                      );
-                    },
-                  ),
-                ]
-              ],
-            );
+          builder: (context, songSnapshot) {
+            return StreamBuilder<bool?>(
+                stream: ConnectedSongService()
+                    .controller
+                    .map((event) => event?.isReady)
+                    .distinct(),
+                initialData: ConnectedSongService().controller.value?.isReady,
+                builder: (context, controllerSnapshot) {
+                  bool isReady = true;
+                  if (songSnapshot.data?.isAdmin == true) {
+                    isReady = (controllerSnapshot.data ?? true);
+                  }
+                  return playingScreenBody(
+                      context, connectedSongService.isAdmin, isReady);
+                });
           },
         ),
       ),
@@ -154,7 +137,6 @@ class _PlayingScreenState extends State<PlayingScreen>
   }
 
   Widget get isLoadingWidget {
-    print("loading widget cağırıldı");
     try {
       handler.pause();
     } on Exception catch (_) {}
@@ -187,7 +169,8 @@ class _PlayingScreenState extends State<PlayingScreen>
     );
   }
 
-  PageView playingScreenBody(BuildContext context, bool isAdmin) {
+  PageView playingScreenBody(BuildContext context, bool isAdmin, bool isReady) {
+    bool absorbing = isAdmin ? !isReady : true;
     return PageView(
       controller: pageController,
       children: [
@@ -215,23 +198,18 @@ class _PlayingScreenState extends State<PlayingScreen>
                       color: Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    child: Column(
-                      children: [
-                        AbsorbPointer(
-                          absorbing: !isAdmin,
-                          child: Opacity(
-                            opacity: isAdmin ? 1 : 0.6,
-                            child: buildSliderWidget(),
-                          ),
+                    child: AnimatedOpacity(
+                      duration: Duration(milliseconds: 250),
+                      opacity: !absorbing ? 1 : 0.6,
+                      child: AbsorbPointer(
+                        absorbing: absorbing,
+                        child: Column(
+                          children: [
+                            buildSliderWidget(),
+                            buildActionsWidget(),
+                          ],
                         ),
-                        AbsorbPointer(
-                          absorbing: !isAdmin,
-                          child: Opacity(
-                            opacity: isAdmin ? 1 : 0.6,
-                            child: buildActionsWidget(),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ],
@@ -293,9 +271,14 @@ class _PlayingScreenState extends State<PlayingScreen>
                     ),
                     builder: (c, snap) {
                       if (snap.hasData) {
-                        if (snap.data!.docs.isNotEmpty) {
+                        List<String> filtered = snap.data!.docs
+                            .map((e) => e.data()["userId"].toString())
+                            .toList();
+                        filtered.removeWhere((element) =>
+                            element == FirebaseAuth.instance.currentUser!.uid);
+                        if (filtered.isNotEmpty) {
                           return Text(
-                              snap.data!.docs.length.toString() + " Dinleyici");
+                              filtered.length.toString() + " Dinleyici");
                         }
                       }
                       return SizedBox();
@@ -387,7 +370,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 onSelected: (s) {
-                                  onSelected(s, connectedUser);
+                                  onSelected(s, connectedUser, song);
                                 },
                                 itemBuilder: (_) {
                                   return [
@@ -573,63 +556,83 @@ class _PlayingScreenState extends State<PlayingScreen>
   void showListeningUsers(String songId) {
     showModalBottomSheet(
         context: context,
+        backgroundColor: Colors.grey.shade200,
+        isScrollControlled: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(16),
+          ),
+        ),
         builder: (c) {
           AuthService authService = AuthService();
-          return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-            stream: ListeningSongService().getStreamListenersFrom(songId),
-            builder: (c, snapshot) {
-              if (!snapshot.hasData) {
-                return Center(
-                  child: CircularProgressIndicator(),
-                );
-              }
-
-              if (snapshot.data!.docs.isEmpty) {
-                return Center(
-                  child: Text("Burada hiç kullanıcı yok :("),
-                );
-              }
-
-              return ListView.builder(
-                physics: BouncingScrollPhysics(),
-                itemCount: snapshot.data!.docs.length,
-                itemBuilder: (c, i) {
-                  print(snapshot.data!.docs[i].id);
-                  return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-                    stream: authService
-                        .getUserStreamFromId(snapshot.data!.docs[i].id),
-                    builder: (c, snap) {
-                      if (!snap.hasData) {
-                        return Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      }
-                      if (snap.data == null) {
-                        return Text("");
-                      }
-                      UserModel user = UserModel.fromMap(snap.data!.data()!);
-                      if (user.id == FirebaseAuth.instance.currentUser!.uid) {
-                        return SizedBox();
-                      }
-                      if (!(user.connectionType?.isReady ?? false)) {
-                        return SizedBox();
-                      }
-                      return ListTile(
-                        onTap: () {
-                          AuthService().sendUserMatchRequest(user.id!);
-                          Navigator.pop(context);
-                        },
-                        leading: CircleAvatar(
-                          backgroundImage: NetworkImage(user.image!),
-                        ),
-                        title: Text(user.userName ?? "User Name"),
-                        subtitle: Text(user.bio ?? "Biografi"),
-                      );
-                    },
+          return SizedBox(
+            height: MediaQuery.of(context).size.height * 0.6,
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: ListeningSongService().getStreamListenersFrom(songId),
+              builder: (c, snapshot) {
+                if (!snapshot.hasData) {
+                  return SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: Const.kBackground,
+                      ),
+                    ),
                   );
-                },
-              );
-            },
+                }
+
+                if (snapshot.data!.docs.isEmpty) {
+                  return SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.6,
+                    child: Center(
+                      child: Text("Burada hiç kullanıcı yok :("),
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  physics: BouncingScrollPhysics(),
+                  itemCount: snapshot.data!.docs.length,
+                  itemBuilder: (c, i) {
+                    return StreamBuilder<
+                        DocumentSnapshot<Map<String, dynamic>>>(
+                      stream: authService
+                          .getUserStreamFromId(snapshot.data!.docs[i].id),
+                      builder: (c, snap) {
+                        if (!snap.hasData) {
+                          return Center(
+                            child: Text(""),
+                          );
+                        }
+                        if (snap.data == null) {
+                          return Text("");
+                        }
+                        UserModel user = UserModel.fromMap(snap.data!.data()!);
+                        if (user.id == FirebaseAuth.instance.currentUser!.uid) {
+                          return SizedBox();
+                        }
+                        if (!(user.connectionType?.isReady ?? false)) {
+                          return SizedBox();
+                        }
+                        return ListTile(
+                          onTap: () {
+                            AuthService().sendUserMatchRequest(user.id!);
+                            Navigator.pop(context);
+                          },
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.grey.shade200,
+                            backgroundImage:
+                                CachedNetworkImageProvider(user.image!),
+                          ),
+                          title: Text(user.userName ?? "User Name"),
+                          subtitle: Text(user.bio ?? "Biografi"),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
           );
         });
   }
@@ -642,32 +645,78 @@ class _PlayingScreenState extends State<PlayingScreen>
           right: 16,
           left: 16,
         ),
-        child: Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          margin: EdgeInsets.zero,
-          elevation: 8,
-          child: SizedBox(
-            width: MediaQuery.of(context).size.width - 32,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: StreamMediaItem(
-                builder: (song) {
-                  if (song == null) return SizedBox();
-                  return GestureDetector(
-                    onDoubleTap: () {
-                      if (isFavorite) {
-                        myData.removeFavoritedSong(song);
-                      } else {
-                        myData.addFavoriteSong(song);
-                      }
-                      setState(() {});
-                    },
-                    child: song.getImageWidget,
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width - 32,
+          child: Center(
+            child: StreamMediaItem(
+              builder: (song) {
+                if (song == null) return SizedBox();
+
+                Widget? child;
+                if (!song.isOnline) {
+                  child = Image(
+                    fit: BoxFit.cover,
+                    width: MediaQuery.of(context).size.width - 32,
+                    gaplessPlayback: true,
+                    image: FileImage(
+                      File(
+                        song.artUri!.toFilePath(),
+                      ),
+                    ),
                   );
-                },
-              ),
+                } else {
+                  child = CachedNetworkImage(
+                    fit: BoxFit.cover,
+                    imageUrl: song.extras!["image"]["maxQualityImageUrl"],
+                    placeholder: (_, __) {
+                      return Image(
+                        fit: BoxFit.cover,
+                        image: AssetImage(
+                          "assets/images/default_song_image.png",
+                        ),
+                      );
+                    },
+                    errorWidget: (_, __, ___) {
+                      return song.getImageWidget;
+                    },
+                    width: MediaQuery.of(context).size.width - 32,
+                  );
+                }
+
+                if (song.type.isVideo) {
+                  child = AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: child,
+                  );
+                }
+
+                if (song.type.isAudio) {
+                  child = AspectRatio(
+                    aspectRatio: 1,
+                    child: child,
+                  );
+                }
+
+                return GestureDetector(
+                  onDoubleTap: () {
+                    if (isFavorite) {
+                      myData.removeFavoritedSong(song);
+                    } else {
+                      myData.addFavoriteSong(song);
+                    }
+                    setState(() {});
+                  },
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    margin: EdgeInsets.zero,
+                    elevation: 8,
+                    child: child,
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -871,6 +920,7 @@ class _PlayingScreenState extends State<PlayingScreen>
   StreamMediaItem buildTitleWidget() {
     return StreamMediaItem(
       builder: (song) {
+        isFavorite = myData.getFavoriteSong().any((e) => e.id == song?.id);
         return Container(
           width: double.maxFinite,
           child: Column(
@@ -917,12 +967,16 @@ class _PlayingScreenState extends State<PlayingScreen>
                       }
                       setState(() {});
                     },
-                    icon: Icon(
-                      isFavorite
-                          ? Icons.favorite
-                          : Icons.favorite_border_rounded,
-                      color:
-                          isFavorite ? Colors.redAccent : Colors.grey.shade400,
+                    icon: AnimatedSwitcher(
+                      duration: Duration(milliseconds: 350),
+                      child: Icon(
+                        isFavorite
+                            ? Icons.favorite
+                            : Icons.favorite_border_rounded,
+                        color: isFavorite
+                            ? Colors.redAccent
+                            : Colors.grey.shade400,
+                      ),
                     ),
                   ),
                 ],
@@ -942,12 +996,14 @@ class _PlayingScreenState extends State<PlayingScreen>
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
+            backgroundColor: Colors.grey.shade200,
             title:
                 Text((user.userName ?? "User") + " ile eşleşmek ister misin?"),
             content: ListTile(
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
-                backgroundImage: NetworkImage(user.image!),
+                backgroundColor: Colors.grey.shade200,
+                backgroundImage: CachedNetworkImageProvider(user.image!),
               ),
               title: Text(user.userName ?? "User"),
               subtitle: Text(
@@ -978,6 +1034,7 @@ class _PlayingScreenState extends State<PlayingScreen>
         context: context,
         builder: (_) {
           return AlertDialog(
+            backgroundColor: Colors.grey.shade200,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -1118,13 +1175,14 @@ class _PlayingScreenState extends State<PlayingScreen>
     handler.customAction("sleepTimer", {"time": minute});
   }
 
-  void onSelected(PopupEnum value, UserModel? user) async {
+  void onSelected(PopupEnum value, UserModel? user, MediaItem? song) async {
     switch (value) {
       case PopupEnum.Match:
         MatchType? type = await showMatchMenu();
+        if (song == null) return;
         if (type == MatchType.Random) {
           List<UserModel> users =
-              await ListeningSongService().getFutureListenersFrom(song!.id);
+              await ListeningSongService().getFutureListenersFrom(song.id);
           if (users.isNotEmpty) {
             if (users.length < 1) {
               showMyOverlayNotification(
@@ -1135,12 +1193,11 @@ class _PlayingScreenState extends State<PlayingScreen>
               return;
             }
             users.shuffle();
-            print("Conencting User= " + users.first.toString());
 
             showUserDialog(users.first);
           }
         } else if (type == MatchType.YourSelect) {
-          showListeningUsers(song!.id);
+          showListeningUsers(song.id);
         }
         break;
       case PopupEnum.UnMatch:

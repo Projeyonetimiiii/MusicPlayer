@@ -45,7 +45,7 @@ extension VideoExt on Video {
       album: "Youtube",
       artist: author,
       duration: duration,
-      artUri: Uri.parse(thumbnails.highResUrl),
+      artUri: Uri.parse(thumbnails.mediumResUrl),
       extras: {
         "type": ModelType.Video.index,
         "isOnline": true,
@@ -126,6 +126,10 @@ extension MediaItemExt on MediaItem {
         },
       );
     }
+  }
+
+  String get maxImageUrl {
+    return extras!["image"]["maxQualityImageUrl"];
   }
 
   Map<String, dynamic> get toMap {

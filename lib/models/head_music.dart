@@ -147,6 +147,13 @@ class HeadMusic {
     return imageMax!;
   }
 
+  String get getNormalImage {
+    if (image != null) {
+      return image!;
+    }
+    return getLowImageQuality;
+  }
+
   String imageQuality(bool maxQuality) {
     if (maxQuality) {
       return getMaxImageQuality;

@@ -5,6 +5,7 @@ import 'package:on_audio_query/on_audio_query.dart';
 import 'package:onlinemusic/models/audio.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
+import 'package:onlinemusic/widgets/custom_back_button.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 import '../services/search_service.dart';
 import '../widgets/search_cards.dart';
@@ -35,7 +36,7 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 0,
-        iconTheme: IconThemeData(
+        leading: CustomBackButton(
           color: Const.kBackground,
         ),
         backgroundColor: Colors.transparent,

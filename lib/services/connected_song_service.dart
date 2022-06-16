@@ -61,7 +61,6 @@ class ConnectedSongService {
 
   Future<void> updateController(
       ConnectedController controller, String docId) async {
-    print("updateController isReady: " + controller.isReady.toString());
     connectedSongReference.doc(docId).set(
           controller.toMap(),
           SetOptions(merge: true),
@@ -69,7 +68,6 @@ class ConnectedSongService {
   }
 
   void startListen() {
-    print("start connected listen");
     userSubscription =
         AuthService().getUserStreamFromId(_auth.currentUser!.uid).listen(
       (event) {
@@ -78,7 +76,7 @@ class ConnectedSongService {
           if (user.connectedSongModel != null) {
             connectSongModel.add(user.connectedSongModel);
             if (user.connectedSongModel!.isAdmin) {
-              controllerSubscription?.cancel();
+              _listenAdminController(user.connectedSongModel!.userId);
               _listenCurrentSong(user.connectedSongModel!.userId);
             } else {
               songSubscription?.cancel();
@@ -86,6 +84,11 @@ class ConnectedSongService {
             }
           } else {
             if (connectSongModel.value != null) {
+              showMyOverlayNotification(
+                duration: Duration(seconds: 2),
+                message: "Müziğin eşleşmesi bitirildi",
+                isDismissible: true,
+              );
               disconnectSong();
             }
           }
@@ -94,8 +97,19 @@ class ConnectedSongService {
     );
   }
 
+  void _listenAdminController(String uid) {
+    String docId = messagesService.getDoc(_auth.currentUser!.uid, uid);
+    controllerSubscription =
+        getConnectedSongStreamFromDocId(docId).listen((event) {
+      if (event.data() != null) {
+        ConnectedController connectedController =
+            ConnectedController.fromMap(event.data()!);
+        controller.add(connectedController);
+      }
+    });
+  }
+
   void stopListen() {
-    print("stop connected listen");
     userSubscription?.cancel();
     controllerSubscription?.cancel();
     songSubscription?.cancel();
@@ -112,12 +126,8 @@ class ConnectedSongService {
       if (event.data() != null) {
         ConnectedController connectedController =
             ConnectedController.fromMap(event.data()!);
-        controller.add(connectedController);
-        print("_listenConnectedSong");
         if (lastItem?.id != connectedController.song.id) {
-          print("last != connectedController.song");
-          if (connectedController.song.isOnline &&
-              (connectedController.isReady == true)) {
+          if (connectedController.isReady == true) {
             lastItem = connectedController.song;
             await updateController(
                 connectedController.copyWith(isReady: false), docId);
@@ -172,7 +182,13 @@ class ConnectedSongService {
               handler.pause();
             } on Exception catch (_) {}
           }
+        } else {
+          try {
+            handler.pause();
+          } on Exception catch (_) {}
         }
+      } else {
+        await event.reference.delete();
       }
     });
   }
@@ -214,7 +230,6 @@ class ConnectedSongService {
   }
 
   void _listenCurrentSong(String uid) {
-    print("_listenCurrentSong");
     String docId = messagesService.getDoc(_auth.currentUser!.uid, uid);
     userId = uid;
     songSubscription = handler.playbackState.listen(

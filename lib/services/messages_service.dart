@@ -42,9 +42,7 @@ class MessagesService {
   }
 
   Future<void> fetchLastMessages(String uid) async {
-    print("fetch last message");
     lastMessagesSubscription = getLastMessagesStream(uid).listen((event) {
-      print(event);
       List<Chat> lastMessages =
           event.docs.map((e) => Chat.fromMap(e.data())).toList();
       lastMessagesStream!.add(lastMessages);
@@ -86,8 +84,7 @@ class MessagesService {
       if (mes.images!.isNotEmpty) {
         StorageBloc storageBlock = context.myData.sB;
         mes.images!.forEach((image) async {
-          print("resim siliniyor = " + image!.ref!);
-          await storageBlock.deleteMessageImage(currentUser.uid, image.ref!);
+          await storageBlock.deleteMessageImage(currentUser.uid, image!.ref!);
         });
       }
     }
@@ -97,7 +94,6 @@ class MessagesService {
       ChatMessage mes, BuildContext context) async {
     if (mes.audio != null) {
       StorageBloc storageBlock = context.myData.sB;
-      print("resim siliniyor = " + mes.audio!.ref!);
       await storageBlock.deleteMessageAudio(currentUser.uid, mes.audio!.ref!);
     }
   }

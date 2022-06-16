@@ -72,7 +72,6 @@ class ListeningSongService {
         users.add(user);
       }
     }
-    print(users);
     users.removeWhere((element) {
       return (element.id == FirebaseAuth.instance.currentUser!.uid) ||
           (!(element.connectionType?.isReady ?? false));

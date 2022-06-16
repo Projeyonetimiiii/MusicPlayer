@@ -30,9 +30,8 @@ class _RootAppState extends State<RootApp> {
       if (clicked) {
         BuildContext? navigatorContext = MyApp.navigatorKey.currentContext;
         if (navigatorContext != null) {
-          print(PlayingScreen.isRunning);
           if (!PlayingScreen.isRunning) {
-            navigatorContext.push(PlayingScreen());
+            navigatorContext.pushOpaque(PlayingScreen());
           }
         }
       }

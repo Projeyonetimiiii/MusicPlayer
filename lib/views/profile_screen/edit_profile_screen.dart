@@ -42,7 +42,6 @@ class _EditProfileState extends State<EditProfile> {
       });
     }
     if (profileImage != null) {
-      print("resim : " + profileImage!.path);
       return CircleAvatar(
         backgroundColor: Colors.grey.shade200,
         backgroundImage: FileImage(File(profileImage!.path)),

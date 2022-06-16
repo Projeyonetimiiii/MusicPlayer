@@ -279,7 +279,6 @@ class _ShareSongPageState extends State<ShareSongPage> {
       if (audioUrl == null) {
         return;
       }
-      print("AudioUrl: " + audioUrl);
     } on Exception catch (e) {
       debugPrint(e.toString());
       return;
@@ -291,7 +290,6 @@ class _ShareSongPageState extends State<ShareSongPage> {
       String? uploadImageUrl =
           await data.sB.uploadImage(imagePath, userId, timeStamp: timeStamp);
       imageUrl = uploadImageUrl ?? Const.kDefaultImageUrl;
-      print("İmageUrl: " + imageUrl);
     } else {
       imageUrl = Const.kDefaultImageUrl;
     }
@@ -307,12 +305,7 @@ class _ShareSongPageState extends State<ShareSongPage> {
       idOfTheSharingUser: userId,
     );
 
-    bool res = await data.aB.saveAudioToFirebase(audio);
-    if (res) {
-      print("Yükleme başarılı");
-    } else {
-      print("Yükleme işlemi başarısız");
-    }
+    await data.aB.saveAudioToFirebase(audio);
   }
 
   Future<void> selectGenre() async {

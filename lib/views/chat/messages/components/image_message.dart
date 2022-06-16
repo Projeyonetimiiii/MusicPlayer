@@ -47,7 +47,6 @@ class ImageMessage extends StatelessWidget {
                         message.message!,
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          fontWeight: FontWeight.bold,
                           color: isMee ? Colors.white : Colors.black,
                         ),
                       ),

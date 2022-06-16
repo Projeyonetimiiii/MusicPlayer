@@ -167,7 +167,6 @@ class _ImagesDetailState extends State<ImagesDetail>
                                       userUid: FirebaseAuth
                                           .instance.currentUser!.uid,
                                     );
-                                    print("downloadurl= " + ref.downloadURL!);
                                     downloadsRef.add(ref);
                                     double val =
                                         (downloadsRef.length / files!.length);

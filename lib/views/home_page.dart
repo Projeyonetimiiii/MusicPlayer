@@ -18,6 +18,7 @@ import 'package:onlinemusic/views/playing_screen/playing_screen.dart';
 import 'package:onlinemusic/views/playlist_screen.dart';
 import 'package:onlinemusic/views/profile_screen/profile_screen.dart';
 import 'package:onlinemusic/views/search_page.dart';
+import 'package:onlinemusic/views/users_screen.dart';
 import 'package:onlinemusic/views/yt_playlist_screen.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
@@ -148,22 +149,41 @@ class _YoutubeHomePageState extends State<HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(
-                          height: MediaQuery.of(context).padding.top + 5,
+                          height: MediaQuery.of(context).padding.top + 10,
                         ),
-                        InkWell(
-                          onTap: () async {
-                            UserModel? userModel = await AuthService()
-                                .getUserFromId(
-                                    FirebaseAuth.instance.currentUser!.uid);
-                            if (userModel != null) {
-                              context.push(ProfileScreen(userModel: userModel));
-                            }
-                          },
-                          child: Icon(
-                            Icons.account_circle_rounded,
-                            size: 35,
-                            color: Colors.white,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            InkWell(
+                              onTap: () async {
+                                UserModel? userModel = await AuthService()
+                                    .getUserFromId(
+                                        FirebaseAuth.instance.currentUser!.uid);
+                                if (userModel != null) {
+                                  context.push(
+                                      ProfileScreen(userModel: userModel));
+                                }
+                              },
+                              child: Icon(
+                                Icons.account_circle_rounded,
+                                size: 35,
+                                color: Colors.white,
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                context.push(UsersScreen());
+                              },
+                              iconSize: 25,
+                              icon: Icon(
+                                Icons.groups_outlined,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(
+                          height: 15,
                         ),
                         Text(
                           "Hoşgeldin",
@@ -181,7 +201,7 @@ class _YoutubeHomePageState extends State<HomePage> {
                               fontWeight: FontWeight.w900),
                         ),
                         SizedBox(
-                          height: 12,
+                          height: 15,
                         ),
                         Container(
                           height: 36,
@@ -436,8 +456,8 @@ class _YoutubeHomePageState extends State<HomePage> {
 
   Widget getGenreWidget(int genreId) {
     return StreamBuilder<List<Audio>>(
-      stream: context.myData.aB.audiosSubject,
-      initialData: context.myData.aB.audiosSubject.value,
+      stream: AudiosBloc().audiosSubject,
+      initialData: AudiosBloc().audioList,
       builder: (context, snapshot) {
         Widget? child;
         if (!snapshot.hasData) {
@@ -658,10 +678,11 @@ class _YoutubeHomePageState extends State<HomePage> {
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
                 child: InkWell(
                   customBorder: RoundedRectangleBorder(
-                      side: BorderSide(
-                    color: Const.kBackground,
-                    width: 3,
-                  )),
+                    side: BorderSide(
+                      color: Const.kBackground,
+                      width: 3,
+                    ),
+                  ),
                   splashColor: Const.kBackground,
                   radius: 0,
                   borderRadius: BorderRadius.vertical(
@@ -695,11 +716,10 @@ class _YoutubeHomePageState extends State<HomePage> {
                                 builder: (context) {
                                   return ClipRRect(
                                     borderRadius: BorderRadius.vertical(
-                                        top: Radius.circular(12)),
+                                      top: Radius.circular(12),
+                                    ),
                                     child: CachedNetworkImage(
-                                      imageUrl: myPlaylist.imageQuality(
-                                        true,
-                                      ),
+                                      imageUrl: myPlaylist.getStandartImage,
                                       fit: BoxFit.cover,
                                       placeholder: (c, i) {
                                         return Image.asset(
@@ -777,111 +797,118 @@ class _YoutubeHomePageState extends State<HomePage> {
   }
 
   Widget getGenres(List<Genre> genres) {
-    return Container(
-      child: IntrinsicHeight(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(left: 12),
-              child: Text(
-                "Kategoriler",
-                style: TextStyle(
-                  color: Const.kBackground,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
-              ),
-            ),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: BouncingScrollPhysics(),
-              child: IntrinsicHeight(
-                child: Row(
-                  children: genres.map((e) {
-                    List<Audio> audios =
-                        AudiosBloc().getAudiosFromGenreId(e.id);
-                    bool isSelectedGenre = selectedGenreId == e.id;
-                    return audios.isEmpty
-                        ? SizedBox()
-                        : IntrinsicHeight(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                InkWell(
-                                  onTap: () {
-                                    selectedGenreId = e.id;
-                                    setState(() {});
-                                  },
-                                  child: Stack(
+    return StreamBuilder<List<Audio>>(
+        stream: AudiosBloc().audiosSubject,
+        initialData: AudiosBloc().audioList,
+        builder: (context, snapshot) {
+          return Container(
+            child: IntrinsicHeight(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(left: 12),
+                    child: Text(
+                      "Kategoriler",
+                      style: TextStyle(
+                        color: Const.kBackground,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                      ),
+                    ),
+                  ),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: BouncingScrollPhysics(),
+                    child: IntrinsicHeight(
+                      child: Row(
+                        children: genres.map((e) {
+                          List<Audio> audios =
+                              AudiosBloc().getAudiosFromGenreId(e.id);
+                          bool isSelectedGenre = selectedGenreId == e.id;
+                          return audios.isEmpty
+                              ? SizedBox()
+                              : IntrinsicHeight(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
-                                      Container(
-                                        height: 75,
-                                        width: 75,
-                                        margin: EdgeInsets.symmetric(
-                                          vertical: 12,
-                                          horizontal: 12,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          image: DecorationImage(
-                                            fit: BoxFit.cover,
-                                            image: CachedNetworkImageProvider(
-                                              audios.first.image,
-                                            ),
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        left: 12,
-                                        top: 12,
-                                        child: Container(
-                                          height: 75,
-                                          width: 75,
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                            color: isSelectedGenre
-                                                ? Colors.black38
-                                                : Colors.black
-                                                    .withOpacity(0.75),
-                                          ),
-                                          child: Center(
-                                            child: Text(
-                                              e.name,
-                                              style: TextStyle(
-                                                fontSize:
-                                                    isSelectedGenre ? 19 : 15,
-                                                color: isSelectedGenre
-                                                    ? Colors.white
-                                                    : Colors.grey,
+                                      InkWell(
+                                        onTap: () {
+                                          selectedGenreId = e.id;
+                                          setState(() {});
+                                        },
+                                        child: Stack(
+                                          children: [
+                                            Container(
+                                              height: 75,
+                                              width: 75,
+                                              margin: EdgeInsets.symmetric(
+                                                vertical: 12,
+                                                horizontal: 12,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                image: DecorationImage(
+                                                  fit: BoxFit.cover,
+                                                  image:
+                                                      CachedNetworkImageProvider(
+                                                    audios.first.image,
+                                                  ),
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
                                               ),
                                             ),
-                                          ),
+                                            Positioned(
+                                              left: 12,
+                                              top: 12,
+                                              child: Container(
+                                                height: 75,
+                                                width: 75,
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  color: isSelectedGenre
+                                                      ? Colors.black38
+                                                      : Colors.black
+                                                          .withOpacity(0.75),
+                                                ),
+                                                child: Center(
+                                                  child: Text(
+                                                    e.name,
+                                                    style: TextStyle(
+                                                      fontSize: isSelectedGenre
+                                                          ? 19
+                                                          : 15,
+                                                      color: isSelectedGenre
+                                                          ? Colors.white
+                                                          : Colors.grey,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Text(
+                                        audios.length.toString() + "  Müzik",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          overflow: TextOverflow.ellipsis,
+                                          fontWeight: FontWeight.w500,
                                         ),
                                       ),
                                     ],
                                   ),
-                                ),
-                                Text(
-                                  audios.length.toString() + "  Müzik",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    overflow: TextOverflow.ellipsis,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                  }).toList(),
-                ),
+                                );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
+          );
+        });
   }
 }

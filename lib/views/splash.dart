@@ -74,7 +74,6 @@ class _SplashScreenState extends State<SplashScreen> {
             child: TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 1, end: 0),
               onEnd: () {
-                print("onEnd");
                 Navigator.pushAndRemoveUntil(
                   context,
                   FadePageTransition(StateScreen()),

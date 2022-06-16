@@ -24,6 +24,11 @@ Box<String>? cacheBox;
 late BackgroundAudioHandler handler;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setPreferredOrientations(
+    [
+      DeviceOrientation.portraitUp,
+    ],
+  );
   await Firebase.initializeApp();
   await initHive();
   cacheBox = await openBox<String>("cache");
@@ -39,7 +44,7 @@ Future<void> initBackgroundService() async {
   handler = await AudioService.init(
     builder: () => BackgroundAudioHandler(),
     config: AudioServiceConfig(
-      androidNotificationIcon: "drawable/ic_notification",
+      androidNotificationIcon: "drawable/audio",
       androidNotificationChannelName: "Müzik",
       androidNotificationChannelDescription: "Müzik Bildirimi",
     ),

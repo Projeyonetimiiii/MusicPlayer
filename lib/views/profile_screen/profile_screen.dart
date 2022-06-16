@@ -8,6 +8,7 @@ import 'package:onlinemusic/services/auth.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/auth/login_screen.dart';
+import 'package:onlinemusic/views/chat/messages/message_screen.dart';
 import 'package:onlinemusic/views/profile_screen/blocked_users.dart';
 import 'package:onlinemusic/views/profile_screen/edit_profile_screen.dart';
 import 'package:onlinemusic/views/profile_screen/shared_songs_screen.dart';
@@ -128,6 +129,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: "Yüklenen müzikler",
             leadingIcon: Icons.music_note_rounded,
           ),
+          if (!isMee) ...[
+            listTileWidget(
+              onTap: () {
+                context.push(MessagesScreen(user: widget.userModel));
+              },
+              title: "Mesaj at",
+              leadingIcon: Icons.message_rounded,
+            ),
+          ],
           if (isMee) ...[
             listTileWidget(
               onTap: () {
@@ -167,6 +177,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ],
+          // if (!isMee && widget.userModel.connectedUserId == null) ...[
+          //   listTileWidget(
+          //     onTap: () {
+          //       context.push(BlockedUsers(user: widget.userModel));
+          //     },
+          //     title: "Eşleşme isteği gönder",
+          //     leadingIcon: Icons.person_add_alt,
+          //   ),
+          // ],
         ],
       ),
     );

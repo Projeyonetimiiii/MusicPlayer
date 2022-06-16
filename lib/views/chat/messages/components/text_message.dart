@@ -24,7 +24,7 @@ class TextMessage extends StatelessWidget {
           maxWidth: MediaQuery.of(context).size.width * 0.65,
         ),
         padding: EdgeInsets.symmetric(
-          horizontal: 8,
+          horizontal: 10,
           vertical: 8,
         ),
         decoration: BoxDecoration(
@@ -34,10 +34,10 @@ class TextMessage extends StatelessWidget {
         child: Text(
           (message.message ?? ""),
           style: TextStyle(
-            fontWeight: FontWeight.bold,
             color: isMee ? Colors.white : Colors.black,
-            fontStyle:
-                message.isRemoved ?? true ? FontStyle.italic : FontStyle.normal,
+            fontStyle: (message.isRemoved ?? false)
+                ? FontStyle.italic
+                : FontStyle.normal,
           ),
         ),
       ),

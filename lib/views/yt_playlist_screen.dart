@@ -140,7 +140,7 @@ class _YtPlaylistScreenState extends State<YtPlaylistScreen> {
                                   Rect.fromLTWH(0, 0, rect.width, rect.height));
                             },
                             child: CachedNetworkImage(
-                              imageUrl: playlist.getLowQualityImageUrl,
+                              imageUrl: playlist.getStandartImage,
                               fit: BoxFit.cover,
                               placeholder: (c, i) {
                                 return Image.asset(

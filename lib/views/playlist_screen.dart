@@ -55,7 +55,6 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         physics: BouncingScrollPhysics(),
         itemCount: (widget.youtubeGenre!.playlists!.length / 2).round(),
         itemBuilder: (c, i) {
-          print((widget.youtubeGenre!.playlists!.length / 2).round());
           int start = i * 2;
           YoutubePlaylist p1 = widget.youtubeGenre!.playlists![start];
           YoutubePlaylist? p2 =
@@ -83,6 +82,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
                     image: p2.imageQuality(true),
                   ),
                 ),
+              if (p2 == null) Expanded(child: SizedBox()),
             ],
           );
         },
@@ -95,7 +95,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
 
       return ListView.builder(
         physics: BouncingScrollPhysics(),
-        itemCount: (items.length).round(),
+        itemCount: (items.length / 2).round(),
         itemBuilder: (c, i) {
           int start = i * 2;
           MediaItem p1 = items[start];

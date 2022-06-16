@@ -45,6 +45,20 @@ class YoutubePlaylist {
     return imageMin!;
   }
 
+  String get getStandartImage {
+    if (imageStandart != null) {
+      return imageStandart!;
+    }
+    return getLowQualityImageUrl;
+  }
+
+  String get getNormalImage {
+    if (image != null) {
+      return image!;
+    }
+    return getLowQualityImageUrl;
+  }
+
   String get getLowQualityImageUrl {
     if (imageMin != null) {
       return imageMin!;

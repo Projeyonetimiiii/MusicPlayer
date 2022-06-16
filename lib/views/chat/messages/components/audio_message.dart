@@ -52,7 +52,6 @@ class _AudioMessageState extends State<AudioMessage> {
   listenPlayer() {
     eventStream = _player.playbackEventStream.listen((event) {
       if (event.processingState == ProcessingState.completed) {
-        print("bitti");
         try {
           if (mounted)
             setState(() {
@@ -93,6 +92,7 @@ class _AudioMessageState extends State<AudioMessage> {
             Container(
               padding: EdgeInsets.all(8),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
@@ -189,16 +189,30 @@ class _AudioMessageState extends State<AudioMessage> {
                       // ),
                     ],
                   ),
+                  if (widget.message!.message!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        top: 5,
+                        bottom: 2,
+                      ),
+                      child: Text(
+                        widget.message!.message.toString(),
+                        style: TextStyle(
+                          color: isMee ? Colors.white : Colors.black,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
             Positioned(
-              bottom: 1,
-              right: 3,
+              top: 7,
+              right: 20,
               child: Text(
                 getDuration(sliderScroll ? scrollSliderValue : millisecond),
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   color: isMee ? Colors.white : Colors.black,
                 ),
               ),

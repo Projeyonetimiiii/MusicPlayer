@@ -27,15 +27,19 @@ class BackgroundAudioHandler extends BaseAudioHandler
 
   AudioServiceRepeatMode get repeatMode => playbackState.value.repeatMode;
   AudioServiceShuffleMode get shuffleMode => playbackState.value.shuffleMode;
+
+  StreamSubscription? playbackEvent;
+  StreamSubscription? processingState;
+
   BackgroundAudioHandler() {
     _init();
   }
 
   Future<void> _init() async {
-    player.playbackEventStream.listen((s) {
+    playbackEvent = player.playbackEventStream.listen((s) {
       _broadcastState();
     });
-    player.processingStateStream.listen((event) async {
+    processingState = player.processingStateStream.listen((event) async {
       if (event == ProcessingState.completed) {
         skipItem();
       }
@@ -46,11 +50,7 @@ class BackgroundAudioHandler extends BaseAudioHandler
     if (!connectedSongService.isAdmin) {
       return;
     }
-    if (connectedSongService.controller.value != null) {
-      if (!(connectedSongService.controller.value!.isReady ?? false)) {
-        return;
-      }
-    }
+
     if (repeatMode == AudioServiceRepeatMode.one) {
       await player.seek(Duration.zero);
       player.play();
@@ -86,7 +86,9 @@ class BackgroundAudioHandler extends BaseAudioHandler
   @override
   Future<void> playMediaItem(MediaItem mediaItem1) async {
     updateMediaItemIndex(mediaItem1);
-    await updatePlayingMediaItem(mediaItem1);
+    if (mediaItem.value?.id != mediaItem1.id) {
+      await updatePlayingMediaItem(mediaItem1);
+    }
   }
 
   @override
@@ -153,7 +155,9 @@ class BackgroundAudioHandler extends BaseAudioHandler
           extras!['time'].runtimeType == int &&
           extras['time'] > 0 as bool) {
         _sleepTimer = Timer(Duration(minutes: extras['time'] as int), () {
-          stop();
+          if (connectedSongService.isAdmin) {
+            stop();
+          }
         });
       }
     }
@@ -164,14 +168,8 @@ class BackgroundAudioHandler extends BaseAudioHandler
   @override
   Future<void> skipToQueueItem(int index) async {
     if (index < queue.value.length && index > -1) {
+      await pause();
       await playMediaItem(queue.value[index]);
-      print("userID: " +
-          (AuthService().currentUser.value?.id ?? "") +
-          "\nisAdmin: " +
-          connectedSongService.isAdmin.toString() +
-          "\nisConencted: " +
-          connectedSongService.isConnectedSong.toString() +
-          "   backgroundAudiohandler skipToQueueItem()");
       if (!connectedSongService.isConnectedSong) {
         play();
       }
@@ -272,6 +270,15 @@ class BackgroundAudioHandler extends BaseAudioHandler
       if (connectedSongService.userId != null) {
         UserStatusService().disconnectUserSong(connectedSongService.userId!);
       }
+      mediaItem.add(null);
+      player.stop();
+      _sleepTimer?.cancel();
+      _sleepTimer = null;
+      _effectiveQueue = [];
+      playbackEvent?.cancel();
+      processingState?.cancel();
+      playbackEvent = null;
+      processingState = null;
     }
     return super.stop();
   }

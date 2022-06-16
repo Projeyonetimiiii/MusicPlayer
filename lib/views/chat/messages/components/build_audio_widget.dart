@@ -29,7 +29,6 @@ class _BuildAudioWidgetState extends State<BuildAudioWidget> {
   }
 
   void loadData() async {
-    print("load data");
     if (widget.audios!.isNotEmpty) {
       Duration? dur = await _player!.setFilePath(widget.audios![0].path!);
       setState(() {
@@ -40,7 +39,6 @@ class _BuildAudioWidgetState extends State<BuildAudioWidget> {
 
   @override
   void dispose() {
-    print("dispose");
     _player?.dispose();
     _player = null;
     super.dispose();
@@ -162,9 +160,6 @@ class _BuildAudioWidgetState extends State<BuildAudioWidget> {
                                           setState(() {
                                             sliderScroll = false;
                                           });
-                                          print(
-                                              Duration(milliseconds: e.toInt())
-                                                  .toString());
                                           await _player!.seek(Duration(
                                               milliseconds: e.toInt()));
                                         },
