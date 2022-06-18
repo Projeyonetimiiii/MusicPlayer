@@ -46,15 +46,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: Icon(Icons.arrow_back_ios_new_rounded)),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: Icon(Icons.arrow_back_ios_new_rounded),
+        ),
         iconTheme: IconThemeData(
           color: Const.kBackground,
         ),
         actions: [
-          if (isMee)
+          if (isMee || AuthService().isAdmin)
             IconButton(
               onPressed: () async {
                 await context.push(EditProfile(userModel: widget.userModel));

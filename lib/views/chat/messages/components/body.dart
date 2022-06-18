@@ -121,19 +121,9 @@ class Body extends StatelessWidget {
       children: [
         Expanded(
           child: Center(
-            child: Container(
-              padding: EdgeInsets.all(5),
-              margin: EdgeInsets.symmetric(vertical: 15, horizontal: 2),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white60, width: 1.6),
-              ),
-              child: Center(
-                child: Text(
-                  "HAYDİ HEMEN MESAJ YOLLA",
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                ),
-              ),
+            child: Text(
+              "HAYDİ HEMEN MESAJ YOLLA",
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
           ),
         ),

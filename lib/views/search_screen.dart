@@ -4,11 +4,11 @@ import 'package:hive/hive.dart';
 import 'package:material_floating_search_bar/material_floating_search_bar.dart';
 import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/models/audio.dart';
-import 'package:onlinemusic/providers/data.dart';
 import 'package:onlinemusic/services/search_service.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
-import 'package:onlinemusic/widgets/search_cards.dart';
+import 'package:onlinemusic/widgets/mini_player.dart';
+import 'package:onlinemusic/widgets/build_media_items.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -22,32 +22,44 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   YoutubeExplode youtubeExplode = YoutubeExplode();
   late final FloatingSearchBarController _controller;
-  late MyData data;
+  ValueNotifier<bool> isLoading = ValueNotifier(true);
+
+  bool isYoutubeLoaded = false;
+  bool isFirebaseLoaded = false;
 
   @override
   void initState() {
     super.initState();
-    data = context.myData;
-    data.addListener(_listener);
+    saveInitialQuery();
     _controller = FloatingSearchBarController();
-    _controller.query = widget.initialQuery ?? "";
+    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      _controller.query = widget.initialQuery ?? "";
+      setState(() {});
+    });
   }
 
-  void _listener() {
-    setState(() {});
-  }
-
-  @override
-  void dispose() {
-    data.removeListener(_listener);
-    super.dispose();
+  saveInitialQuery() {
+    if ((widget.initialQuery ?? "").trim().isNotEmpty) {
+      List<String> history = getHistory;
+      if (!history.any((element) => element == widget.initialQuery)) {
+        history.add(widget.initialQuery!);
+        cacheBox!.put("searchHistory", history);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: SafeArea(child: searchPageBody()),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(child: searchPageBody()),
+            MiniPlayer(),
+          ],
+        ),
+      ),
     );
   }
 
@@ -89,6 +101,9 @@ class _SearchScreenState extends State<SearchScreen> {
       onSubmitted: (c) {
         _controller.close();
         List<String> history = getHistory;
+        isLoading.value = true;
+        isFirebaseLoaded = false;
+        isYoutubeLoaded = false;
         setState(() {});
         if (!history.any((element) => element == c)) {
           history.add(c);
@@ -142,13 +157,33 @@ class _SearchScreenState extends State<SearchScreen> {
               );
             });
       },
-      body: ListView(
-        padding: EdgeInsets.only(top: 50),
-        physics: BouncingScrollPhysics(),
+      body: Stack(
         children: [
-          getLocalSongs(),
-          getFirebaseSongs(),
-          getYoutubeSongs(),
+          ValueListenableBuilder<bool>(
+              valueListenable: isLoading,
+              builder: (context, value, snapshot) {
+                return Positioned(
+                  top: 53.5,
+                  right: 23,
+                  left: 23,
+                  child: value
+                      ? LinearProgressIndicator(
+                          minHeight: 3,
+                          backgroundColor: Const.kBackground.withOpacity(0.1),
+                          color: Const.kBackground.withOpacity(0.5),
+                        )
+                      : SizedBox(),
+                );
+              }),
+          ListView(
+            padding: EdgeInsets.only(top: 50),
+            physics: BouncingScrollPhysics(),
+            children: [
+              // getLocalSongs(),
+              getFirebaseSongs(),
+              getYoutubeSongs(),
+            ],
+          ),
         ],
       ),
     );
@@ -160,12 +195,24 @@ class _SearchScreenState extends State<SearchScreen> {
         .toList();
   }
 
+  void loaded() {
+    Future.delayed(Duration(seconds: 3), () {
+      WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+        isLoading.value = false;
+      });
+    });
+  }
+
   Widget getFirebaseSongs() {
     return FutureBuilder<List<Audio>>(
       future:
           SearchService.fetchAudiosFromQuery(_controller.query.toLowerCase()),
       builder: (BuildContext context, AsyncSnapshot<List<Audio>> snapshot) {
         if (snapshot.hasData) {
+          isFirebaseLoaded = true;
+          if (isYoutubeLoaded) {
+            loaded();
+          }
           if ((snapshot.data ?? []).isEmpty) {
             return SizedBox();
           }
@@ -177,7 +224,7 @@ class _SearchScreenState extends State<SearchScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                buildTitle("Kullanıcı Müzikleri"),
+                buildTitle("Paylaşılan Müzikler"),
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -203,6 +250,7 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           );
         } else {
+          isFirebaseLoaded = false;
           return Center(
             child: CircularProgressIndicator(
               color: Const.kBackground,
@@ -219,6 +267,10 @@ class _SearchScreenState extends State<SearchScreen> {
       builder: (BuildContext context, AsyncSnapshot<List<Video>> snapshot) {
         Widget? child;
         if (snapshot.hasData) {
+          isYoutubeLoaded = true;
+          if (isFirebaseLoaded) {
+            loaded();
+          }
           if ((snapshot.data ?? []).isEmpty) {
             child = SizedBox();
           } else {
@@ -263,6 +315,7 @@ class _SearchScreenState extends State<SearchScreen> {
             );
           }
         } else {
+          isYoutubeLoaded = false;
           child = SizedBox();
         }
         return AnimatedSwitcher(
@@ -273,64 +326,71 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  Widget getLocalSongs() {
-    List<MediaItem> songs = SearchService.fetchMusicFromQuery(
-      _controller.query.toLowerCase(),
-      context,
-    );
-    Widget? child;
-    if (songs.isEmpty) {
-      child = SizedBox();
-    } else {
-      child = Padding(
-        padding: const EdgeInsets.symmetric(
-          vertical: 12,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            buildTitle("Cihazdaki Müzikler"),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-              ),
-              child: Card(
-                margin: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(8),
-                    bottomRight: Radius.circular(8),
-                    topRight: Radius.circular(8),
-                  ),
-                ),
-                elevation: 6,
-                color: Colors.white,
-                child: BuildMediaItems(
-                  items: songs,
-                  scrollable: false,
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+  // Widget getLocalSongs() {
+  //   List<MediaItem> songs = SearchService.fetchMusicFromQuery(
+  //     _controller.query.toLowerCase(),
+  //     context,
+  //   );
+  //   Widget? child;
+  //   if (songs.isEmpty) {
+  //     child = SizedBox();
+  //   } else {
+  //     child = Padding(
+  //       padding: const EdgeInsets.symmetric(
+  //         vertical: 12,
+  //       ),
+  //       child: Column(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           buildTitle("Cihazdaki Müzikler"),
+  //           Padding(
+  //             padding: const EdgeInsets.symmetric(
+  //               horizontal: 16,
+  //             ),
+  //             child: Card(
+  //               margin: EdgeInsets.zero,
+  //               shape: RoundedRectangleBorder(
+  //                 borderRadius: BorderRadius.only(
+  //                   bottomLeft: Radius.circular(8),
+  //                   bottomRight: Radius.circular(8),
+  //                   topRight: Radius.circular(8),
+  //                 ),
+  //               ),
+  //               elevation: 6,
+  //               color: Colors.white,
+  //               child: BuildMediaItems(
+  //                 items: songs,
+  //                 scrollable: false,
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     );
+  //   }
 
-    return AnimatedSwitcher(
-      duration: Duration(milliseconds: 350),
-      child: child,
-    );
-  }
+  //   return AnimatedSwitcher(
+  //     duration: Duration(milliseconds: 350),
+  //     child: child,
+  //   );
+  // }
 
   Widget buildTitle(String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         decoration: BoxDecoration(
-          color: Const.kBackground,
+          color: Colors.white,
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(6),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 2,
+              offset: Offset(0, 0),
+            ),
+          ],
         ),
         child: Padding(
           padding: const EdgeInsets.all(8),
@@ -339,7 +399,7 @@ class _SearchScreenState extends State<SearchScreen> {
               text,
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.white,
+                color: Const.kBackground,
               ),
             ),
           ),

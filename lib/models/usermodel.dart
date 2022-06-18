@@ -15,6 +15,7 @@ class UserModel {
   ConnectionType? connectionType;
   bool? isOnline;
   DateTime? lastSeen;
+  bool? isAdmin;
   UserModel({
     this.image,
     this.email,
@@ -26,6 +27,7 @@ class UserModel {
     this.connectionType,
     this.isOnline,
     this.lastSeen,
+    this.isAdmin,
   });
 
   UserModel copyWith({
@@ -38,6 +40,7 @@ class UserModel {
     ConnectedSongModel? connectedSongUserId,
     ConnectionType? connectionType,
     bool? isOnline,
+    bool? isAdmin,
     DateTime? lastSeen,
   }) {
     return UserModel(
@@ -51,6 +54,7 @@ class UserModel {
       connectionType: connectionType ?? this.connectionType,
       isOnline: isOnline ?? this.isOnline,
       lastSeen: lastSeen ?? this.lastSeen,
+      isAdmin: isAdmin ?? this.isAdmin,
     );
   }
 
@@ -66,6 +70,7 @@ class UserModel {
       'connectionType': connectionType?.index,
       'isOnline': isOnline,
       'lastSeen': lastSeen?.millisecondsSinceEpoch,
+      'isAdmin': isAdmin,
     };
   }
 
@@ -76,6 +81,7 @@ class UserModel {
       userName: map['userName'] != null ? map['userName'] as String : null,
       id: map['id'] != null ? map['id'] as String : null,
       bio: map['bio'] != null ? map['bio'] as String : null,
+      isAdmin: map['isAdmin'] != null ? map['isAdmin'] : null,
       connectedUserId: map['connectedUserId'] != null
           ? map['connectedUserId'] as String
           : null,
@@ -99,7 +105,7 @@ class UserModel {
 
   @override
   String toString() {
-    return 'UserModel(image: $image, email: $email, userName: $userName, id: $id, bio: $bio, connectedUserId: $connectedUserId, ConnectedSongModel: $connectedSongModel, connectionType: $connectionType, isOnline: $isOnline, lastSeen: $lastSeen)';
+    return 'UserModel(image: $image, email: $email, userName: $userName, id: $id, bio: $bio, connectedUserId: $connectedUserId, ConnectedSongModel: $connectedSongModel, connectionType: $connectionType, isOnline: $isOnline, lastSeen: $lastSeen, isAdmin: $isAdmin)';
   }
 
   @override
@@ -116,7 +122,8 @@ class UserModel {
         other.connectedSongModel == connectedSongModel &&
         other.connectionType == connectionType &&
         other.isOnline == isOnline &&
-        other.lastSeen == lastSeen;
+        other.lastSeen == lastSeen &&
+        other.isAdmin == isAdmin;
   }
 
   @override
@@ -130,6 +137,7 @@ class UserModel {
         connectedSongModel.hashCode ^
         connectionType.hashCode ^
         isOnline.hashCode ^
-        lastSeen.hashCode;
+        lastSeen.hashCode ^
+        isAdmin.hashCode;
   }
 }

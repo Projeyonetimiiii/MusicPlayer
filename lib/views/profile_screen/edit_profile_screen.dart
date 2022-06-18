@@ -5,9 +5,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:onlinemusic/models/usermodel.dart';
+import 'package:onlinemusic/services/auth.dart';
 import 'package:onlinemusic/services/storage_bloc.dart';
 import 'package:onlinemusic/services/user_status_service.dart';
 import 'package:onlinemusic/util/const.dart';
+import 'package:onlinemusic/widgets/custom_back_button.dart';
 import 'package:onlinemusic/widgets/custom_textfield.dart';
 
 class EditProfile extends StatefulWidget {
@@ -74,14 +76,8 @@ class _EditProfileState extends State<EditProfile> {
             color: Const.kBackground,
           ),
         ),
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: Const.kBackground,
-          ),
+        leading: CustomBackButton(
+          color: Const.kBackground,
         ),
         centerTitle: true,
       ),
@@ -170,6 +166,30 @@ class _EditProfileState extends State<EditProfile> {
                 ),
               ],
             ),
+            if (AuthService().isAdmin &&
+                widget.userModel.id != AuthService().currentUser.value?.id &&
+                !(widget.userModel.isAdmin ?? false)) ...[
+              SwitchListTile.adaptive(
+                activeColor: Const.kBackground,
+                title: Text("Çevrimiçi"),
+                value: widget.userModel.isOnline ?? false,
+                onChanged: (s) {
+                  UserModel user = widget.userModel..isOnline = s;
+                  statusService.updateProfile(user);
+                  setState(() {});
+                },
+              ),
+              SwitchListTile.adaptive(
+                activeColor: Const.kBackground,
+                title: Text("Admin"),
+                value: widget.userModel.isAdmin ?? false,
+                onChanged: (s) {
+                  UserModel user = widget.userModel..isAdmin = s;
+                  statusService.updateProfile(user);
+                  setState(() {});
+                },
+              ),
+            ],
             SizedBox(
               height: 16,
             ),
@@ -195,7 +215,7 @@ class _EditProfileState extends State<EditProfile> {
                                 UserModel userModel = widget.userModel;
                                 if (profileImage != null) {
                                   var mediaUrl =
-                                      await storageService.uploadImage(
+                                      await storageService.uploadProfileImage(
                                     profileImage!.path,
                                     _auth.currentUser!.uid,
                                   );
@@ -221,14 +241,15 @@ class _EditProfileState extends State<EditProfile> {
                               child: Container(
                                 height: 40,
                                 child: Center(
-                                    child: Text(
-                                  "Kaydet",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
+                                  child: Text(
+                                    "Kaydet",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                    ),
                                   ),
-                                )),
+                                ),
                               ),
                             ),
                           ),

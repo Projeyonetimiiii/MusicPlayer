@@ -8,6 +8,7 @@ import 'package:onlinemusic/services/auth.dart';
 import 'package:onlinemusic/services/messages_service.dart';
 import 'package:onlinemusic/services/user_status_service.dart';
 import 'package:onlinemusic/util/const.dart';
+import 'package:onlinemusic/util/enums.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/chat/models/chat_message.dart';
 import 'package:onlinemusic/views/profile_screen/profile_screen.dart';
@@ -111,10 +112,14 @@ class _MessagesScreenState extends State<MessagesScreen> {
                           FirebaseAuth.instance.currentUser!.uid,
                           widget.user.id!);
                       messagesService.updateChat(
-                          docId,
-                          lastMessage!.copyWith(
-                            message: "mesaj silindi",
-                          ));
+                        docId,
+                        lastMessage!.copyWith(
+                          message: "mesaj silindi",
+                          audio: null,
+                          images: null,
+                          messageType: ChatMessageType.Text,
+                        ),
+                      );
                     }
                   }
                   selectedMessage.forEach((element) async {

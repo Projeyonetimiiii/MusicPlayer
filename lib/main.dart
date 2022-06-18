@@ -11,6 +11,7 @@ import 'package:onlinemusic/services/connected_song_service.dart';
 import 'package:onlinemusic/services/listening_song_service.dart';
 import 'package:onlinemusic/services/user_status_service.dart';
 import 'package:onlinemusic/util/const.dart';
+import 'package:onlinemusic/util/converter.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/widgets/app_lifecycle.dart';
 import 'package:overlay_support/overlay_support.dart';
@@ -52,7 +53,7 @@ Future<void> initBackgroundService() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  MyApp({Key? key}) : super(key: key);
   static GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   @override
   Widget build(BuildContext context) {

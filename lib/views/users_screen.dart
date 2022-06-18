@@ -25,82 +25,90 @@ class _UsersScreenState extends State<UsersScreen> {
         title: Text("Kullanıcılar"),
       ),
       body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: AuthService().usersReference.snapshots(),
-          builder: (c, snap) {
-            if (!snap.hasData) {
-              return Center(
-                child: CircularProgressIndicator(
-                  color: Const.kBackground,
-                ),
-              );
-            }
-            List<UserModel> users = snap.data!.docs
-                .map((e) => UserModel.fromMap(e.data()))
-                .toList();
-            users.removeWhere((element) =>
-                element.id == FirebaseAuth.instance.currentUser!.uid);
-            return ListView.builder(
-              itemCount: users.length,
-              itemBuilder: (c, i) {
-                UserModel user = users[i];
-                Color color = user.isOnline == true ? Colors.green : Colors.red;
-                return Stack(
-                  children: [
-                    Positioned(
-                      left: 4,
-                      top: 10,
-                      bottom: 10,
-                      child: Container(
-                        width: 3,
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      left: 7,
-                      top: 11,
-                      bottom: 11,
-                      child: Container(
-                        width: 60,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              color.withOpacity(0.1),
-                              Colors.transparent,
-                            ],
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                          ),
-                        ),
-                      ),
-                    ),
-                    ListTile(
-                      onTap: () {
-                        context.push(ProfileScreen(userModel: user));
-                      },
-                      leading: SizedBox(
-                        width: 48,
-                        height: 48,
-                        child: Card(
-                          clipBehavior: Clip.antiAlias,
-                          elevation: 4,
-                          shape: StadiumBorder(),
-                          child: CachedNetworkImage(
-                            imageUrl: user.image!,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
-                      title: Text(user.userName ?? "User"),
-                      subtitle: Text(user.bio ?? "Biografi"),
-                    ),
-                  ],
-                );
-              },
+        stream: AuthService().usersReference.snapshots(),
+        builder: (c, snap) {
+          if (!snap.hasData) {
+            return Center(
+              child: CircularProgressIndicator(
+                color: Const.kBackground,
+              ),
             );
-          }),
+          }
+          List<UserModel> users =
+              snap.data!.docs.map((e) => UserModel.fromMap(e.data())).toList();
+          users.removeWhere((element) =>
+              element.id == FirebaseAuth.instance.currentUser!.uid);
+          return ListView.builder(
+            itemCount: users.length,
+            itemBuilder: (c, i) {
+              UserModel user = users[i];
+              Color color = user.isOnline == true ? Colors.green : Colors.red;
+              return Stack(
+                children: [
+                  Positioned(
+                    left: 4,
+                    top: 10,
+                    bottom: 10,
+                    child: Container(
+                      width: 3,
+                      decoration: BoxDecoration(
+                        color: color,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 7,
+                    top: 11,
+                    bottom: 11,
+                    child: Container(
+                      width: 60,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            color.withOpacity(0.1),
+                            Colors.transparent,
+                          ],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                      ),
+                    ),
+                  ),
+                  ListTile(
+                    onTap: () {
+                      context.push(ProfileScreen(userModel: user));
+                    },
+                    leading: SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: Card(
+                        clipBehavior: Clip.antiAlias,
+                        elevation: 4,
+                        shape: StadiumBorder(),
+                        child: CachedNetworkImage(
+                          imageUrl: user.image!,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    title: Text(
+                      user.userName ?? "User",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      user.bio ?? "Biografi",
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

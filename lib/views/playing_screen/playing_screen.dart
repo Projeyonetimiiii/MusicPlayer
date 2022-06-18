@@ -30,7 +30,7 @@ import 'package:onlinemusic/widgets/my_overlay_notification.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import '../chat/messages/message_screen.dart';
-import '../video_player_page.dart';
+import '../video_player_screen.dart';
 
 class PlayingScreen extends StatefulWidget {
   final MediaItem? song;
@@ -61,10 +61,9 @@ class _PlayingScreenState extends State<PlayingScreen>
   @override
   void initState() {
     super.initState();
-    listenConnectedController();
     PlayingScreen.isRunning = true;
     isFavorite =
-        myData.getFavoriteSong().any((element) => element.id == song?.id);
+        myData.favoriteSongs.value.any((element) => element.id == song?.id);
     pageController = PageController();
     setMediaItem(updateQueue: true);
   }
@@ -74,8 +73,6 @@ class _PlayingScreenState extends State<PlayingScreen>
     PlayingScreen.isRunning = false;
     super.dispose();
   }
-
-  void listenConnectedController() {}
 
   Future<void> updateQueue() async {
     if (widget.queue != null) {
@@ -258,8 +255,8 @@ class _PlayingScreenState extends State<PlayingScreen>
             Spacer(),
             StreamMediaItem(
               builder: (song) {
-                isFavorite =
-                    myData.getFavoriteSong().any((element) => element == song);
+                isFavorite = myData.favoriteSongs.value
+                    .any((element) => element == song);
                 Widget? favoriteChild;
                 Widget? listenerCount;
 
@@ -555,86 +552,86 @@ class _PlayingScreenState extends State<PlayingScreen>
 
   void showListeningUsers(String songId) {
     showModalBottomSheet(
-        context: context,
-        backgroundColor: Colors.grey.shade200,
-        isScrollControlled: true,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(16),
-          ),
+      context: context,
+      backgroundColor: Colors.grey.shade200,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(16),
         ),
-        builder: (c) {
-          AuthService authService = AuthService();
-          return SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: ListeningSongService().getStreamListenersFrom(songId),
-              builder: (c, snapshot) {
-                if (!snapshot.hasData) {
-                  return SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.6,
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        color: Const.kBackground,
-                      ),
+      ),
+      builder: (c) {
+        AuthService authService = AuthService();
+        return SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: ListeningSongService().getStreamListenersFrom(songId),
+            builder: (c, snapshot) {
+              if (!snapshot.hasData) {
+                return SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.6,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: Const.kBackground,
                     ),
-                  );
-                }
-
-                if (snapshot.data!.docs.isEmpty) {
-                  return SizedBox(
-                    height: MediaQuery.of(context).size.height * 0.6,
-                    child: Center(
-                      child: Text("Burada hiç kullanıcı yok :("),
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  physics: BouncingScrollPhysics(),
-                  itemCount: snapshot.data!.docs.length,
-                  itemBuilder: (c, i) {
-                    return StreamBuilder<
-                        DocumentSnapshot<Map<String, dynamic>>>(
-                      stream: authService
-                          .getUserStreamFromId(snapshot.data!.docs[i].id),
-                      builder: (c, snap) {
-                        if (!snap.hasData) {
-                          return Center(
-                            child: Text(""),
-                          );
-                        }
-                        if (snap.data == null) {
-                          return Text("");
-                        }
-                        UserModel user = UserModel.fromMap(snap.data!.data()!);
-                        if (user.id == FirebaseAuth.instance.currentUser!.uid) {
-                          return SizedBox();
-                        }
-                        if (!(user.connectionType?.isReady ?? false)) {
-                          return SizedBox();
-                        }
-                        return ListTile(
-                          onTap: () {
-                            AuthService().sendUserMatchRequest(user.id!);
-                            Navigator.pop(context);
-                          },
-                          leading: CircleAvatar(
-                            backgroundColor: Colors.grey.shade200,
-                            backgroundImage:
-                                CachedNetworkImageProvider(user.image!),
-                          ),
-                          title: Text(user.userName ?? "User Name"),
-                          subtitle: Text(user.bio ?? "Biografi"),
-                        );
-                      },
-                    );
-                  },
+                  ),
                 );
-              },
-            ),
-          );
-        });
+              }
+
+              if (snapshot.data!.docs.isEmpty) {
+                return SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.6,
+                  child: Center(
+                    child: Text("Burada hiç kullanıcı yok :("),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                physics: BouncingScrollPhysics(),
+                itemCount: snapshot.data!.docs.length,
+                itemBuilder: (c, i) {
+                  return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                    stream: authService
+                        .getUserStreamFromId(snapshot.data!.docs[i].id),
+                    builder: (c, snap) {
+                      if (!snap.hasData) {
+                        return Center(
+                          child: Text(""),
+                        );
+                      }
+                      if (snap.data == null) {
+                        return Text("");
+                      }
+                      UserModel user = UserModel.fromMap(snap.data!.data()!);
+                      if (user.id == FirebaseAuth.instance.currentUser!.uid) {
+                        return SizedBox();
+                      }
+                      if (!(user.connectionType?.isReady ?? false)) {
+                        return SizedBox();
+                      }
+                      return ListTile(
+                        onTap: () {
+                          AuthService().sendUserMatchRequest(user.id!);
+                          Navigator.pop(context);
+                        },
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.grey.shade200,
+                          backgroundImage:
+                              CachedNetworkImageProvider(user.image!),
+                        ),
+                        title: Text(user.userName ?? "User Name"),
+                        subtitle: Text(user.bio ?? "Biografi"),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 
   Widget buildImageWidget() {
@@ -654,32 +651,38 @@ class _PlayingScreenState extends State<PlayingScreen>
 
                 Widget? child;
                 if (!song.isOnline) {
-                  child = Image(
-                    fit: BoxFit.cover,
-                    width: MediaQuery.of(context).size.width - 32,
-                    gaplessPlayback: true,
-                    image: FileImage(
-                      File(
-                        song.artUri!.toFilePath(),
+                  child = Hero(
+                    tag: "currentArtwork",
+                    child: Image(
+                      fit: BoxFit.cover,
+                      width: MediaQuery.of(context).size.width - 32,
+                      gaplessPlayback: true,
+                      image: FileImage(
+                        File(
+                          song.artUri!.toFilePath(),
+                        ),
                       ),
                     ),
                   );
                 } else {
-                  child = CachedNetworkImage(
-                    fit: BoxFit.cover,
-                    imageUrl: song.extras!["image"]["maxQualityImageUrl"],
-                    placeholder: (_, __) {
-                      return Image(
-                        fit: BoxFit.cover,
-                        image: AssetImage(
-                          "assets/images/default_song_image.png",
-                        ),
-                      );
-                    },
-                    errorWidget: (_, __, ___) {
-                      return song.getImageWidget;
-                    },
-                    width: MediaQuery.of(context).size.width - 32,
+                  child = Hero(
+                    tag: "currentArtwork",
+                    child: CachedNetworkImage(
+                      fit: BoxFit.cover,
+                      imageUrl: song.maxImageUrl,
+                      placeholder: (_, __) {
+                        return Image(
+                          fit: BoxFit.cover,
+                          image: AssetImage(
+                            "assets/images/default_song_image.png",
+                          ),
+                        );
+                      },
+                      errorWidget: (_, __, ___) {
+                        return song.getImageWidget;
+                      },
+                      width: MediaQuery.of(context).size.width - 32,
+                    ),
                   );
                 }
 
@@ -920,7 +923,7 @@ class _PlayingScreenState extends State<PlayingScreen>
   StreamMediaItem buildTitleWidget() {
     return StreamMediaItem(
       builder: (song) {
-        isFavorite = myData.getFavoriteSong().any((e) => e.id == song?.id);
+        isFavorite = myData.favoriteSongs.value.any((e) => e.id == song?.id);
         return Container(
           width: double.maxFinite,
           child: Column(
@@ -1224,7 +1227,7 @@ class _PlayingScreenState extends State<PlayingScreen>
         StreamManifest url =
             await yt.videos.streamsClient.getManifest(song!.id);
         context.push(
-          VideoPlayerPage(
+          VideoPlayerScreen(
             isLocal: false,
             url: url.muxed.bestQuality.url.toString(),
           ),

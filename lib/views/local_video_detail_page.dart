@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:on_video_query/on_video_query.dart';
 import 'package:onlinemusic/util/extensions.dart';
-import 'package:onlinemusic/views/video_player_page.dart';
+import 'package:onlinemusic/views/video_player_screen.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import '../util/const.dart';
 
@@ -31,7 +31,7 @@ class _VideosDetailsState extends State<VideosDetails> {
             return InkWell(
               onTap: () {
                 context.push(
-                  VideoPlayerPage(isLocal: true, url: e.path),
+                  VideoPlayerScreen(isLocal: true, url: e.path),
                 );
               },
               child: ListTile(

@@ -80,6 +80,10 @@ class BackgroundAudioHandler extends BaseAudioHandler
   Future<void> updateQueue(List<MediaItem> newQueue) {
     _effectiveQueue.clear();
     _effectiveQueue.addAll(newQueue);
+    cacheBox!.put(
+      "lastQueue",
+      newQueue.map((e) => e.toJson).toList(),
+    );
     return super.updateQueue(newQueue);
   }
 
@@ -126,6 +130,7 @@ class BackgroundAudioHandler extends BaseAudioHandler
       url = await mediaItem1.source;
     }
     if (url == null) return;
+    cacheBox!.put("lastMediaItem", mediaItem1.toJson);
     if (mediaItem1.isOnline) {
       try {
         await player.setAudioSource(
@@ -179,6 +184,10 @@ class BackgroundAudioHandler extends BaseAudioHandler
 
   @override
   Future<void> setRepeatMode(AudioServiceRepeatMode repeatMode) async {
+    cacheBox!.put(
+      "lastRepeatMode",
+      repeatMode.index,
+    );
     _broadcastState(repeatMode: repeatMode);
   }
 
@@ -221,6 +230,14 @@ class BackgroundAudioHandler extends BaseAudioHandler
       queue.add(_effectiveQueue.copyList);
       index = queue.value.indexWhere((e) => e.id == mediaItem.value?.id);
     }
+    cacheBox!.put(
+      "lastShuffleMode",
+      shuffleMode.index,
+    );
+    cacheBox!.put(
+      "lastQueue",
+      queue.value.map((e) => e.toJson).toList(),
+    );
     _broadcastState(shuffleMode: shuffleMode);
   }
 
@@ -232,9 +249,9 @@ class BackgroundAudioHandler extends BaseAudioHandler
     playbackState.add(playbackState.value.copyWith(
       controls: connectedSongService.isAdmin
           ? [
-              MediaControl.skipToPrevious,
-              playing ? MediaControl.pause : MediaControl.play,
-              MediaControl.skipToNext
+              MyMediaControls.skipToPrevious,
+              playing ? MyMediaControls.pause : MyMediaControls.play,
+              MyMediaControls.skipToNext
             ]
           : [],
       systemActions: const {
@@ -243,7 +260,7 @@ class BackgroundAudioHandler extends BaseAudioHandler
         MediaAction.seekBackward,
       },
       androidCompactActionIndices:
-          connectedSongService.isAdmin ? const [0, 1, 2] : [],
+          connectedSongService.isAdmin ? const [ 0,1,2] : [],
       processingState: const {
         ProcessingState.idle: AudioProcessingState.idle,
         ProcessingState.loading: AudioProcessingState.loading,
@@ -263,7 +280,10 @@ class BackgroundAudioHandler extends BaseAudioHandler
 
   @override
   Future<void> stop() async {
-    await pause();
+    await player.stop();
+    await playbackState.firstWhere(
+      (state) => state.processingState == AudioProcessingState.idle,
+    );
     if (!appIsRunnig) {
       await listeningSongService.deleteUserIdFromLastListenedSongId();
       await userStatusService.updateConenctionType(ConnectionType.DontConnect);
@@ -282,4 +302,34 @@ class BackgroundAudioHandler extends BaseAudioHandler
     }
     return super.stop();
   }
+}
+
+class MyMediaControls {
+  /// A default control for [MediaAction.pause].
+  static const pause = MediaControl(
+    androidIcon: 'drawable/pause',
+    label: 'Pause',
+    action: MediaAction.pause,
+  );
+
+  /// A default control for [MediaAction.play].
+  static const play = MediaControl(
+    androidIcon: 'drawable/play',
+    label: 'Play',
+    action: MediaAction.play,
+  );
+
+  /// A default control for [MediaAction.skipToNext].
+  static const skipToNext = MediaControl(
+    androidIcon: 'drawable/next',
+    label: 'Next',
+    action: MediaAction.skipToNext,
+  );
+
+  /// A default control for [MediaAction.skipToPrevious].
+  static const skipToPrevious = MediaControl(
+    androidIcon: 'drawable/geri',
+    label: 'Previous',
+    action: MediaAction.skipToPrevious,
+  );
 }

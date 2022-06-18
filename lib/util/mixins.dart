@@ -98,7 +98,7 @@ mixin BottomSheetMixin {
                                   });
                                   StorageBloc storageBloc = StorageBloc();
                                   MediaReference mediaRef =
-                                      await storageBloc.uploadAudio(
+                                      await storageBloc.uploadMessageAudio(
                                     index: 0,
                                     timeStamp: DateTime.now()
                                         .millisecondsSinceEpoch

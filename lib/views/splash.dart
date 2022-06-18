@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:onlinemusic/services/app_update_service.dart';
 import 'package:onlinemusic/views/state.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -74,6 +75,7 @@ class _SplashScreenState extends State<SplashScreen> {
             child: TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: 1, end: 0),
               onEnd: () {
+                AppUpdateService.checkForUpdates();
                 Navigator.pushAndRemoveUntil(
                   context,
                   FadePageTransition(StateScreen()),

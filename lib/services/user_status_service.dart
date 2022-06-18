@@ -81,7 +81,7 @@ class UserStatusService {
     try {
       await _firestore
           .collection("Users")
-          .doc(_auth.currentUser!.uid)
+          .doc(userModel.id)
           .set(userModel.toMap(), SetOptions(merge: true));
     } catch (e) {
       print("hata " + e.toString());
@@ -137,13 +137,15 @@ class UserStatusService {
 
   Future<void> disconnectUserSong(String connectedSongUserId) async {
     try {
-      await _firestore.collection("Users").doc(_auth.currentUser!.uid).set({
-        "connectedSongModel": null,
-      }, SetOptions(merge: true));
-      await _firestore.collection("Users").doc(connectedSongUserId).set({
-        "connectedSongModel": null,
-      }, SetOptions(merge: true));
-      connectedSongService.disconnectSong(uid: connectedSongUserId);
+      if (_auth.currentUser != null) {
+        await _firestore.collection("Users").doc(_auth.currentUser!.uid).set({
+          "connectedSongModel": null,
+        }, SetOptions(merge: true));
+        await _firestore.collection("Users").doc(connectedSongUserId).set({
+          "connectedSongModel": null,
+        }, SetOptions(merge: true));
+        connectedSongService.disconnectSong(uid: connectedSongUserId);
+      }
     } catch (e) {
       print("hata  " + e.toString());
     }
@@ -151,10 +153,12 @@ class UserStatusService {
 
   Future<void> userConnectStatus(bool isOnline) async {
     try {
-      await _firestore.collection("Users").doc(_auth.currentUser!.uid).set({
-        "isOnline": isOnline,
-        if (!isOnline) "lastSeen": DateTime.now().millisecondsSinceEpoch,
-      }, SetOptions(merge: true));
+      if (_auth.currentUser != null) {
+        await _firestore.collection("Users").doc(_auth.currentUser!.uid).set({
+          "isOnline": isOnline,
+          if (!isOnline) "lastSeen": DateTime.now().millisecondsSinceEpoch,
+        }, SetOptions(merge: true));
+      }
     } catch (e) {
       print("hata  " + e.toString());
     }

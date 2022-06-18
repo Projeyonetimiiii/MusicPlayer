@@ -7,8 +7,10 @@ import 'package:onlinemusic/models/youtube_playlist.dart';
 import 'package:onlinemusic/services/audios_bloc.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/playing_screen/playing_screen.dart';
-import 'package:onlinemusic/views/yt_playlist_screen.dart';
+import 'package:onlinemusic/views/playlist_screen/widgets/my_gridview.dart';
+import 'package:onlinemusic/views/playlist_screen/yt_playlist_screen.dart';
 import 'package:onlinemusic/widgets/custom_back_button.dart';
+import 'package:onlinemusic/widgets/mini_player.dart';
 
 class PlaylistScreen extends StatefulWidget {
   final bool isYoutube;
@@ -44,48 +46,29 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
           leading: CustomBackButton(),
           centerTitle: true,
         ),
-        body: getBody(),
+        body: Column(
+          children: [
+            Expanded(child: getBody()),
+            MiniPlayer(),
+          ],
+        ),
       ),
     );
   }
 
   Widget getBody() {
     if (widget.isYoutube) {
-      return ListView.builder(
-        physics: BouncingScrollPhysics(),
-        itemCount: (widget.youtubeGenre!.playlists!.length / 2).round(),
-        itemBuilder: (c, i) {
-          int start = i * 2;
-          YoutubePlaylist p1 = widget.youtubeGenre!.playlists![start];
-          YoutubePlaylist? p2 =
-              (start + 1) < widget.youtubeGenre!.playlists!.length
-                  ? widget.youtubeGenre!.playlists![start + 1]
-                  : null;
-          return Row(
-            children: [
-              Expanded(
-                child: buildItem(
-                  p1.title ?? title,
-                  () {
-                    playlistOnTap(p1);
-                  },
-                  image: p1.imageQuality(true),
-                ),
-              ),
-              if (p2 != null)
-                Expanded(
-                  child: buildItem(
-                    p2.title ?? title,
-                    () {
-                      playlistOnTap(p2);
-                    },
-                    image: p2.imageQuality(true),
-                  ),
-                ),
-              if (p2 == null) Expanded(child: SizedBox()),
-            ],
+      return MyGridView(
+        children: widget.youtubeGenre!.playlists!.map((e) {
+          return buildItem(
+            e.title ?? title,
+            () {
+              playlistOnTap(e);
+            },
+            image: e.getStandartImage,
           );
-        },
+        }).toList(),
+        axisCount: 3,
       );
     } else {
       List<MediaItem> items = AudiosBloc()
@@ -93,38 +76,17 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
           .map((e) => e.toMediaItem)
           .toList();
 
-      return ListView.builder(
-        physics: BouncingScrollPhysics(),
-        itemCount: (items.length / 2).round(),
-        itemBuilder: (c, i) {
-          int start = i * 2;
-          MediaItem p1 = items[start];
-          MediaItem? p2 = (start + 1) < items.length ? items[start + 1] : null;
-          return Row(
-            children: [
-              Expanded(
-                child: buildItem(
-                  p1.title,
-                  () {
-                    mediaItemOnTap(items, p1);
-                  },
-                  imageWidget: p1.getImageWidget,
-                ),
-              ),
-              if (p2 != null)
-                Expanded(
-                  child: buildItem(
-                    p2.title,
-                    () {
-                      mediaItemOnTap(items, p2);
-                    },
-                    imageWidget: p2.getImageWidget,
-                  ),
-                ),
-              if (p2 == null) Expanded(child: SizedBox()),
-            ],
+      return MyGridView(
+        children: items.map((e) {
+          return buildItem(
+            e.title,
+            () {
+              mediaItemOnTap(items, e);
+            },
+            imageWidget: e.getImageWidget,
           );
-        },
+        }).toList(),
+        axisCount: 3,
       );
     }
   }
@@ -160,6 +122,7 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 5,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [

@@ -35,6 +35,7 @@ class ListeningSongService {
 
   Future<void> deleteUserIdFromLastListenedSongId(
       {String? listeninSongId}) async {
+    if (FirebaseAuth.instance.currentUser == null) return;
     String userId = FirebaseAuth.instance.currentUser!.uid;
     String? lastListenedSongId = cacheBox!.get("lastListenedSong");
     if (lastListenedSongId != null) {

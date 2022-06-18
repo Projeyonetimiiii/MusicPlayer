@@ -21,7 +21,7 @@ class StorageBloc {
   }
 
   Reference get messageAudiosRef {
-    return reference.child("message_audio");
+    return reference.child("message_audios");
   }
 
   Reference get audioImagesRef {
@@ -30,6 +30,10 @@ class StorageBloc {
 
   Reference get messageImagesRef {
     return reference.child("message_images");
+  }
+
+  Reference get profileImagesRef {
+    return reference.child("profile_pictures");
   }
 
   Future<MediaReference> uploadAudio({
@@ -77,7 +81,7 @@ class StorageBloc {
     String? timeStamp,
     String? ext,
   }) async {
-    ext = ext ?? fileExt(file.path);
+    ext = ext ?? fileExt(file.path, defExt: "jpg");
     timeStamp = timeStamp ?? DateTime.now().millisecondsSinceEpoch.toString();
     String ref = "$timeStamp-$index.$ext";
     UploadTask task = messageImagesRef
@@ -89,8 +93,15 @@ class StorageBloc {
     return MediaReference(ref: ref, downloadURL: downloadURL);
   }
 
-  static String fileExt(String name) {
-    return name.split(".").last;
+  static String fileExt(String name, {String defExt = "mp3"}) {
+    List<String> paths = name.split("/");
+    if (paths.length > 1) {
+      List<String> names = paths.last.split(".");
+      if (names.length > 1) {
+        return names.last;
+      }
+    }
+    return defExt;
   }
 
   // ref = MediaReference deki ref
@@ -125,6 +136,26 @@ class StorageBloc {
     String ref = "$timeStamp.$ext";
     try {
       UploadTask task = audioImagesRef.child(userId).child(ref).putFile(
+          File(imagePath), SettableMetadata(contentType: 'image/$ext'));
+      await task.whenComplete(() => null);
+      String downloadURL = await task.snapshot.ref.getDownloadURL();
+      return downloadURL;
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+      return null;
+    }
+  }
+
+  Future<String?> uploadProfileImage(
+    String imagePath,
+    String userId, {
+    String? timeStamp,
+  }) async {
+    String ext = fileExt(imagePath);
+    timeStamp = timeStamp ?? DateTime.now().millisecondsSinceEpoch.toString();
+    String ref = "$timeStamp.$ext";
+    try {
+      UploadTask task = profileImagesRef.child(userId).child(ref).putFile(
           File(imagePath), SettableMetadata(contentType: 'image/$ext'));
       await task.whenComplete(() => null);
       String downloadURL = await task.snapshot.ref.getDownloadURL();

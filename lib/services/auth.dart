@@ -43,6 +43,8 @@ class AuthService {
     currentUser = BehaviorSubject.seeded(null);
   }
 
+  bool get isAdmin => currentUser.value?.isAdmin == true;
+
   CollectionReference<Map<String, dynamic>> get usersReference =>
       _firestore.collection("Users");
 

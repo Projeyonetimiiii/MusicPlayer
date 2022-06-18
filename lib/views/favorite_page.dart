@@ -12,98 +12,99 @@ class FavoritePage extends StatefulWidget {
 }
 
 class _FavoritePageState extends State<FavoritePage> {
-  List<MediaItem> favorisongs = [];
-
-  @override
-  void initState() {
-    super.initState();
-    favorisongs = context.myData.getFavoriteSong();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Favori Müziklerim"),
       ),
-      body: favorisongs.isNotEmpty
-          ? ListView.builder(
-              physics: BouncingScrollPhysics(),
-              itemCount: favorisongs.length,
-              itemBuilder: (BuildContext context, int index) {
-                MediaItem mediItem = favorisongs[index];
-                return Dismissible(
-                  key: Key(mediItem.id),
-                  background: Container(
-                    color: Colors.red,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Icon(Icons.delete, color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                  secondaryBackground: Container(
-                    color: Colors.red,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Icon(Icons.delete, color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                  onDismissed: (l) {
-                    setState(() {
-                      favorisongs.removeAt(index);
-                      context.myData.removeFavoritedSong(mediItem);
-                    });
-                  },
-                  child: ListTile(
-                    contentPadding:
-                        const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    onTap: () {
-                      context.pushOpaque(PlayingScreen(
-                        song: mediItem,
-                        queue: favorisongs,
-                      ));
-                    },
-                    leading: Material(
-                      elevation: 10,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: SizedBox(
-                          width: 90,
-                          child: AspectRatio(
-                            aspectRatio: 16 / 9,
-                            child: mediItem.getImageWidget,
-                          ),
-                        ),
-                      ),
-                    ),
-                    trailing: Text(Const.getDurationString(
-                        mediItem.duration ?? Duration.zero)),
-                    title: Text(
-                      mediItem.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 14),
-                    ),
-                  ),
-                );
-              },
-            )
-          : Center(
+      body: StreamBuilder<List<MediaItem>>(
+        stream: context.myData.favoriteSongs,
+        initialData: context.myData.favoriteSongs.value,
+        builder: (c, snapshot) {
+          List<MediaItem> songs = snapshot.data!;
+
+          if (songs.isEmpty) {
+            return Center(
               child: Text("Favori Müziğiniz Yok"),
-            ),
+            );
+          }
+
+          return ListView.builder(
+            physics: BouncingScrollPhysics(),
+            itemCount: songs.length,
+            itemBuilder: (BuildContext context, int index) {
+              MediaItem mediItem = songs[index];
+              return Dismissible(
+                key: Key(mediItem.id),
+                background: Container(
+                  color: Colors.red,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Icon(Icons.delete, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+                secondaryBackground: Container(
+                  color: Colors.red,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Icon(Icons.delete, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+                onDismissed: (l) {
+                  setState(() {
+                    context.myData.removeFavoritedSong(mediItem);
+                  });
+                },
+                child: ListTile(
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  onTap: () {
+                    context.pushOpaque(PlayingScreen(
+                      song: mediItem,
+                      queue: songs,
+                    ));
+                  },
+                  leading: Material(
+                    elevation: 10,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: SizedBox(
+                        width: 90,
+                        child: AspectRatio(
+                          aspectRatio: 16 / 9,
+                          child: mediItem.getImageWidget,
+                        ),
+                      ),
+                    ),
+                  ),
+                  trailing: Text(Const.getDurationString(
+                      mediItem.duration ?? Duration.zero)),
+                  title: Text(
+                    mediItem.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

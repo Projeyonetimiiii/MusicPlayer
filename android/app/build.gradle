@@ -42,6 +42,15 @@ android {
         main.java.srcDirs += 'src/main/kotlin'
     }
 
+    splits {
+        abi {
+             enable = true
+             reset()
+             include("armeabi-v7a", "arm64-v8a")
+             universalApk = true
+        }
+  }
+
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId "com.example.onlinemusic"
@@ -54,6 +63,7 @@ android {
 
     buildTypes {
         release {
+            shrinkResources false
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig signingConfigs.debug

@@ -3,7 +3,7 @@ import 'package:onlinemusic/models/audio.dart';
 import 'package:onlinemusic/models/usermodel.dart';
 import 'package:onlinemusic/services/audios_bloc.dart';
 import 'package:onlinemusic/util/extensions.dart';
-import 'package:onlinemusic/widgets/search_cards.dart';
+import 'package:onlinemusic/widgets/build_media_items.dart';
 
 class SharedSongsScreen extends StatefulWidget {
   final UserModel user;

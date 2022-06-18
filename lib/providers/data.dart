@@ -12,12 +12,17 @@ import 'package:onlinemusic/services/storage_bloc.dart';
 import 'package:onlinemusic/util/converter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:onlinemusic/util/extensions.dart';
+import 'package:rxdart/rxdart.dart';
+
+enum LoadedType { PermissionDenied, Loading, Loaded, None }
 
 class MyData extends ChangeNotifier {
   late StorageBloc _storageBloc;
   late AudiosBloc _audiosBloc;
   List<MapEntry<int, String>> songsImage = [];
   List<MediaItem> songs = [];
+  late BehaviorSubject<List<MediaItem>> favoriteSongs;
+  late BehaviorSubject<LoadedType> loadedType;
 
   bool? isEmpty;
 
@@ -32,6 +37,9 @@ class MyData extends ChangeNotifier {
   Future<void> init() async {
     _storageBloc = StorageBloc();
     _audiosBloc = AudiosBloc();
+    loadedType = BehaviorSubject.seeded(LoadedType.None);
+    favoriteSongs = BehaviorSubject.seeded([]);
+    favoriteSongs.add(_getFavoriteSong());
     getSongsFromHive();
     getMusics();
   }
@@ -39,6 +47,11 @@ class MyData extends ChangeNotifier {
   Future<void> getMusics() async {
     bool result = await _requestPermission();
     if (result) {
+      if (songs.isNotEmpty) {
+        loadedType.add(LoadedType.Loaded);
+      } else {
+        loadedType.add(LoadedType.Loading);
+      }
       List<SongModel> songsModel =
           getFilteredSongs(await OnAudioQuery().querySongs(), 60);
       for (var song in songsModel) {
@@ -53,8 +66,10 @@ class MyData extends ChangeNotifier {
       }
       songs = songsModel.map((e) => e.toMediaItem).toList();
       saveSongs();
+      loadedType.add(LoadedType.Loaded);
       notifyListeners();
     } else {
+      loadedType.add(LoadedType.PermissionDenied);
       print("İzin Verilmedi");
     }
   }
@@ -70,6 +85,7 @@ class MyData extends ChangeNotifier {
     if (songJsons != null) {
       songs =
           songJsons.map((e) => MediaItemConverter.jsonToMediaItem(e)).toList();
+      loadedType.add(LoadedType.Loaded);
     }
   }
 
@@ -133,7 +149,12 @@ class MyData extends ChangeNotifier {
   Future<bool> _requestPermission() async {
     bool permissionStatus = await OnAudioQuery().permissionsStatus();
     if (!permissionStatus) {
-      return await OnAudioQuery().permissionsRequest();
+      try {
+        bool res = await OnAudioQuery().permissionsRequest();
+        return res;
+      } on Exception catch (_) {
+        return false;
+      }
     }
     return true;
   }
@@ -161,28 +182,30 @@ class MyData extends ChangeNotifier {
       );
   }
 
-  List<MediaItem> getFavoriteSong() {
-    List<String> songJsons = songsBox!.get("songs", defaultValue: [])!;
+  List<MediaItem> _getFavoriteSong() {
+    List<String> songJsons = songsBox!.get("favorites", defaultValue: [])!;
     return songJsons.map((e) => MediaItemConverter.jsonToMediaItem(e)).toList();
   }
 
   void removeFavoritedSong(MediaItem item) {
-    List<MediaItem> items = getFavoriteSong();
+    List<MediaItem> items = _getFavoriteSong();
     if (items.any((element) => element.id == item.id)) {
       items.removeWhere((element) => element.id == item.id);
+      favoriteSongs.add(items);
       saveFavoriteSongs(items);
     }
   }
 
   Future<void> saveFavoriteSongs(List<MediaItem> items) async {
     List<String> value = items.map((e) => e.toJson).toList();
-    await songsBox!.put("songs", value);
+    await songsBox!.put("favorites", value);
   }
 
   void addFavoriteSong(MediaItem item) {
-    List<MediaItem> items = getFavoriteSong();
+    List<MediaItem> items = _getFavoriteSong();
     if (!items.any((element) => element.id == item.id)) {
       items.add(item);
+      favoriteSongs.add(items);
       saveFavoriteSongs(items);
     }
   }
