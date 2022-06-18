@@ -242,8 +242,10 @@ class _MiniPlayerState extends State<MiniPlayer> {
                                     value: position.inSeconds.toDouble(),
                                     max: song.duration!.inSeconds.toDouble(),
                                     onChanged: (newPosition) {
-                                      handler.seek(Duration(
-                                          seconds: newPosition.round()));
+                                      if (connectedSongService.isAdmin) {
+                                        handler.seek(Duration(
+                                            seconds: newPosition.round()));
+                                      }
                                     },
                                   ),
                                 );
@@ -301,22 +303,29 @@ class ControlButtons extends StatelessWidget {
                       ),
                     ),
                   if (miniplayer)
-                    Center(
-                      child: playing
-                          ? IconButton(
-                              tooltip: "Durdur",
-                              onPressed: handler.pause,
-                              icon: const Icon(
-                                Icons.pause_rounded,
-                              ),
-                              color: textColor,
-                            )
-                          : IconButton(
-                              tooltip: "Oynat",
-                              onPressed: handler.play,
-                              icon: const Icon(Icons.play_arrow_rounded),
-                              color: textColor,
-                            ),
+                    AnimatedOpacity(
+                      duration: Duration(milliseconds: 350),
+                      opacity: connectedSongService.isAdmin ? 1 : 0.6,
+                      child: AbsorbPointer(
+                        absorbing: !connectedSongService.isAdmin,
+                        child: Center(
+                          child: playing
+                              ? IconButton(
+                                  tooltip: "Durdur",
+                                  onPressed: handler.pause,
+                                  icon: const Icon(
+                                    Icons.pause_rounded,
+                                  ),
+                                  color: textColor,
+                                )
+                              : IconButton(
+                                  tooltip: "Oynat",
+                                  onPressed: handler.play,
+                                  icon: const Icon(Icons.play_arrow_rounded),
+                                  color: textColor,
+                                ),
+                        ),
+                      ),
                     )
                   else
                     Center(
