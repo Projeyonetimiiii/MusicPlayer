@@ -44,8 +44,9 @@ class _SeekBarState extends State<SeekBar> {
               rangeThumbShape: RoundRangeSliderThumbShape(elevation: 0),
               minThumbSeparation: 0,
               inactiveTrackColor: Colors.transparent,
-              disabledInactiveTrackColor: Const.kBackground.withOpacity(0.15),
-              disabledActiveTrackColor: Const.kBackground.withOpacity(0.4),
+              disabledInactiveTrackColor:
+                  Const.contrainsColor.withOpacity(0.15),
+              disabledActiveTrackColor: Const.contrainsColor.withOpacity(0.4),
               overlayShape: RoundSliderOverlayShape(
                 overlayRadius: 0,
               ),
@@ -81,10 +82,10 @@ class _SeekBarState extends State<SeekBar> {
               overlayRadius: 0,
             ),
             trackHeight: 4,
-            inactiveTrackColor: Colors.grey.withOpacity(0),
+            inactiveTrackColor: Colors.transparent,
           ),
           child: Slider(
-            activeColor: Const.kBackground,
+            activeColor: Const.contrainsColor,
             max: widget.duration.inMilliseconds.toDouble(),
             value: value,
             onChanged: (value) {

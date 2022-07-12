@@ -105,11 +105,14 @@ class BackgroundAudioHandler extends BaseAudioHandler
   }
 
   @override
-  Future<void> pause() => player.pause();
+  Future<void> pause() async {
+    player.pause();
+  }
 
   void updateMediaItemIndex(MediaItem mediaItem1) {
     if (queue.value.any((e) => e.id == mediaItem1.id)) {
       index = queue.value.indexWhere((e) => e.id == mediaItem1.id);
+      _broadcastState();
     }
   }
 
@@ -126,7 +129,7 @@ class BackgroundAudioHandler extends BaseAudioHandler
 
     if (!mediaItem1.isHaveUrl) {
       player.seek(Duration.zero);
-      player.stop();
+      player.pause();
       url = await mediaItem1.source;
     }
     if (url == null) return;
@@ -153,6 +156,43 @@ class BackgroundAudioHandler extends BaseAudioHandler
   }
 
   @override
+  Future<void> insertQueueItem(int index, MediaItem mediaItem) {
+    _effectiveQueue.insert(index, mediaItem);
+    List<MediaItem> newList = queue.value.toList();
+    newList.insert(index, mediaItem);
+    cacheBox!.put(
+      "lastQueue",
+      newList.map((e) => e.toJson).toList(),
+    );
+    return super.insertQueueItem(index, mediaItem);
+  }
+
+  @override
+  Future<void> removeQueueItem(MediaItem mediaItem) {
+    _effectiveQueue.remove(mediaItem);
+    cacheBox!.put(
+      "lastQueue",
+      queue.value.map((e) => e.toJson).toList(),
+    );
+    if (this.mediaItem.value != null) {
+      updateMediaItemIndex(this.mediaItem.value!);
+    }
+    return super.removeQueueItem(mediaItem);
+  }
+
+  @override
+  Future<void> addQueueItem(MediaItem mediaItem) {
+    _effectiveQueue.add(mediaItem);
+    List<MediaItem> newList = queue.value.toList();
+    newList.add(mediaItem);
+    cacheBox!.put(
+      "lastQueue",
+      newList.map((e) => e.toJson).toList(),
+    );
+    return super.addQueueItem(mediaItem);
+  }
+
+  @override
   Future customAction(String name, [Map<String, dynamic>? extras]) {
     if (name == 'sleepTimer') {
       _sleepTimer?.cancel();
@@ -173,7 +213,7 @@ class BackgroundAudioHandler extends BaseAudioHandler
   @override
   Future<void> skipToQueueItem(int index) async {
     if (index < queue.value.length && index > -1) {
-      await pause();
+      // if(!connectedSongService.isAdmin) await pause();
       await playMediaItem(queue.value[index]);
       if (!connectedSongService.isConnectedSong) {
         play();
@@ -246,36 +286,52 @@ class BackgroundAudioHandler extends BaseAudioHandler
     AudioServiceShuffleMode? shuffleMode,
   }) {
     final playing = player.playing;
-    playbackState.add(playbackState.value.copyWith(
-      controls: connectedSongService.isAdmin
-          ? [
-              MyMediaControls.skipToPrevious,
-              playing ? MyMediaControls.pause : MyMediaControls.play,
-              MyMediaControls.skipToNext
-            ]
-          : [],
-      systemActions: const {
-        MediaAction.seek,
-        MediaAction.seekForward,
-        MediaAction.seekBackward,
-      },
-      androidCompactActionIndices:
-          connectedSongService.isAdmin ? const [ 0,1,2] : [],
-      processingState: const {
-        ProcessingState.idle: AudioProcessingState.idle,
-        ProcessingState.loading: AudioProcessingState.loading,
-        ProcessingState.buffering: AudioProcessingState.buffering,
-        ProcessingState.ready: AudioProcessingState.ready,
-        ProcessingState.completed: AudioProcessingState.completed,
-      }[player.processingState]!,
-      playing: playing,
-      updatePosition: player.position,
-      bufferedPosition: player.bufferedPosition,
-      speed: player.speed,
-      queueIndex: index,
-      repeatMode: repeatMode ?? this.repeatMode,
-      shuffleMode: shuffleMode ?? this.shuffleMode,
-    ));
+
+    AudioProcessingState processingState = getProcessingState();
+
+    playbackState.add(
+      playbackState.value.copyWith(
+        controls: connectedSongService.isAdmin
+            ? [
+                MyMediaControls.skipToPrevious,
+                playing ? MyMediaControls.pause : MyMediaControls.play,
+                MyMediaControls.skipToNext
+              ]
+            : [],
+        systemActions: const {
+          MediaAction.seek,
+          MediaAction.seekForward,
+          MediaAction.seekBackward,
+        },
+        androidCompactActionIndices:
+            connectedSongService.isAdmin ? const [0, 1, 2] : [],
+        processingState: processingState,
+        playing: playing,
+        updatePosition: player.position,
+        bufferedPosition: player.bufferedPosition,
+        speed: player.speed,
+        queueIndex: index,
+        repeatMode: repeatMode ?? this.repeatMode,
+        shuffleMode: shuffleMode ?? this.shuffleMode,
+      ),
+    );
+  }
+
+  AudioProcessingState getProcessingState() {
+    AudioProcessingState state = const {
+      ProcessingState.idle: AudioProcessingState.idle,
+      ProcessingState.loading: AudioProcessingState.loading,
+      ProcessingState.buffering: AudioProcessingState.buffering,
+      ProcessingState.ready: AudioProcessingState.ready,
+      ProcessingState.completed: AudioProcessingState.completed,
+    }[player.processingState]!;
+
+    if (!appIsRunnig) {
+      if (state == AudioProcessingState.idle) {
+        state = AudioProcessingState.loading;
+      }
+    }
+    return state;
   }
 
   @override

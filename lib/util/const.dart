@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:onlinemusic/models/genre.dart';
+import 'package:onlinemusic/services/theme_service.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 class Const {
@@ -11,22 +11,21 @@ class Const {
 
   static const Color kWhite = Colors.white;
   static const Color kBackground = Color(0xFF02001D);
+  static Color kLight = Colors.grey.shade200;
   // static const Color kBackground1 = Color(0xFF02001D);
+  static Color get contrainsColor {
+    if (ThemeService().isLight) return Const.kBackground;
+    return Colors.grey.shade200;
+  }
 
-  static List<Genre> genres = [
-    Genre(id: 1, name: "Rock"),
-    Genre(id: 2, name: "Caz"),
-    Genre(id: 3, name: "Klasik"),
-    Genre(id: 4, name: "Rap"),
-    Genre(id: 5, name: "Soundtrack"),
-    Genre(id: 6, name: "Blues"),
-    Genre(id: 7, name: "R&B"),
-    Genre(id: 8, name: "Progresif"),
-    Genre(id: 9, name: "Heavy"),
-    Genre(id: 10, name: "Kelt"),
-    Genre(id: 11, name: "Punk"),
-    Genre(id: 12, name: "Pop "),
-  ];
+  static Color get themeColor {
+    if (ThemeService().isLight) return Colors.grey.shade200;
+    return Const.kBackground;
+  }
+
+  static String getPlaylistsUrl(String query) {
+    return "https://www.youtube.com/results?search_query=${query}&sp=EgIQAw%253D%253D";
+  }
 
   static Future<String> getAudioUrlFromVideoId(String videoId) async {
     YoutubeExplode youtubeExplode = YoutubeExplode();
@@ -41,5 +40,33 @@ class Const {
 
   static String getDateTimeString(DateTime time) {
     return time.toString().split(".").first;
+  }
+
+  static String timeEllapsed(DateTime time) {
+    var now = DateTime.now();
+    Duration diff = now.difference(time);
+
+    String timeEllapse = "";
+
+    if (diff.inDays < 1) {
+      timeEllapse = _getNum(time.hour) + ":" + _getNum(time.minute);
+    } else if (diff.inDays == 1) {
+      timeEllapse = "Dün";
+    } else {
+      timeEllapse = _getNum(time.day) +
+          "." +
+          _getNum(time.month) +
+          "." +
+          _getNum(time.year);
+    }
+    return timeEllapse;
+  }
+
+  static String _getNum(int time) {
+    if (time < 10) {
+      return "0" + time.toString();
+    } else {
+      return time.toString();
+    }
   }
 }

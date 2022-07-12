@@ -39,7 +39,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
   Widget build(BuildContext context) {
     return Card(
       elevation: 0,
-      color: Colors.grey.shade300,
+      color: Const.contrainsColor.withOpacity(0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
@@ -52,7 +52,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           maxLines: widget.maxLines,
           readOnly: widget.readOnly,
           controller: widget.controller,
-          cursorColor: Const.kBackground,
+          cursorColor: Const.contrainsColor,
           cursorRadius: Radius.circular(4),
           cursorWidth: 1,
           decoration: InputDecoration(

@@ -30,6 +30,8 @@ class _EditProfileState extends State<EditProfile> {
   dynamic _pickImage;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  bool get isMee => AuthService().currentUser.value?.id == widget.userModel.id;
+
   @override
   void initState() {
     super.initState();
@@ -69,11 +71,10 @@ class _EditProfileState extends State<EditProfile> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
         title: Text(
           "Profili düzenle",
           style: TextStyle(
-            color: Const.kBackground,
+            color: Const.contrainsColor,
           ),
         ),
         leading: CustomBackButton(
@@ -97,28 +98,29 @@ class _EditProfileState extends State<EditProfile> {
                   elevation: 4,
                   shape: StadiumBorder(),
                 ),
-                Positioned(
-                  bottom: 10,
-                  right: 10,
-                  child: RawMaterialButton(
-                    constraints: BoxConstraints.loose(Size.square(45)),
-                    shape: StadiumBorder(),
-                    fillColor: Colors.grey.shade200,
-                    onPressed: () {
-                      _onImageButtonPressed(
-                        ImageSource.gallery,
-                        context: context,
-                      );
-                    },
-                    child: CircleAvatar(
-                      backgroundColor: Colors.transparent,
-                      child: Icon(
-                        Icons.camera_alt,
-                        color: Const.kBackground,
+                if (isMee)
+                  Positioned(
+                    bottom: 10,
+                    right: 10,
+                    child: RawMaterialButton(
+                      constraints: BoxConstraints.loose(Size.square(45)),
+                      shape: StadiumBorder(),
+                      fillColor: Colors.grey.shade200,
+                      onPressed: () {
+                        _onImageButtonPressed(
+                          ImageSource.gallery,
+                          context: context,
+                        );
+                      },
+                      child: CircleAvatar(
+                        backgroundColor: Colors.transparent,
+                        child: Icon(
+                          Icons.camera_alt,
+                          color: Const.kBackground,
+                        ),
                       ),
                     ),
                   ),
-                ),
               ],
             ),
             SizedBox(
@@ -127,12 +129,13 @@ class _EditProfileState extends State<EditProfile> {
             Column(
               children: [
                 CustomTextField(
+                  readOnly: !isMee,
                   controller: _nameController,
                   hintText: "Kullanıcı adı",
                   horizontalPadding: 0,
                   prefixIcon: Icon(
                     Icons.person,
-                    color: Colors.black,
+                    color: Const.contrainsColor,
                   ),
                   contentPadding: EdgeInsets.only(
                     top: 15,
@@ -149,13 +152,14 @@ class _EditProfileState extends State<EditProfile> {
                   readOnly: true,
                   prefixIcon: Icon(
                     Icons.mail,
-                    color: Colors.black,
+                    color: Const.contrainsColor,
                   ),
                   contentPadding: EdgeInsets.only(
                     top: 15,
                   ),
                 ),
                 CustomTextField(
+                  readOnly: !isMee,
                   controller: _bio,
                   hintText: "Biyografi",
                   horizontalPadding: 8,
@@ -170,7 +174,8 @@ class _EditProfileState extends State<EditProfile> {
                 widget.userModel.id != AuthService().currentUser.value?.id &&
                 !(widget.userModel.isAdmin ?? false)) ...[
               SwitchListTile.adaptive(
-                activeColor: Const.kBackground,
+                activeColor: Const.contrainsColor,
+                inactiveThumbColor: Const.contrainsColor.withOpacity(0.2),
                 title: Text("Çevrimiçi"),
                 value: widget.userModel.isOnline ?? false,
                 onChanged: (s) {
@@ -180,7 +185,8 @@ class _EditProfileState extends State<EditProfile> {
                 },
               ),
               SwitchListTile.adaptive(
-                activeColor: Const.kBackground,
+                activeColor: Const.contrainsColor,
+                inactiveThumbColor: Const.contrainsColor.withOpacity(0.2),
                 title: Text("Admin"),
                 value: widget.userModel.isAdmin ?? false,
                 onChanged: (s) {
@@ -206,37 +212,39 @@ class _EditProfileState extends State<EditProfile> {
                               horizontal: 6,
                             ),
                             child: RawMaterialButton(
-                              fillColor: Const.kBackground,
+                              fillColor: Const.contrainsColor.withOpacity(0.1),
                               splashColor: Colors.white12,
                               hoverColor: Colors.white12,
                               highlightColor: Colors.white12,
                               shape: StadiumBorder(),
                               onPressed: () async {
-                                UserModel userModel = widget.userModel;
-                                if (profileImage != null) {
-                                  var mediaUrl =
-                                      await storageService.uploadProfileImage(
-                                    profileImage!.path,
-                                    _auth.currentUser!.uid,
-                                  );
-                                  userModel = userModel..image = mediaUrl;
-                                  await FirebaseAuth.instance.currentUser!
-                                      .updatePhotoURL(
-                                    mediaUrl,
-                                  );
+                                if (isMee) {
+                                  UserModel userModel = widget.userModel;
+                                  if (profileImage != null) {
+                                    var mediaUrl =
+                                        await storageService.uploadProfileImage(
+                                      profileImage!.path,
+                                      _auth.currentUser!.uid,
+                                    );
+                                    userModel = userModel..image = mediaUrl;
+                                    await FirebaseAuth.instance.currentUser!
+                                        .updatePhotoURL(
+                                      mediaUrl,
+                                    );
+                                  }
+                                  if (_nameController.text.trim() !=
+                                      widget.userModel.userName?.trim()) {
+                                    await FirebaseAuth.instance.currentUser!
+                                        .updateDisplayName(
+                                      _nameController.text.trim(),
+                                    );
+                                  }
+                                  userModel = userModel
+                                    ..userName = _nameController.text.trim()
+                                    ..bio = _bio.text;
+                                  statusService.updateProfile(userModel);
+                                  Navigator.pop(context);
                                 }
-                                if (_nameController.text.trim() !=
-                                    widget.userModel.userName) {
-                                  await FirebaseAuth.instance.currentUser!
-                                      .updateDisplayName(
-                                    _nameController.text.trim(),
-                                  );
-                                }
-                                userModel = userModel
-                                  ..userName = _nameController.text.trim()
-                                  ..bio = _bio.text;
-                                statusService.updateProfile(userModel);
-                                Navigator.pop(context);
                               },
                               child: Container(
                                 height: 40,

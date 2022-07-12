@@ -6,7 +6,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:on_audio_query/on_audio_query.dart';
 import 'package:onlinemusic/main.dart';
-import 'package:onlinemusic/models/audio.dart';
 import 'package:onlinemusic/models/quality_image.dart';
 import 'package:onlinemusic/providers/data.dart';
 import 'package:onlinemusic/util/const.dart';
@@ -34,6 +33,7 @@ extension BuildContextExt on BuildContext {
     );
   }
 
+  Size get getSize => MediaQuery.of(this).size;
   MyData get myData => this.read<MyData>();
 }
 
@@ -53,6 +53,7 @@ extension VideoExt on Video {
           maxQualityImageUrl: thumbnails.highResUrl,
           lowQualityImageUrl: thumbnails.lowResUrl,
         ).toMap(),
+        "dateAdded": publishDate?.millisecondsSinceEpoch,
       },
     );
   }
@@ -71,6 +72,7 @@ extension SongModelExt on SongModel {
         "url": data,
         "type": ModelType.SongModel.index,
         "isOnline": false,
+        "dateAdded": dateAdded,
       },
     );
   }
@@ -78,25 +80,6 @@ extension SongModelExt on SongModel {
   String get getImagePath {
     MyData data = MyApp.navigatorKey.currentContext!.myData;
     return data.getImagePathFromSongModel(this);
-  }
-}
-
-extension AudioExt on Audio {
-  MediaItem get toMediaItem {
-    return MediaItem(
-      id: id.toString(),
-      title: title,
-      album: "User",
-      artist: artist,
-      duration: duration,
-      artUri: Uri.parse(image),
-      extras: {
-        "url": url,
-        "type": ModelType.Audio.index,
-        "isOnline": true,
-        "image": QualityImage.fromUrl(image).toMap(),
-      },
-    );
   }
 }
 
@@ -164,7 +147,6 @@ extension MediaItemExt on MediaItem {
 
 extension ModelTypeExt on ModelType {
   bool get isVideo => this == ModelType.Video;
-  bool get isAudio => this == ModelType.Audio;
   bool get isSongModel => this == ModelType.SongModel;
 }
 
@@ -184,4 +166,10 @@ extension ConnectionTypeExt on ConnectionType {
 
 extension RequestTypeExt on RequestType {
   bool get isUser => this == RequestType.User;
+}
+
+extension BuildMusicListTypeExt on BuildMusicListType {
+  bool get isFavorite => this == BuildMusicListType.Favorite;
+  bool get isQueue => this == BuildMusicListType.Queue;
+  bool get isDownloaded => this == BuildMusicListType.Downloaded;
 }

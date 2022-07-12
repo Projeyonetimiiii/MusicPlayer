@@ -1,10 +1,7 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:onlinemusic/models/genre.dart';
-import 'package:onlinemusic/models/youtube_genre.dart';
 import 'package:onlinemusic/models/youtube_playlist.dart';
-import 'package:onlinemusic/services/audios_bloc.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/playing_screen/playing_screen.dart';
 import 'package:onlinemusic/views/playlist_screen/widgets/my_gridview.dart';
@@ -12,54 +9,57 @@ import 'package:onlinemusic/views/playlist_screen/yt_playlist_screen.dart';
 import 'package:onlinemusic/widgets/custom_back_button.dart';
 import 'package:onlinemusic/widgets/mini_player.dart';
 
-class PlaylistScreen extends StatefulWidget {
-  final bool isYoutube;
-  final YoutubeGenre? youtubeGenre;
-  final Genre? genre;
-  const PlaylistScreen.YoutubeGenre({Key? key, required this.youtubeGenre})
-      : genre = null,
-        isYoutube = true,
+class PlaylistAllItemsScreen extends StatefulWidget {
+  final String? title;
+  final bool isPlaylist;
+  final List<YoutubePlaylist>? playlists;
+  final List<MediaItem>? songs;
+  const PlaylistAllItemsScreen({
+    Key? key,
+    this.isPlaylist = true,
+    required this.title,
+    required this.playlists,
+  })  : this.songs = null,
         super(key: key);
-  const PlaylistScreen.Genre({Key? key, this.genre})
-      : youtubeGenre = null,
-        isYoutube = false,
+
+  const PlaylistAllItemsScreen.fromSongs({
+    Key? key,
+    this.isPlaylist = false,
+    required this.title,
+    required this.songs,
+  })  : this.playlists = null,
         super(key: key);
 
   @override
-  State<PlaylistScreen> createState() => _PlaylistScreenState();
+  State<PlaylistAllItemsScreen> createState() => _PlaylistAllItemsScreenState();
 }
 
-class _PlaylistScreenState extends State<PlaylistScreen> {
+class _PlaylistAllItemsScreenState extends State<PlaylistAllItemsScreen> {
   String get title {
-    return (widget.isYoutube
-            ? widget.youtubeGenre?.title
-            : widget.genre?.name) ??
-        "Title";
+    return widget.title ?? "Title";
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(title),
-          leading: CustomBackButton(),
-          centerTitle: true,
-        ),
-        body: Column(
-          children: [
-            Expanded(child: getBody()),
-            MiniPlayer(),
-          ],
-        ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
+        leading: CustomBackButton(),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          Expanded(child: getBody()),
+          MiniPlayer(),
+        ],
       ),
     );
   }
 
   Widget getBody() {
-    if (widget.isYoutube) {
+    if (widget.isPlaylist) {
       return MyGridView(
-        children: widget.youtubeGenre!.playlists!.map((e) {
+        children: widget.playlists!.map((e) {
           return buildItem(
             e.title ?? title,
             () {
@@ -71,17 +71,15 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
         axisCount: 3,
       );
     } else {
-      List<MediaItem> items = AudiosBloc()
-          .getAudiosFromGenreId(widget.genre!.id)
-          .map((e) => e.toMediaItem)
-          .toList();
-
       return MyGridView(
-        children: items.map((e) {
+        children: widget.songs!.map((e) {
           return buildItem(
             e.title,
             () {
-              mediaItemOnTap(items, e);
+              context.pushOpaque(PlayingScreen(
+                song: e,
+                queue: widget.songs,
+              ));
             },
             imageWidget: e.getImageWidget,
           );
@@ -97,20 +95,11 @@ class _PlaylistScreenState extends State<PlaylistScreen> {
     );
   }
 
-  void mediaItemOnTap(List<MediaItem> queue, MediaItem song) {
-    context.pushOpaque(
-      PlayingScreen(
-        song: song,
-        queue: queue,
-      ),
-    );
-  }
-
   Padding buildItem(
     String title,
     VoidCallback onTap, {
-    Widget? imageWidget,
     String image = "",
+    Widget? imageWidget,
   }) {
     return Padding(
       padding: const EdgeInsets.all(8.0),

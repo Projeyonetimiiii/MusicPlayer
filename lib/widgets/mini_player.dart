@@ -1,5 +1,4 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
-import 'dart:convert';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
@@ -23,9 +22,10 @@ class MiniPlayerStyle {
     this.margin = EdgeInsets.zero,
     this.borderRadius = BorderRadius.zero,
     Color? backgroundColor,
-    this.textColor = Const.kBackground,
+    Color? textColor,
     this.boxShadow,
-  }) : this.backgroundColor = backgroundColor ?? Colors.grey.shade200;
+  })  : this.backgroundColor = backgroundColor ?? Const.themeColor,
+        this.textColor = textColor ?? Const.contrainsColor;
 
   MiniPlayerStyle copyWith({
     EdgeInsets? padding,
@@ -47,7 +47,9 @@ class MiniPlayerStyle {
 }
 
 class MiniPlayer extends StatefulWidget {
-  static MiniPlayerStyle sStyle = MiniPlayerStyle();
+  static MiniPlayerStyle get sStyle {
+    return MiniPlayerStyle();
+  }
 
   final bool isBottomBar;
   final MiniPlayerStyle style;
@@ -125,19 +127,51 @@ class _MiniPlayerState extends State<MiniPlayer> {
       return SizedBox();
     }
     return Dismissible(
-      direction: DismissDirection.down,
+      direction: DismissDirection.vertical,
       key: Key(song.id),
+      secondaryBackground: Center(
+        child: Text("Oynatma Ekranına Git"),
+      ),
+      background: Center(
+        child: Text("Müziği Kapat"),
+      ),
       confirmDismiss: (d) async {
-        if (connectedSongService.isAdmin) {
-          await handler.stop();
-          return true;
+        if (d == DismissDirection.down) {
+          if (connectedSongService.isAdmin) {
+            await handler.stop();
+            return true;
+          } else {
+            return false;
+          }
         } else {
-          return false;
+          context.pushOpaque(PlayingScreen());
         }
+        return false;
       },
       child: Dismissible(
         key: ValueKey(song.id),
-        direction: DismissDirection.horizontal,
+        background: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            if (handler.hasPrev)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text("Önceki Müzik"),
+              ),
+          ],
+        ),
+        secondaryBackground: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            if (handler.hasNext)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text("Sonraki Müzik"),
+              ),
+          ],
+        ),
         confirmDismiss: (s) async {
           if (connectedSongService.isAdmin) {
             if (s == DismissDirection.startToEnd) {

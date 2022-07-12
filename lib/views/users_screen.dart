@@ -39,6 +39,7 @@ class _UsersScreenState extends State<UsersScreen> {
           users.removeWhere((element) =>
               element.id == FirebaseAuth.instance.currentUser!.uid);
           return ListView.builder(
+            physics: BouncingScrollPhysics(),
             itemCount: users.length,
             itemBuilder: (c, i) {
               UserModel user = users[i];

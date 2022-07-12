@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:onlinemusic/models/usermodel.dart';
@@ -22,29 +21,8 @@ class _ChatsScreenState extends State<ChatsScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        leading: Center(
-          child: Container(
-            width: 40,
-            height: 40,
-            margin: EdgeInsets.only(left: 10),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(5),
-              child: CachedNetworkImage(
-                imageUrl: FirebaseAuth.instance.currentUser!.photoURL!,
-                fit: BoxFit.cover,
-                placeholder: (c, i) {
-                  return Container(
-                    width: 40,
-                    height: 40,
-                    color: Colors.white24,
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
         title: Text(
-          "Mesajlar",
+          "Sohbetlerim",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
@@ -63,7 +41,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
           List<Chat> chats = snapshot.data ?? [];
           if (chats.isEmpty) {
             return Center(
-              child: Text("Hiç Mesajınız Yok"),
+              child: Text("Hiç Sohbetiniz Yok"),
             );
           }
           return ListView.builder(

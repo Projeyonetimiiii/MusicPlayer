@@ -1,14 +1,18 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:audio_service/audio_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:onlinemusic/models/media_reference.dart';
 import 'package:onlinemusic/models/usermodel.dart';
 import 'package:onlinemusic/services/storage_bloc.dart';
+import 'package:onlinemusic/util/const.dart';
+import 'package:onlinemusic/util/enums.dart';
 import 'package:onlinemusic/views/chat/messages/components/build_audio_widget.dart';
 import 'package:onlinemusic/views/chat/messages/components/chat_input_field.dart';
+import 'package:onlinemusic/widgets/build_item.dart';
 
 mixin PickerMixin {
   Future<List<PlatformFile>> getImagePicker() async {
@@ -35,17 +39,23 @@ mixin BottomSheetMixin {
       FilesTyper filesTyper, UserModel? receiver, String myUid) async {
     bool loading = false;
     return await showModalBottomSheet<MediaReference>(
-        context: context,
-        isDismissible: false,
-        backgroundColor: Colors.transparent,
-        builder: (c) {
-          return Container(
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.grey[850]),
-            margin: EdgeInsets.all(8),
-            height: 200,
-            child: StatefulBuilder(builder: (context, setState) {
+      context: context,
+      isDismissible: false,
+      backgroundColor: Colors.transparent,
+      builder: (c) {
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            color: Const.themeColor,
+            border: Border.all(
+              color: Const.kLight,
+              width: 1,
+            ),
+          ),
+          margin: EdgeInsets.all(8),
+          height: 200,
+          child: StatefulBuilder(
+            builder: (context, setState) {
               return Padding(
                 padding: const EdgeInsets.all(10.0),
                 child: Column(
@@ -54,12 +64,25 @@ mixin BottomSheetMixin {
                       text: TextSpan(
                         children: [
                           TextSpan(
-                              text: "'${filesTyper.files![0].name}' ",
-                              style: TextStyle(fontWeight: FontWeight.bold)),
+                            text: "'${filesTyper.files![0].name}' ",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Const.contrainsColor,
+                            ),
+                          ),
                           TextSpan(
-                              text: " ${receiver!.userName} ",
-                              style: TextStyle(fontWeight: FontWeight.bold)),
-                          TextSpan(text: "kişisine gönderilsin mi?"),
+                            text: " ${receiver!.userName} ",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Const.contrainsColor,
+                            ),
+                          ),
+                          TextSpan(
+                            text: "kişisine gönderilsin mi?",
+                            style: TextStyle(
+                              color: Const.contrainsColor,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -78,7 +101,7 @@ mixin BottomSheetMixin {
                               },
                               child: Text("İptal Et"),
                               style: TextButton.styleFrom(
-                                primary: Colors.white,
+                                primary: Const.contrainsColor,
                                 shadowColor: Colors.transparent,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(33),
@@ -114,23 +137,25 @@ mixin BottomSheetMixin {
                               child:
                                   Text(loading ? "Gönderiliyor..." : "Gönder"),
                               style: TextButton.styleFrom(
-                                  primary: Colors.white,
-                                  shadowColor: Colors.transparent,
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(33))),
+                                primary: Const.contrainsColor,
+                                shadowColor: Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(33),
+                                ),
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-
-                    // TextButton(onPressed:(){}, child: Text("Göder")),
                   ],
                 ),
               );
-            }),
-          );
-        });
+            },
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -138,61 +163,100 @@ mixin LoadingMixin {
   void showLoadingStreamDialog(
       BuildContext context, Stream<double> loadingProgress) {
     showDialog(
-        context: context,
-        builder: (c) {
-          return AlertDialog(
-            backgroundColor: Colors.grey.shade800,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            content: StreamBuilder<double>(
-                stream: loadingProgress,
-                initialData: 0,
-                builder: (context, snapshot) {
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                      SizedBox(
-                        width: 10,
-                      ),
-                      Text(
-                          "Resimler Yükleniyor ( %${(snapshot.data! * 100).toInt()} )",
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold)),
-                    ],
-                  );
-                }),
-          );
-        });
-  }
-
-  void showLoadingDialog(BuildContext context, String textLoading) {
-    showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (c) {
-          return AlertDialog(
-            backgroundColor: Colors.grey.shade800,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            content: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-                SizedBox(
-                  width: 10,
-                ),
-                Text("$textLoading Yükleniyor",
+      context: context,
+      builder: (c) {
+        return AlertDialog(
+          backgroundColor: Const.themeColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          content: StreamBuilder<double>(
+            stream: loadingProgress,
+            initialData: 0,
+            builder: (context, snapshot) {
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Const.contrainsColor),
+                  ),
+                  SizedBox(
+                    width: 10,
+                  ),
+                  Text(
+                    "Resimler Yükleniyor ( %${(snapshot.data! * 100).toInt()} )",
                     style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold)),
-              ],
+                      color: Const.contrainsColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+mixin BuildMediaItemMixin {
+  Widget buildMusicItem(
+    MediaItem item,
+    List<MediaItem> queue, {
+    VoidCallback? onPressed,
+    Widget? trailing,
+    BuildMusicListType type = BuildMusicListType.None,
+  }) {
+    return BuildItem(
+      item: item,
+      queue: queue,
+      onPressed: onPressed,
+      trailing: trailing,
+      type: type,
+    );
+  }
+}
+
+mixin DialogMixin {
+  Future<void> showTextDialog(
+    String title,
+    BuildContext context, {
+    String? initialText,
+    required ValueChanged<String> onSubmitted,
+    String hintText = "Oynatma listesi ismi",
+    String? submitText,
+  }) async {
+    TextEditingController controller = TextEditingController(text: initialText);
+    await showDialog(
+      context: context,
+      builder: (c) {
+        return AlertDialog(
+          title: Text(title),
+          content: TextField(
+            autofocus: true,
+            controller: controller,
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              hintText: hintText,
             ),
-          );
-        });
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text("İptal Et"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                onSubmitted(controller.text.trim());
+              },
+              child: Text(submitText ?? "Kaydet"),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

@@ -9,6 +9,7 @@ import 'package:onlinemusic/models/media_reference.dart';
 import 'package:onlinemusic/models/usermodel.dart';
 import 'package:onlinemusic/services/messages_service.dart';
 import 'package:onlinemusic/services/user_status_service.dart';
+import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/enums.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/util/mixins.dart';
@@ -39,206 +40,207 @@ class _ChatInputFieldState extends State<ChatInputField>
     docId = messagesService.getDoc(
         widget.rUser.id, FirebaseAuth.instance.currentUser!.uid);
     return StreamBuilder<List<BlockedDetails>>(
-        stream: UserStatusService().blockedUsers,
-        initialData: UserStatusService().blockedUsers.value,
-        builder: (context, myBlockedUsers) {
-          didIBlock =
-              myBlockedUsers.data!.any((e) => e.blockedUid == widget.rUser.id);
-          return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: UserStatusService().streamBlockedUsers(widget.rUser.id!),
-              builder: (context, recBlockedUsers) {
-                if (recBlockedUsers.hasData) {
-                  List<BlockedDetails> heBlockedDetails = recBlockedUsers
-                      .data!.docs
-                      .map((e) => BlockedDetails.fromMap(e.data()))
-                      .toList();
-                  didHeBlock = heBlockedDetails.any((e) =>
-                      e.blockedUid == FirebaseAuth.instance.currentUser!.uid);
-                } else {
-                  didHeBlock = false;
-                }
-                return Stack(
+      stream: UserStatusService().blockedUsers,
+      initialData: UserStatusService().blockedUsers.value,
+      builder: (context, myBlockedUsers) {
+        didIBlock =
+            myBlockedUsers.data!.any((e) => e.blockedUid == widget.rUser.id);
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: UserStatusService().streamBlockedUsers(widget.rUser.id!),
+          builder: (context, recBlockedUsers) {
+            if (recBlockedUsers.hasData) {
+              List<BlockedDetails> heBlockedDetails = recBlockedUsers.data!.docs
+                  .map((e) => BlockedDetails.fromMap(e.data()))
+                  .toList();
+              didHeBlock = heBlockedDetails.any((e) =>
+                  e.blockedUid == FirebaseAuth.instance.currentUser!.uid);
+            } else {
+              didHeBlock = false;
+            }
+            return Stack(
+              children: [
+                Column(
                   children: [
-                    Column(
-                      children: [
-                        Divider(
-                          height: 1,
-                        ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 8,
-                          ),
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          child: SafeArea(
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 40,
-                                  height: 40,
-                                  child: TextButton(
-                                    child: Icon(Icons.add, color: Colors.black),
-                                    onPressed: () async {
-                                      FilesTyper? filesType = await showModal();
-                                      if (filesType != null) {
-                                        SenderMediaMessage? senderMediaMessage =
-                                            await getFilesDetailsScreen(
-                                                filesType,
-                                                FirebaseAuth
-                                                    .instance.currentUser!.uid);
-                                        if (senderMediaMessage != null) {
-                                          MessagesService service =
-                                              MessagesService.instance;
-                                          await service.addMessage(
+                    Divider(
+                      height: 1,
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      child: SafeArea(
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              child: TextButton(
+                                child: Icon(Icons.add_rounded,
+                                    color: Const.contrainsColor),
+                                onPressed: () async {
+                                  FilesTyper? filesType = await showModal();
+                                  if (filesType != null) {
+                                    SenderMediaMessage? senderMediaMessage =
+                                        await getFilesDetailsScreen(
+                                            filesType,
                                             FirebaseAuth
-                                                .instance.currentUser!.uid,
-                                            widget.rUser.id!,
-                                            ChatMessage(
-                                              audio: senderMediaMessage.type ==
-                                                      ChatMessageType.Audio
-                                                  ? senderMediaMessage
-                                                      .refs!.first
-                                                  : null,
-                                              images: senderMediaMessage.type ==
-                                                      ChatMessageType.Image
-                                                  ? senderMediaMessage.refs!
-                                                  : null,
-                                              isRemoved: false,
-                                              receiverId: widget.rUser.id!,
-                                              senderId: FirebaseAuth
-                                                  .instance.currentUser!.uid,
-                                              messageStatus:
-                                                  MessageStatus.Sended,
-                                              messageType:
-                                                  senderMediaMessage.type,
-                                              messageTime: DateTime.now()
-                                                  .millisecondsSinceEpoch,
-                                              message:
-                                                  senderMediaMessage.message,
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Expanded(
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(40),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          child: TextField(
-                                            controller: message,
-                                            cursorRadius: Radius.circular(8),
-                                            cursorColor: Theme.of(context)
-                                                .textTheme
-                                                .bodyText1!
-                                                .color,
-                                            cursorWidth: 1.5,
-                                            decoration: InputDecoration(
-                                              hintText: "Mesajınız...",
-                                              border: InputBorder.none,
-                                            ),
-                                            onChanged: (s) {},
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 5,
-                                ),
-                                IconButton(
-                                  icon: Icon(Icons.send),
-                                  onPressed: () async {
-                                    if (!isSending) {
-                                      isSending = true;
-                                      if (this.message.text.trim().isNotEmpty) {
-                                        String senderId = FirebaseAuth
-                                            .instance.currentUser!.uid;
-                                        ChatMessage message = ChatMessage(
-                                          message: this.message.text.trim(),
+                                                .instance.currentUser!.uid);
+                                    if (senderMediaMessage != null) {
+                                      MessagesService service =
+                                          MessagesService.instance;
+                                      await service.addMessage(
+                                        FirebaseAuth.instance.currentUser!.uid,
+                                        widget.rUser.id!,
+                                        ChatMessage(
+                                          audio: senderMediaMessage.type ==
+                                                  ChatMessageType.Audio
+                                              ? senderMediaMessage.refs!.first
+                                              : null,
+                                          images: senderMediaMessage.type ==
+                                                  ChatMessageType.Image
+                                              ? senderMediaMessage.refs!
+                                              : null,
+                                          isRemoved: false,
+                                          receiverId: widget.rUser.id!,
+                                          senderId: FirebaseAuth
+                                              .instance.currentUser!.uid,
                                           messageStatus: MessageStatus.Sended,
+                                          messageType: senderMediaMessage.type,
                                           messageTime: DateTime.now()
                                               .millisecondsSinceEpoch,
-                                          senderId: senderId,
-                                          messageType: ChatMessageType.Text,
-                                          receiverId: widget.rUser.id,
-                                        );
-                                        await messagesService.addMessage(
-                                            senderId,
-                                            widget.rUser.id!,
-                                            message);
-                                        this.message.clear();
-                                      }
-                                      isSending = false;
+                                          message: senderMediaMessage.message,
+                                        ),
+                                      );
                                     }
-                                  },
+                                  }
+                                },
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8,
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (didHeBlock)
-                      Positioned(
-                        top: 1,
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          child: Center(
-                            child: Text(
-                              "Görünüşe göre ${widget.rUser.userName} sizi engellemiş.",
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                      ),
-                    if (didIBlock)
-                      Positioned(
-                        top: 1,
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8),
-                          color: Theme.of(context).scaffoldBackgroundColor,
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  "Bu kullanıcıyı engellediniz.",
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(40),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: message,
+                                        cursorRadius: Radius.circular(8),
+                                        cursorColor: Theme.of(context)
+                                            .textTheme
+                                            .bodyText1!
+                                            .color,
+                                        cursorWidth: 1.5,
+                                        decoration: InputDecoration(
+                                          hintText: "Mesajınız...",
+                                          border: InputBorder.none,
+                                        ),
+                                        onChanged: (s) {},
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              TextButton(
-                                  style: TextButton.styleFrom(
-                                    shape: StadiumBorder(),
-                                  ),
-                                  onPressed: () async {
-                                    UserStatusService()
-                                        .deleteBlockedUser(widget.rUser.id!);
-                                  },
-                                  child: Text("Engeli Kaldır")),
-                            ],
-                          ),
+                            ),
+                            SizedBox(
+                              width: 5,
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.send),
+                              onPressed: () async {
+                                if (!isSending) {
+                                  isSending = true;
+                                  if (this.message.text.trim().isNotEmpty) {
+                                    String senderId =
+                                        FirebaseAuth.instance.currentUser!.uid;
+                                    ChatMessage message = ChatMessage(
+                                      message: this.message.text.trim(),
+                                      messageStatus: MessageStatus.Sended,
+                                      messageTime:
+                                          DateTime.now().millisecondsSinceEpoch,
+                                      senderId: senderId,
+                                      messageType: ChatMessageType.Text,
+                                      receiverId: widget.rUser.id,
+                                    );
+                                    await messagesService.addMessage(
+                                        senderId, widget.rUser.id!, message);
+                                    this.message.clear();
+                                  }
+                                  isSending = false;
+                                }
+                              },
+                            ),
+                          ],
                         ),
                       ),
+                    ),
                   ],
-                );
-              });
-        });
+                ),
+                if (didHeBlock)
+                  Positioned(
+                    top: 1,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Görünüşe göre ${widget.rUser.userName} sizi engellemiş.",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (didIBlock)
+                  Positioned(
+                    top: 1,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8),
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              "Bu kullanıcıyı engellediniz.",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          TextButton(
+                            style: TextButton.styleFrom(
+                              shape: StadiumBorder(),
+                            ),
+                            onPressed: () async {
+                              UserStatusService()
+                                  .deleteBlockedUser(widget.rUser.id!);
+                            },
+                            child: Text("Engeli Kaldır"),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<SenderMediaMessage?> getFilesDetailsScreen(
@@ -284,8 +286,12 @@ class _ChatInputFieldState extends State<ChatInputField>
           margin: EdgeInsets.all(8),
           height: 150,
           decoration: BoxDecoration(
-            color: Colors.grey[850],
+            color: Const.themeColor,
             borderRadius: BorderRadius.circular(15),
+            border: Border.all(
+              color: Const.kLight,
+              width: 1,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -295,9 +301,10 @@ class _ChatInputFieldState extends State<ChatInputField>
                 child: Text(
                   "Dosya Türü Seçin",
                   style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.white60,
-                      fontWeight: FontWeight.bold),
+                    fontSize: 15,
+                    color: Const.contrainsColor,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               Container(
@@ -391,17 +398,19 @@ class _ChatInputFieldState extends State<ChatInputField>
           color: Colors.transparent,
           height: 55,
           width: 55,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              primary: Colors.grey[850],
+          child: TextButton(
+            style: TextButton.styleFrom(
+              primary: Const.contrainsColor.withOpacity(0.1),
               elevation: 0,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(45)),
+                borderRadius: BorderRadius.circular(45),
+              ),
             ),
             onPressed: onPressed,
             child: Center(
               child: Icon(
                 icon,
+                color: Const.contrainsColor,
               ),
             ),
           ),
@@ -412,8 +421,10 @@ class _ChatInputFieldState extends State<ChatInputField>
           ),
           child: Text(
             isim,
-            style:
-                TextStyle(fontWeight: FontWeight.bold, color: Colors.white70),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Const.contrainsColor.withOpacity(0.6),
+            ),
           ),
         ),
       ],

@@ -1,9 +1,7 @@
-import 'dart:io';
 import 'dart:math';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:onlinemusic/services/auth.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
@@ -11,7 +9,7 @@ import 'package:onlinemusic/views/auth/login_screen.dart';
 import 'package:onlinemusic/views/chat/messages/message_screen.dart';
 import 'package:onlinemusic/views/profile_screen/blocked_users.dart';
 import 'package:onlinemusic/views/profile_screen/edit_profile_screen.dart';
-import 'package:onlinemusic/views/profile_screen/shared_songs_screen.dart';
+import 'package:onlinemusic/widgets/custom_back_button.dart';
 import '../../models/usermodel.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -41,18 +39,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade200,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: Icon(Icons.arrow_back_ios_new_rounded),
-        ),
+        leading: CustomBackButton(),
         iconTheme: IconThemeData(
-          color: Const.kBackground,
+          color: Const.contrainsColor,
         ),
         actions: [
           if (isMee || AuthService().isAdmin)
@@ -77,17 +68,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Container(
             width: double.maxFinite,
             decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: Const.kBackground.withOpacity(0.25),
-                    offset: Offset(0, 7),
-                    blurRadius: 12,
-                  ),
-                ],
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(16),
-                )),
+              boxShadow: [
+                BoxShadow(
+                  color: Const.contrainsColor.withOpacity(0.1),
+                  offset: Offset(0, 7),
+                  blurRadius: 12,
+                ),
+              ],
+              color: Const.themeColor,
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(16),
+              ),
+            ),
             child: IntrinsicHeight(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -123,13 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           SizedBox(
             height: 15,
           ),
-          listTileWidget(
-            onTap: () {
-              context.push(SharedSongsScreen(user: widget.userModel));
-            },
-            title: "Yüklenen müzikler",
-            leadingIcon: Icons.music_note_rounded,
-          ),
+
           if (!isMee) ...[
             listTileWidget(
               onTap: () {
@@ -200,19 +186,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return ListTile(
       onTap: onTap,
       contentPadding: EdgeInsets.symmetric(horizontal: 28),
-      leading: Icon(leadingIcon, color: Const.kBackground.withOpacity(0.4)),
+      leading: Icon(leadingIcon, color: Const.contrainsColor.withOpacity(0.4)),
       title: Text(
         title,
         style: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w600,
-          color: Const.kBackground,
         ),
       ),
       trailing: Icon(
         Icons.arrow_forward_ios_rounded,
         size: 18,
-        color: Const.kBackground.withOpacity(0.4),
+        color: Const.contrainsColor.withOpacity(0.4),
       ),
     );
   }

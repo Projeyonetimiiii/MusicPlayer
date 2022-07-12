@@ -24,7 +24,7 @@ class YoutubeMusics {
 
   Map<String, dynamic> toMap() {
     return {
-      'playlists': genres?.map((x) => x.toMap()).toList(),
+      'genres': genres?.map((x) => x.toMap()).toList(),
       'headMusics': headSongs?.map((x) => x.toMap()).toList(),
     };
   }

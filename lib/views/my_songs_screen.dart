@@ -2,20 +2,27 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:onlinemusic/providers/data.dart';
 import 'package:onlinemusic/services/search_service.dart';
+import 'package:onlinemusic/services/theme_service.dart';
 import 'package:onlinemusic/util/const.dart';
+import 'package:onlinemusic/util/enums.dart';
 import 'package:onlinemusic/util/extensions.dart';
+import 'package:onlinemusic/util/helper_functions.dart';
 import 'package:onlinemusic/widgets/custom_back_button.dart';
 import 'package:onlinemusic/widgets/build_media_items.dart';
 
-class LibraryPage extends StatefulWidget {
-  LibraryPage({Key? key}) : super(key: key);
+import '../widgets/short_popupbutton.dart';
+
+class MySongsScren extends StatefulWidget {
+  MySongsScren({Key? key}) : super(key: key);
 
   @override
-  State<LibraryPage> createState() => _LibraryPageState();
+  State<MySongsScren> createState() => _MySongsScrenState();
 }
 
-class _LibraryPageState extends State<LibraryPage> {
+class _MySongsScrenState extends State<MySongsScren> {
   late MyData data;
+  SortType? sortType;
+  OrderType? orderType;
 
   @override
   void initState() {
@@ -34,17 +41,35 @@ class _LibraryPageState extends State<LibraryPage> {
     setState(() {});
   }
 
+  int get songsCount {
+    return context.myData.songs.value.length;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Cihaz"),
+        title: StreamBuilder<Object>(
+            stream: data.songs,
+            builder: (context, snapshot) {
+              return Text("Müziğim ${songsCount == 0 ? "" : "($songsCount)"}");
+            }),
         actions: [
           IconButton(
             onPressed: () {
               showSearch(context: context, delegate: LocalSearchDelegate());
             },
             icon: Icon(Icons.search_rounded),
+          ),
+          SortPopupButton(
+            changeSort: (sort, order) {
+              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                setState(() {
+                  sortType = sort;
+                  orderType = order;
+                });
+              });
+            },
           ),
         ],
       ),
@@ -82,12 +107,24 @@ class _LibraryPageState extends State<LibraryPage> {
               ),
             );
           }
-
-          return BuildMediaItems(
-            items: data.songs,
-            padding: EdgeInsets.only(
-              bottom: 130,
-            ),
+          return StreamBuilder<List<MediaItem>>(
+            stream: data.songs,
+            initialData: data.songs.value,
+            builder: (c, snap) {
+              List<MediaItem> items = data.songs.value;
+              if (sortType == null && orderType == null) {
+                items = sortItems(items, SortType.Name, OrderType.Growing);
+              } else {
+                items = sortItems(items, sortType!, orderType!);
+              }
+              return BuildMediaItems(
+                items: items,
+                type: BuildMusicListType.Downloaded,
+                padding: EdgeInsets.only(
+                  bottom: 130,
+                ),
+              );
+            },
           );
         },
       ),
@@ -96,21 +133,22 @@ class _LibraryPageState extends State<LibraryPage> {
 }
 
 class LocalSearchDelegate extends SearchDelegate {
+  ThemeService service = ThemeService();
   @override
   ThemeData appBarTheme(BuildContext context) {
-    return ThemeData.light().copyWith(
-      scaffoldBackgroundColor: Colors.grey.shade200,
+    return Theme.of(context).copyWith(
+      scaffoldBackgroundColor: Const.themeColor,
       inputDecorationTheme: InputDecorationTheme(
         border: InputBorder.none,
       ),
       textSelectionTheme: TextSelectionThemeData(
-        cursorColor: Const.kBackground,
-        selectionColor: Const.kBackground.withOpacity(0.1),
-        selectionHandleColor: Const.kBackground,
+        cursorColor: Const.contrainsColor,
+        selectionColor: Const.contrainsColor.withOpacity(0.1),
+        selectionHandleColor: Const.contrainsColor,
       ),
       appBarTheme: AppBarTheme(
         elevation: 0,
-        backgroundColor: Colors.grey.shade200,
+        backgroundColor: Const.themeColor,
       ),
     );
   }

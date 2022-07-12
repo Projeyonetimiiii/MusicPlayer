@@ -6,6 +6,8 @@ import 'package:onlinemusic/models/usermodel.dart';
 import 'package:onlinemusic/services/auth.dart';
 import 'package:onlinemusic/services/user_status_service.dart';
 import 'package:onlinemusic/util/const.dart';
+import 'package:onlinemusic/util/extensions.dart';
+import 'package:onlinemusic/views/profile_screen/profile_screen.dart';
 
 class BlockedUsers extends StatelessWidget {
   final UserModel user;
@@ -42,12 +44,12 @@ class BlockedUsers extends StatelessWidget {
                         user = UserModel.fromMap(snap.data!.data()!);
                       }
                       return ListTile(
-                        title: AnimatedSwitcher(
-                          duration: Duration(milliseconds: 350),
-                          child: user == null
-                              ? SizedBox()
-                              : Text(user.userName ?? "User"),
-                        ),
+                        onTap: () {
+                          if (user != null) {
+                            context.push(ProfileScreen(userModel: user));
+                          }
+                        },
+                        title: Text(user?.userName ?? "User"),
                         leading: AnimatedSwitcher(
                           duration: Duration(milliseconds: 350),
                           child: user == null

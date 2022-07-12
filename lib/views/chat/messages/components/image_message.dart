@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/views/chat/models/chat_message.dart';
 
 class ImageMessage extends StatelessWidget {
@@ -42,12 +43,13 @@ class ImageMessage extends StatelessWidget {
                     Container(
                       padding: EdgeInsets.all(5),
                       width: double.maxFinite,
-                      color: isMee ? Colors.blue : Colors.grey.shade400,
+                      color: Const.contrainsColor.withOpacity(isMee ? 1 : .1),
                       child: Text(
                         message.message!,
                         textAlign: TextAlign.left,
                         style: TextStyle(
-                          color: isMee ? Colors.white : Colors.black,
+                          color:
+                              isMee ? Const.themeColor : Const.contrainsColor,
                         ),
                       ),
                     ),

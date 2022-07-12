@@ -2,7 +2,8 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/util/const.dart';
-import 'package:onlinemusic/util/extensions.dart';
+import 'package:onlinemusic/util/enums.dart';
+import 'package:onlinemusic/util/mixins.dart';
 import 'package:onlinemusic/views/playing_screen/widgets/stream_media_item.dart';
 
 class QueuePage extends StatefulWidget {
@@ -18,22 +19,20 @@ class QueuePage extends StatefulWidget {
   _QueuePageState createState() => _QueuePageState();
 }
 
-class _QueuePageState extends State<QueuePage> {
+class _QueuePageState extends State<QueuePage> with BuildMediaItemMixin {
   List<MediaItem> queue = [];
 
   @override
   void initState() {
-    queue = widget.queue.copyList;
+    queue = widget.queue.toList();
     super.initState();
   }
 
   @override
   void didUpdateWidget(covariant QueuePage oldWidget) {
-    if (oldWidget.queue != widget.queue) {
-      setState(() {
-        queue = widget.queue.copyList;
-      });
-    }
+    setState(() {
+      queue = widget.queue.toList();
+    });
     super.didUpdateWidget(oldWidget);
   }
 
@@ -51,7 +50,7 @@ class _QueuePageState extends State<QueuePage> {
                       return Material(
                         color: Colors.transparent,
                         child: Container(
-                          color: Colors.white12,
+                          color: Const.contrainsColor.withOpacity(0.1),
                           child: c,
                         ),
                       );
@@ -64,7 +63,9 @@ class _QueuePageState extends State<QueuePage> {
                       queue.removeAt(oldIndex);
                       queue.insert(newIndex, temp);
                       await handler.updateQueue(queue);
+                      print("reordered");
                       if (playingSong != null) {
+                        print("index bulunuyor");
                         handler.updateMediaItemIndex(playingSong);
                       }
                       setState(() {});
@@ -73,54 +74,18 @@ class _QueuePageState extends State<QueuePage> {
                     itemCount: queue.length,
                     itemBuilder: (BuildContext context, int index) {
                       MediaItem song = queue[index];
-                      return ListTile(
-                        key: Key(song.id.toString()),
-                        contentPadding: const EdgeInsets.symmetric(
-                            vertical: 6, horizontal: 12),
-                        onTap: () {
-                          if (widget.changeItem != null) {
-                            widget.changeItem!(song);
-                          }
-                        },
-                        leading: Material(
-                          elevation: 10,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: SizedBox(
-                              width: 90,
-                              child: AspectRatio(
-                                aspectRatio: 16 / 9,
-                                child: song.getImageWidget,
-                              ),
-                            ),
-                          ),
-                        ),
-                        trailing: playingSong?.id == song.id
-                            ? Icon(
-                                Icons.bar_chart_rounded,
-                                color: Const.kBackground,
-                              )
-                            : Text(
-                                Const.getDurationString(
-                                    song.duration ?? Duration.zero),
-                              ),
-                        title: Text(
-                          song.title,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        subtitle: Text(
-                          song.artist ?? "Artist",
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(fontSize: 13),
+                      return Container(
+                        key: Key(song.id),
+                        color: song.id == playingSong?.id
+                            ? Const.contrainsColor.withOpacity(0.1)
+                            : Colors.transparent,
+                        child: buildMusicItem(
+                          song,
+                          queue,
+                          onPressed: () {
+                            widget.changeItem?.call(song);
+                          },
+                          type: BuildMusicListType.Queue,
                         ),
                       );
                     },

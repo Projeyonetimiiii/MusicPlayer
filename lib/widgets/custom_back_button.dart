@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:onlinemusic/util/const.dart';
 
 class CustomBackButton extends StatelessWidget {
   final Color color;
@@ -13,7 +14,7 @@ class CustomBackButton extends StatelessWidget {
       },
       icon: Icon(
         Icons.arrow_back_ios_new_rounded,
-        color: color,
+        color: Const.contrainsColor,
       ),
     );
   }

@@ -9,7 +9,6 @@ import 'package:flutter_vibrate/flutter_vibrate.dart';
 import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/models/request_model.dart';
 import 'package:onlinemusic/models/usermodel.dart';
-import 'package:onlinemusic/services/audios_bloc.dart';
 import 'package:onlinemusic/services/connected_song_service.dart';
 import 'package:onlinemusic/services/user_status_service.dart';
 import 'package:onlinemusic/util/const.dart';
@@ -121,7 +120,22 @@ class AuthService {
   //çıkış yap fonksiyonu
   signOut() async {
     stopListen();
+    await deleteHiveDatas();
     await _auth.signOut();
+  }
+
+  Future<void> deleteHiveDatas() async {
+    List<String> keys = [
+      "lastRepeatMode",
+      "lastShuffleMode",
+      "lastQueue",
+      "lastMediaItem",
+      "supportedAbis",
+      "searchHistory"
+    ];
+    for (var key in keys) {
+      await cacheBox!.delete(key);
+    }
   }
 
   //kayıt ol fonksiyonu
@@ -208,10 +222,8 @@ class AuthService {
       resultType: ResultType.Waiting,
     );
     await userRequestReference(userId).set(requestModel.toMap());
-    showMyOverlayNotification(
-      duration: Duration(seconds: 2),
+    showMessage(
       message: "İstek gönderildi",
-      isDismissible: true,
     );
   }
 
@@ -224,10 +236,8 @@ class AuthService {
       resultType: ResultType.Waiting,
     );
     await userRequestReference(userId).set(requestModel.toMap());
-    showMyOverlayNotification(
-      duration: Duration(seconds: 2),
+    showMessage(
       message: "İstek gönderildi",
-      isDismissible: true,
     );
   }
 
@@ -258,18 +268,7 @@ class AuthService {
             }
           }
           Vibrate.vibrate();
-
-          // showingResult 5 saniye sonra true ise false yap, kullanıcı dismissible yaparsa showingResult değeri true kalır
-          Future.delayed(
-            Duration(seconds: 5),
-            () {
-              if (showingResult) {
-                showingResult = false;
-              }
-            },
-          );
           showMyOverlayNotification(
-            isDismissible: true,
             duration: Duration(seconds: 5),
             leading: CircleAvatar(
               backgroundColor: Colors.white,
@@ -287,16 +286,22 @@ class AuthService {
                   requestModel.requestType == RequestType.User) {
                 return [
                   TextButton(
-                      onPressed: () {
-                        if (entry != null) {
-                          entry.dismiss();
-                        }
-                        showingResult = false;
-                        context.push(MessagesScreen(
+                    style: TextButton.styleFrom(
+                      primary: Const.themeColor,
+                    ),
+                    onPressed: () {
+                      if (entry != null) {
+                        entry.dismiss();
+                      }
+                      showingResult = false;
+                      context.push(
+                        MessagesScreen(
                           user: user,
-                        ));
-                      },
-                      child: Text("Mesaj At")),
+                        ),
+                      );
+                    },
+                    child: Text("Mesaj At"),
+                  ),
                 ];
               }
               return null;
@@ -317,10 +322,8 @@ class AuthService {
         UserModel user = UserModel.fromMap(event.data()!);
         if (user.connectedUserId == null &&
             currentUser.value?.connectedUserId != null) {
-          showMyOverlayNotification(
-            duration: Duration(seconds: 2),
+          showMessage(
             message: "Kullanıcı eşleşme bitirildi",
-            isDismissible: true,
           );
         }
         currentUser.add(user);
@@ -335,7 +338,6 @@ class AuthService {
       statusService.userConnectStatus(true);
       statusService.listenBlockedUsers();
       listenCurrentUser();
-      AudiosBloc().listenAudios();
     }
   }
 
@@ -345,7 +347,6 @@ class AuthService {
     statusService.userConnectStatus(false);
     statusService.stopListenBlockedUsers();
     currentUserSubscription?.cancel();
-    AudiosBloc().stopListen();
   }
 
   bool showingRequest = false;
@@ -368,7 +369,6 @@ class AuthService {
         if (user != null) {
           Vibrate.vibrate();
           showMyOverlayNotification(
-            isDismissible: false,
             duration: Duration(seconds: 10),
             leading: CircleAvatar(
               backgroundColor: Colors.white,
@@ -379,6 +379,9 @@ class AuthService {
             actionsBuilder: (entry) {
               return [
                 TextButton(
+                  style: TextButton.styleFrom(
+                    primary: Const.themeColor,
+                  ),
                   onPressed: () async {
                     if (entry != null) {
                       entry.dismiss();
@@ -402,6 +405,9 @@ class AuthService {
                   child: Text("Kabul Et"),
                 ),
                 TextButton(
+                  style: TextButton.styleFrom(
+                    primary: Const.themeColor,
+                  ),
                   onPressed: () async {
                     if (entry != null) {
                       entry.dismiss();

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:onlinemusic/models/usermodel.dart';
 import 'package:onlinemusic/services/messages_service.dart';
+import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/views/chat/models/chat_message.dart';
 import 'package:flutter/material.dart';
 
@@ -103,7 +104,8 @@ class Body extends StatelessWidget {
                 }
               },
               child: Container(
-                color: isSelected ? Colors.grey.shade400 : null,
+                color:
+                    isSelected ? Const.contrainsColor.withOpacity(0.2) : null,
                 child: Message(
                   message: message,
                   isSelected: isSelected,

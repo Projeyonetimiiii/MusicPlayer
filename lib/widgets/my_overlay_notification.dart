@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:onlinemusic/util/const.dart';
 import 'package:overlay_support/overlay_support.dart';
 
 typedef ActionsBuilder = List<Widget>? Function(OverlaySupportEntry?);
@@ -11,25 +12,26 @@ class MyOverlayNotification extends StatelessWidget {
   final List<Widget>? actions;
   final VoidCallback? onFinish;
   final Widget? leading;
-  final bool isDismissible;
 
   MyOverlayNotification({
     this.actions,
     required this.duration,
     required this.message,
-    this.isDismissible = false,
     this.onFinish,
     this.leading,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SlideDismissible(
+    return Dismissible(
       key: ValueKey(duration),
-      direction:
-          isDismissible ? DismissDirection.horizontal : DismissDirection.none,
+      direction: DismissDirection.horizontal,
+      confirmDismiss: (s) {
+        onFinish?.call();
+        return Future.value(true);
+      },
       child: Material(
-        color: Colors.white,
+        color: Const.contrainsColor,
         elevation: 4,
         child: SafeArea(
           child: IntrinsicHeight(
@@ -57,6 +59,7 @@ class MyOverlayNotification extends StatelessWidget {
                               message,
                               style: TextStyle(
                                 fontSize: 13,
+                                color: Const.themeColor,
                               ),
                             ),
                           ),
@@ -107,7 +110,7 @@ class _LinearCountDownWidgetState extends State<LinearCountDownWidget> {
   }
 
   startTimer() {
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       subscription =
           Stream.periodic(Duration(milliseconds: 16)).listen((event) {
         setState(() {
@@ -132,10 +135,18 @@ class _LinearCountDownWidgetState extends State<LinearCountDownWidget> {
   Widget build(BuildContext context) {
     return LinearProgressIndicator(
       value: val.clamp(0, 1),
-      valueColor: AlwaysStoppedAnimation(Colors.black),
+      valueColor: AlwaysStoppedAnimation(
+        Const.themeColor,
+      ),
       backgroundColor: Colors.transparent,
     );
   }
+}
+
+showMessage({
+  required String message,
+}) {
+  showMyOverlayNotification(duration: Duration(seconds: 3), message: message);
 }
 
 showMyOverlayNotification({
@@ -144,7 +155,6 @@ showMyOverlayNotification({
   required Duration duration,
   required String message,
   VoidCallback? onFinish,
-  bool isDismissible = false,
 }) {
   OverlaySupportEntry? entry;
   entry = showOverlayNotification(
@@ -152,7 +162,6 @@ showMyOverlayNotification({
       return MyOverlayNotification(
         duration: duration,
         leading: leading,
-        isDismissible: isDismissible,
         actions: actionsBuilder?.call(OverlaySupportEntry.of(context)),
         message: message,
         onFinish: () {

@@ -5,10 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/models/youtube_playlist.dart';
+import 'package:onlinemusic/services/download_service.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/converter.dart';
 import 'package:onlinemusic/util/extensions.dart';
-import 'package:onlinemusic/views/playing_screen/playing_screen.dart';
+import 'package:onlinemusic/util/mixins.dart';
 import 'package:onlinemusic/views/video_player_screen.dart';
 import 'package:onlinemusic/widgets/mini_player.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
@@ -21,7 +22,8 @@ class YtPlaylistScreen extends StatefulWidget {
   _YtPlaylistScreenState createState() => _YtPlaylistScreenState();
 }
 
-class _YtPlaylistScreenState extends State<YtPlaylistScreen> {
+class _YtPlaylistScreenState extends State<YtPlaylistScreen>
+    with BuildMediaItemMixin {
   YoutubePlaylist get playlist => widget.playlist;
   late YoutubeExplode _yt;
   List<MediaItem> searchedList = [];
@@ -33,7 +35,7 @@ class _YtPlaylistScreenState extends State<YtPlaylistScreen> {
     _yt = YoutubeExplode();
     if (playlist.isPlaylist) searchedList = getInitialVideos();
     fetched = searchedList.isNotEmpty;
-    WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (playlist.isPlaylist) {
         getVideos();
       }
@@ -97,10 +99,38 @@ class _YtPlaylistScreenState extends State<YtPlaylistScreen> {
                   elevation: 0,
                   stretch: true,
                   systemOverlayStyle: SystemUiOverlayStyle.light,
-                  backgroundColor: Colors.grey.shade200,
+                  backgroundColor: Const.themeColor,
                   iconTheme: IconThemeData(
-                    color: Const.kBackground,
+                    color: Const.contrainsColor,
                   ),
+                  actions: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Center(
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(5),
+                          onTap: () {
+                            downloadService.addAllQueue(
+                              searchedList,
+                              context,
+                              isTest: true,
+                            );
+                          },
+                          child: Container(
+                            padding: EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: Const.themeColor,
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Icon(
+                              Icons.download_rounded,
+                              color: Const.contrainsColor,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                   leading: Center(
                     child: InkWell(
                       onTap: () {
@@ -109,12 +139,12 @@ class _YtPlaylistScreenState extends State<YtPlaylistScreen> {
                       child: Container(
                         padding: EdgeInsets.all(3),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
+                          color: Const.themeColor,
                           borderRadius: BorderRadius.circular(5),
                         ),
                         child: Icon(
                           Icons.arrow_back_ios_new_rounded,
-                          color: Const.kBackground,
+                          color: Const.contrainsColor,
                         ),
                       ),
                     ),
@@ -130,7 +160,7 @@ class _YtPlaylistScreenState extends State<YtPlaylistScreen> {
                         maxLines: 1,
                         style: TextStyle(
                           fontSize: 16,
-                          color: Const.kBackground,
+                          color: Const.contrainsColor,
                         ),
                       ),
                     ),
@@ -145,7 +175,8 @@ class _YtPlaylistScreenState extends State<YtPlaylistScreen> {
                             Colors.white,
                           ],
                         ).createShader(
-                            Rect.fromLTWH(0, 0, rect.width, rect.height));
+                          Rect.fromLTWH(0, 0, rect.width, rect.height),
+                        );
                       },
                       child: CachedNetworkImage(
                         imageUrl: playlist.getStandartImage,
@@ -176,61 +207,7 @@ class _YtPlaylistScreenState extends State<YtPlaylistScreen> {
                     delegate: SliverChildListDelegate(
                       searchedList.map(
                         (MediaItem entry) {
-                          return ListTile(
-                            leading: Card(
-                              elevation: 8,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(5.0),
-                              ),
-                              clipBehavior: Clip.antiAlias,
-                              child: SizedBox(
-                                height: 45.0,
-                                child: AspectRatio(
-                                  aspectRatio: 16 / 9,
-                                  child: entry.getImageWidget,
-                                ),
-                              ),
-                            ),
-                            title: Text(
-                              entry.title.toString(),
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 14,
-                              ),
-                            ),
-                            subtitle: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      entry.artist.toString(),
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Text(
-                                  Const.getDurationString(entry.duration!),
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            onTap: () async {
-                              context.pushOpaque(
-                                PlayingScreen(
-                                  queue: searchedList,
-                                  song: entry,
-                                ),
-                              );
-                            },
-                          );
+                          return buildMusicItem(entry, searchedList);
                         },
                       ).toList(),
                     ),

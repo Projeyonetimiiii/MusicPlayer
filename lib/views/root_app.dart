@@ -1,18 +1,14 @@
-import 'dart:ui';
-
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/converter.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/views/chat/chats_screen.dart';
-import 'package:onlinemusic/views/favorite_page.dart';
 import 'package:onlinemusic/views/home_page.dart';
-import 'package:onlinemusic/views/library_page.dart';
+import 'package:onlinemusic/views/library_scren.dart';
+import 'package:onlinemusic/views/my_songs_screen.dart';
 import 'package:onlinemusic/views/playing_screen/playing_screen.dart';
-import 'package:onlinemusic/views/share_song_page.dart';
 import 'package:onlinemusic/widgets/mini_player.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 
@@ -39,7 +35,9 @@ class _RootAppState extends State<RootApp> {
         }
       }
     });
-    updateWithLastDatas();
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      updateWithLastDatas();
+    });
     super.initState();
   }
 
@@ -82,51 +80,16 @@ class _RootAppState extends State<RootApp> {
           YoutubeHomePage(
             key: PageStorageKey("home"),
           ),
-          FavoritePage(
-            key: PageStorageKey("favorite"),
-          ),
           ChatsScreen(
             key: PageStorageKey("chat"),
           ),
-          LibraryPage(
+          MySongsScren(
+            key: PageStorageKey("mysongs"),
+          ),
+          LibraryScreen(
             key: PageStorageKey("library"),
           ),
         ],
-      ),
-      floatingActionButton: ClipRRect(
-        borderRadius: BorderRadius.circular(50),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: 5,
-            sigmaY: 5,
-          ),
-          child: FloatingActionButton.extended(
-            extendedIconLabelSpacing: 0,
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(50),
-                side: BorderSide(
-                  color: Const.kBackground,
-                  width: 2,
-                )),
-            backgroundColor: Const.kBackground.withOpacity(0.5),
-            label: Text(
-              "Yayınla ",
-              style: TextStyle(
-                  color: Const.kWhite,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.4,
-                  fontSize: 16),
-            ),
-            onPressed: () {
-              context.push(ShareSongPage());
-            },
-            icon: Icon(
-              Icons.add,
-              color: Const.kWhite,
-            ),
-          ),
-        ),
       ),
       bottomNavigationBar: ValueListenableBuilder<int>(
         valueListenable: _bottomPageNotifier,
@@ -142,24 +105,23 @@ class _RootAppState extends State<RootApp> {
                   bool isIdle = processingState == AudioProcessingState.idle;
                   bool showPlayer = (isThereItem.data == true);
 
-                  Widget bottomBar = AnimatedContainer(
-                    duration: Duration(milliseconds: 350),
+                  Widget bottomBar = Container(
                     margin: EdgeInsets.only(
                       left: 8,
                       right: 8,
                       bottom: 8,
-                      top: showPlayer && !isIdle ? 58 : 0,
+                      top: showPlayer ? 58 : 0,
                     ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(27),
                       boxShadow: [
                         BoxShadow(
-                          color: Const.kBackground.withOpacity(0.4),
+                          color: Const.contrainsColor.withOpacity(0.4),
                           blurRadius: 2,
                           offset: Offset(0, 0),
                         ),
                       ],
-                      color: Colors.white,
+                      color: Const.themeColor,
                     ),
                     child: SalomonBottomBar(
                       itemPadding:
@@ -170,27 +132,31 @@ class _RootAppState extends State<RootApp> {
                       },
                       items: [
                         SalomonBottomBarItem(
-                          selectedColor: Const.kBackground,
-                          unselectedColor: Const.kBackground.withOpacity(0.4),
+                          selectedColor: Const.contrainsColor,
+                          unselectedColor:
+                              Const.contrainsColor.withOpacity(0.4),
                           title: Text("Ana Sayfa"),
-                          icon: Icon(Icons.audiotrack_rounded),
+                          icon: Icon(Icons.home_rounded),
                         ),
                         SalomonBottomBarItem(
-                          selectedColor: Const.kBackground,
-                          unselectedColor: Const.kBackground.withOpacity(0.4),
-                          title: Text("Favoriler"),
-                          icon: Icon(Icons.favorite),
-                        ),
-                        SalomonBottomBarItem(
-                          selectedColor: Const.kBackground,
-                          unselectedColor: Const.kBackground.withOpacity(0.4),
-                          title: Text("Mesajlar"),
+                          selectedColor: Const.contrainsColor,
+                          unselectedColor:
+                              Const.contrainsColor.withOpacity(0.4),
+                          title: Text("Sohbetler"),
                           icon: Icon(Icons.message_rounded),
                         ),
                         SalomonBottomBarItem(
-                          selectedColor: Const.kBackground,
-                          unselectedColor: Const.kBackground.withOpacity(0.4),
-                          title: Text("Cihaz"),
+                          selectedColor: Const.contrainsColor,
+                          unselectedColor:
+                              Const.contrainsColor.withOpacity(0.4),
+                          title: Text("Müziğim"),
+                          icon: Icon(Icons.audiotrack_rounded),
+                        ),
+                        SalomonBottomBarItem(
+                          selectedColor: Const.contrainsColor,
+                          unselectedColor:
+                              Const.contrainsColor.withOpacity(0.4),
+                          title: Text("Kütüphane"),
                           icon: Icon(Icons.library_music_rounded),
                         ),
                       ],
@@ -205,7 +171,7 @@ class _RootAppState extends State<RootApp> {
                             style: MiniPlayer.sStyle.copyWith(
                               boxShadow: BoxShadow(
                                 blurRadius: 5,
-                                color: Colors.black54,
+                                color: Const.contrainsColor.withOpacity(0.4),
                               ),
                               borderRadius: BorderRadius.vertical(
                                 top: Radius.circular(12),
@@ -241,7 +207,7 @@ class _RootAppState extends State<RootApp> {
                                     borderRadius: BorderRadius.vertical(
                                       top: Radius.circular(12),
                                     ),
-                                    color: Colors.grey.shade200,
+                                    color: Const.themeColor,
                                     boxShadow: [
                                       BoxShadow(
                                         blurRadius: 5,

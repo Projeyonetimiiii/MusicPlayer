@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:onlinemusic/services/app_update_service.dart';
+import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/views/state.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -15,7 +16,7 @@ class _SplashScreenState extends State<SplashScreen> {
     Size size = MediaQuery.of(context).size;
     double textHeight = size.height * 0.1;
     return Material(
-      color: Colors.grey.shade200,
+      color: Const.themeColor,
       child: Column(
         children: [
           SizedBox(

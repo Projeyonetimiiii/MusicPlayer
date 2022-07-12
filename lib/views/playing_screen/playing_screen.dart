@@ -9,14 +9,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:onlinemusic/main.dart';
-import 'package:onlinemusic/models/connected_controller.dart';
 import 'package:onlinemusic/models/connected_song_model.dart';
 import 'package:onlinemusic/models/usermodel.dart';
 import 'package:onlinemusic/providers/data.dart';
 import 'package:onlinemusic/services/auth.dart';
 import 'package:onlinemusic/services/connected_song_service.dart';
 import 'package:onlinemusic/services/listening_song_service.dart';
-import 'package:onlinemusic/services/messages_service.dart';
 import 'package:onlinemusic/services/user_status_service.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/enums.dart';
@@ -26,6 +24,8 @@ import 'package:onlinemusic/views/playing_screen/widgets/seekbar.dart';
 import 'package:onlinemusic/views/playing_screen/widgets/stream_media_item.dart';
 import 'package:onlinemusic/views/profile_screen/profile_screen.dart';
 import 'package:onlinemusic/views/playing_screen/queue_screen.dart';
+import 'package:onlinemusic/widgets/download_button.dart';
+import 'package:onlinemusic/widgets/favorite_animation.dart';
 import 'package:onlinemusic/widgets/my_overlay_notification.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
@@ -114,53 +114,21 @@ class _PlayingScreenState extends State<PlayingScreen>
           initialData: connectedSongService.connectSongModel.value,
           builder: (context, songSnapshot) {
             return StreamBuilder<bool?>(
-                stream: ConnectedSongService()
-                    .controller
-                    .map((event) => event?.isReady)
-                    .distinct(),
-                initialData: ConnectedSongService().controller.value?.isReady,
-                builder: (context, controllerSnapshot) {
-                  bool isReady = true;
-                  if (songSnapshot.data?.isAdmin == true) {
-                    isReady = (controllerSnapshot.data ?? true);
-                  }
-                  return playingScreenBody(
-                      context, connectedSongService.isAdmin, isReady);
-                });
+              stream: ConnectedSongService()
+                  .controller
+                  .map((event) => event?.isReady)
+                  .distinct(),
+              initialData: ConnectedSongService().controller.value?.isReady,
+              builder: (context, controllerSnapshot) {
+                bool isReady = true;
+                if (songSnapshot.data?.isAdmin == true) {
+                  isReady = (controllerSnapshot.data ?? true);
+                }
+                return playingScreenBody(
+                    context, connectedSongService.isAdmin, isReady);
+              },
+            );
           },
-        ),
-      ),
-    );
-  }
-
-  Widget get isLoadingWidget {
-    try {
-      handler.pause();
-    } on Exception catch (_) {}
-    return Positioned.fill(
-      child: Container(
-        color: Colors.black38,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Diğer kullanıcının ayarları yapılıyor lütfen bekleyiniz",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                ),
-              ),
-              SizedBox(
-                height: 12,
-              ),
-              Center(
-                  child: CircularProgressIndicator(
-                color: Colors.white,
-              )),
-            ],
-          ),
         ),
       ),
     );
@@ -192,7 +160,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                     padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                     margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: Const.contrainsColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: AnimatedOpacity(
@@ -289,7 +257,6 @@ class _PlayingScreenState extends State<PlayingScreen>
                   favoriteChild = Text(
                     "Favori Müziğim",
                     style: TextStyle(
-                      color: Const.kBackground,
                       fontSize: 14,
                     ),
                   );
@@ -313,6 +280,8 @@ class _PlayingScreenState extends State<PlayingScreen>
               builder: (song) {
                 return Row(
                   children: [
+                    if (song != null && song.type.isVideo)
+                      DownloadButton(item: song),
                     StreamBuilder<UserModel?>(
                       stream: AuthService().currentUser,
                       initialData: AuthService().currentUser.value,
@@ -341,15 +310,16 @@ class _PlayingScreenState extends State<PlayingScreen>
                                   value: PopupEnum.Profile,
                                   textStyle: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.black,
                                     fontWeight: FontWeight.bold,
+                                    color: Const.contrainsColor,
                                   ),
                                   child: Row(
                                     children: [
                                       Text(connectedUser.userName!),
                                       Spacer(),
                                       CircleAvatar(
-                                        backgroundColor: Colors.grey.shade300,
+                                        backgroundColor:
+                                            Const.themeColor.withOpacity(0.2),
                                         radius: 14,
                                         backgroundImage:
                                             CachedNetworkImageProvider(
@@ -363,8 +333,13 @@ class _PlayingScreenState extends State<PlayingScreen>
                               child = PopupMenuButton<PopupEnum>(
                                 key: popupKey,
                                 padding: EdgeInsets.zero,
+                                color: Const.themeColor,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                    color: Const.kLight,
+                                    width: 1,
+                                  ),
                                 ),
                                 onSelected: (s) {
                                   onSelected(s, connectedUser, song);
@@ -375,15 +350,13 @@ class _PlayingScreenState extends State<PlayingScreen>
                                       if (song?.isOnline == true)
                                         PopupMenuItem(
                                           value: PopupEnum.Match,
-                                          textStyle: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black,
-                                          ),
+                                          textStyle: popupTextStyle,
                                           child: Row(
                                             children: [
                                               Icon(
                                                 Icons.person_add_alt_rounded,
                                                 size: 16,
+                                                color: Const.contrainsColor,
                                               ),
                                               const SizedBox(
                                                 width: 10,
@@ -393,6 +366,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                                               Icon(
                                                 Icons.arrow_forward_ios_rounded,
                                                 size: 16,
+                                                color: Const.contrainsColor,
                                               ),
                                             ],
                                           ),
@@ -401,15 +375,13 @@ class _PlayingScreenState extends State<PlayingScreen>
                                     if (song?.type.isVideo ?? true)
                                       PopupMenuItem(
                                         value: PopupEnum.ViewVideo,
-                                        textStyle: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black,
-                                        ),
+                                        textStyle: popupTextStyle,
                                         child: Row(
                                           children: [
                                             Icon(
                                               Icons.videocam,
                                               size: 16,
+                                              color: Const.contrainsColor,
                                             ),
                                             const SizedBox(
                                               width: 10,
@@ -422,15 +394,13 @@ class _PlayingScreenState extends State<PlayingScreen>
                                         connectedSongService.isAdmin)
                                       PopupMenuItem(
                                         value: PopupEnum.Timer,
-                                        textStyle: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black,
-                                        ),
+                                        textStyle: popupTextStyle,
                                         child: Row(
                                           children: [
                                             Icon(
                                               Icons.timer_sharp,
                                               size: 16,
+                                              color: Const.contrainsColor,
                                             ),
                                             const SizedBox(
                                               width: 10,
@@ -442,15 +412,13 @@ class _PlayingScreenState extends State<PlayingScreen>
                                     if (userPopupMenuItem != null) ...[
                                       PopupMenuItem(
                                         value: PopupEnum.Message,
-                                        textStyle: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black,
-                                        ),
+                                        textStyle: popupTextStyle,
                                         child: Row(
                                           children: [
                                             Icon(
                                               Icons.message_rounded,
                                               size: 16,
+                                              color: Const.contrainsColor,
                                             ),
                                             const SizedBox(
                                               width: 10,
@@ -464,15 +432,13 @@ class _PlayingScreenState extends State<PlayingScreen>
                                           (connectedUser?.isOnline ?? false))
                                         PopupMenuItem(
                                           value: PopupEnum.SongMatch,
-                                          textStyle: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black,
-                                          ),
+                                          textStyle: popupTextStyle,
                                           child: Row(
                                             children: [
                                               Icon(
                                                 Icons.audiotrack_rounded,
                                                 size: 16,
+                                                color: Const.contrainsColor,
                                               ),
                                               const SizedBox(
                                                 width: 10,
@@ -484,15 +450,13 @@ class _PlayingScreenState extends State<PlayingScreen>
                                       if (user.connectedSongModel != null)
                                         PopupMenuItem(
                                           value: PopupEnum.SongUnMatch,
-                                          textStyle: TextStyle(
-                                            fontSize: 14,
-                                            color: Colors.black,
-                                          ),
+                                          textStyle: popupTextStyle,
                                           child: Row(
                                             children: [
                                               Icon(
                                                 Icons.audiotrack_rounded,
                                                 size: 16,
+                                                color: Const.contrainsColor,
                                               ),
                                               const SizedBox(
                                                 width: 10,
@@ -504,15 +468,13 @@ class _PlayingScreenState extends State<PlayingScreen>
                                       MyPopupMenuDivider(
                                         tickness: 3,
                                         height: 3,
-                                        color: Colors.grey.shade200,
+                                        color: Const.contrainsColor
+                                            .withOpacity(0.2),
                                       ),
                                       userPopupMenuItem,
                                       PopupMenuItem(
                                         value: PopupEnum.UnMatch,
-                                        textStyle: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.black,
-                                        ),
+                                        textStyle: popupTextStyle,
                                         child: Center(
                                           child: Text(
                                             "Eşleşmeyi Bitir",
@@ -553,13 +515,8 @@ class _PlayingScreenState extends State<PlayingScreen>
   void showListeningUsers(String songId) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.grey.shade200,
+      backgroundColor: Const.themeColor,
       isScrollControlled: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(16),
-        ),
-      ),
       builder: (c) {
         AuthService authService = AuthService();
         return SizedBox(
@@ -572,13 +529,13 @@ class _PlayingScreenState extends State<PlayingScreen>
                   height: MediaQuery.of(context).size.height * 0.6,
                   child: Center(
                     child: CircularProgressIndicator(
-                      color: Const.kBackground,
+                      color: Const.contrainsColor,
                     ),
                   ),
                 );
               }
 
-              if (snapshot.data!.docs.isEmpty) {
+              if (snapshot.data!.docs.length < 2) {
                 return SizedBox(
                   height: MediaQuery.of(context).size.height * 0.6,
                   child: Center(
@@ -615,13 +572,23 @@ class _PlayingScreenState extends State<PlayingScreen>
                           AuthService().sendUserMatchRequest(user.id!);
                           Navigator.pop(context);
                         },
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.grey.shade200,
-                          backgroundImage:
-                              CachedNetworkImageProvider(user.image!),
+                        leading: Material(
+                          elevation: 4,
+                          shape: StadiumBorder(),
+                          child: CircleAvatar(
+                            backgroundColor: Const.themeColor,
+                            backgroundImage:
+                                CachedNetworkImageProvider(user.image!),
+                          ),
                         ),
-                        title: Text(user.userName ?? "User Name"),
-                        subtitle: Text(user.bio ?? "Biografi"),
+                        title: Text(
+                          user.userName ?? "User Name",
+                          style: titleStyle,
+                        ),
+                        subtitle: Text(
+                          user.bio ?? "Biografi",
+                          style: subtitleStyle,
+                        ),
                       );
                     },
                   );
@@ -631,6 +598,26 @@ class _PlayingScreenState extends State<PlayingScreen>
           ),
         );
       },
+    );
+  }
+
+  TextStyle get popupTextStyle {
+    return TextStyle(
+      fontSize: 14,
+      color: Const.contrainsColor,
+    );
+  }
+
+  TextStyle get titleStyle {
+    return TextStyle(
+      fontWeight: FontWeight.w600,
+      color: Const.contrainsColor,
+    );
+  }
+
+  TextStyle get subtitleStyle {
+    return TextStyle(
+      color: Const.contrainsColor,
     );
   }
 
@@ -693,14 +680,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                   );
                 }
 
-                if (song.type.isAudio) {
-                  child = AspectRatio(
-                    aspectRatio: 1,
-                    child: child,
-                  );
-                }
-
-                return GestureDetector(
+                return FavoriteAnimation(
                   onDoubleTap: () {
                     if (isFavorite) {
                       myData.removeFavoritedSong(song);
@@ -715,6 +695,7 @@ class _PlayingScreenState extends State<PlayingScreen>
                     ),
                     clipBehavior: Clip.antiAlias,
                     margin: EdgeInsets.zero,
+                    shadowColor: Const.themeColor.withOpacity(0.6),
                     elevation: 8,
                     child: child,
                   ),
@@ -750,7 +731,8 @@ class _PlayingScreenState extends State<PlayingScreen>
                   },
                   icon: Icon(Icons.shuffle_rounded),
                   iconSize: 20,
-                  color: isShuffleMode ? Colors.black : Colors.black54,
+                  color:
+                      Const.contrainsColor.withOpacity(isShuffleMode ? 1 : 0.6),
                 );
               },
             ),
@@ -763,61 +745,68 @@ class _PlayingScreenState extends State<PlayingScreen>
                           await handler.skipToPrevious();
                           handler.play();
                         },
-                  icon: Icon(Icons.skip_previous_rounded, size: 35),
+                  icon: Icon(
+                    Icons.skip_previous_rounded,
+                    size: 35,
+                    color: Const.contrainsColor
+                        .withOpacity(handler.hasPrev ? 1 : 0.6),
+                  ),
                 ),
                 StreamBuilder<bool>(
-                    stream: handler.player.processingStateStream
-                        .map((event) => event == ProcessingState.ready)
-                        .distinct(),
-                    initialData: false,
-                    builder: (context, snapshot) {
-                      bool isReady = snapshot.data!;
-                      return Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
+                  stream: handler.player.processingStateStream
+                      .map((event) => event == ProcessingState.ready)
+                      .distinct(),
+                  initialData: false,
+                  builder: (context, snapshot) {
+                    bool isReady = snapshot.data!;
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: 65,
+                          height: 65,
+                          padding: EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: Const.themeColor,
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: StreamBuilder<bool>(
+                            stream: handler.playingStream,
+                            builder: (context, snapshot) {
+                              bool isPlaying = snapshot.data ?? false;
+                              return IconButton(
+                                padding: EdgeInsets.zero,
+                                onPressed: () async {
+                                  if (isPlaying) {
+                                    handler.pause();
+                                  } else {
+                                    handler.play();
+                                  }
+                                },
+                                icon: Icon(
+                                  isPlaying
+                                      ? Icons.pause_rounded
+                                      : Icons.play_arrow_rounded,
+                                  size: 45,
+                                  color: Const.contrainsColor,
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        if (!isReady) ...[
+                          SizedBox(
                             width: 65,
                             height: 65,
-                            padding: EdgeInsets.all(5),
-                            decoration: BoxDecoration(
-                              color: Const.kWhite,
-                              borderRadius: BorderRadius.circular(50),
-                            ),
-                            child: StreamBuilder<bool>(
-                              stream: handler.playingStream,
-                              builder: (context, snapshot) {
-                                bool isPlaying = snapshot.data ?? false;
-                                return IconButton(
-                                  padding: EdgeInsets.zero,
-                                  onPressed: () async {
-                                    if (isPlaying) {
-                                      handler.pause();
-                                    } else {
-                                      handler.play();
-                                    }
-                                  },
-                                  icon: Icon(
-                                    isPlaying
-                                        ? Icons.pause_rounded
-                                        : Icons.play_arrow_rounded,
-                                    size: 45,
-                                  ),
-                                );
-                              },
+                            child: CircularProgressIndicator(
+                              color: Const.contrainsColor,
                             ),
                           ),
-                          if (!isReady) ...[
-                            SizedBox(
-                              width: 65,
-                              height: 65,
-                              child: CircularProgressIndicator(
-                                color: Const.kBackground,
-                              ),
-                            ),
-                          ],
                         ],
-                      );
-                    }),
+                      ],
+                    );
+                  },
+                ),
                 IconButton(
                   onPressed: !handler.hasNext
                       ? null
@@ -827,6 +816,8 @@ class _PlayingScreenState extends State<PlayingScreen>
                         },
                   icon: Icon(
                     Icons.skip_next_rounded,
+                    color: Const.contrainsColor
+                        .withOpacity(handler.hasNext ? 1 : 0.6),
                     size: 35,
                   ),
                 ),
@@ -868,14 +859,15 @@ class _PlayingScreenState extends State<PlayingScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 StreamBuilder<Duration>(
-                    stream: AudioService.position,
-                    builder: (context, snapshot) {
-                      return Text(
-                        Const.getDurationString(
-                            handler.playbackState.value.position),
-                        style: TextStyle(fontSize: 12),
-                      );
-                    }),
+                  stream: AudioService.position,
+                  builder: (context, snapshot) {
+                    return Text(
+                      Const.getDurationString(
+                          handler.playbackState.value.position),
+                      style: TextStyle(fontSize: 12),
+                    );
+                  },
+                ),
                 StreamMediaItem(
                   builder: (song) {
                     return Text(
@@ -938,9 +930,10 @@ class _PlayingScreenState extends State<PlayingScreen>
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        overflow: TextOverflow.ellipsis),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
               ),
@@ -955,7 +948,6 @@ class _PlayingScreenState extends State<PlayingScreen>
                         song?.artist ?? "Artist",
                         style: TextStyle(
                           fontSize: 12,
-                          color: Const.kBackground,
                         ),
                       ),
                     ),
@@ -993,72 +985,102 @@ class _PlayingScreenState extends State<PlayingScreen>
 
   void showUserDialog(UserModel user) {
     showDialog(
-        context: context,
-        builder: (_) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          backgroundColor: Const.themeColor,
+          title: Text(
+            (user.userName ?? "User") + " ile eşleşmek ister misin?",
+            style: titleStyle,
+          ),
+          content: ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: CircleAvatar(
+              backgroundColor: Const.themeColor,
+              backgroundImage: CachedNetworkImageProvider(user.image!),
             ),
-            backgroundColor: Colors.grey.shade200,
-            title:
-                Text((user.userName ?? "User") + " ile eşleşmek ister misin?"),
-            content: ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: CircleAvatar(
-                backgroundColor: Colors.grey.shade200,
-                backgroundImage: CachedNetworkImageProvider(user.image!),
-              ),
-              title: Text(user.userName ?? "User"),
-              subtitle: Text(
-                user.bio ?? "Biografi",
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+            title: Text(
+              user.userName ?? "User",
+              style: titleStyle,
             ),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    AuthService().sendUserMatchRequest(user.id!);
-                    Navigator.pop(context);
-                  },
-                  child: Text("Eşleş")),
-              TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text("Eşleşme")),
-            ],
-          );
-        });
+            subtitle: Text(
+              user.bio ?? "Biografi",
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: subtitleStyle,
+            ),
+          ),
+          actions: [
+            TextButton(
+              style: TextButton.styleFrom(
+                primary: Const.contrainsColor,
+              ),
+              onPressed: () {
+                AuthService().sendUserMatchRequest(user.id!);
+                Navigator.pop(context);
+              },
+              child: Text("Eşleş"),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                primary: Const.contrainsColor,
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text("Eşleşme"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void showUnMatchDialog(UserModel user) {
     showDialog(
-        context: context,
-        builder: (_) {
-          return AlertDialog(
-            backgroundColor: Colors.grey.shade200,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          backgroundColor: Const.themeColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text(
+            "Emin misin?",
+            style: titleStyle,
+          ),
+          content: Text(
+            (user.userName ?? "User") +
+                " ile eşleşmeni kapatmak istediğine emin misin?",
+            style: subtitleStyle,
+          ),
+          actions: [
+            TextButton(
+              style: TextButton.styleFrom(
+                primary: Const.contrainsColor,
+              ),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text("Hayır"),
             ),
-            title: Text("Emin misin?"),
-            content: Text((user.userName ?? "User") +
-                " ile eşleşmeni kapatmak istediğine emin misin?"),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: Text("Hayır")),
-              TextButton(
-                  onPressed: () async {
-                    UserStatusService().disconnectUser(user.id!);
-                    Navigator.pop(context);
-                  },
-                  child: Text("Evet")),
-            ],
-          );
-        });
+            TextButton(
+              style: TextButton.styleFrom(
+                primary: Const.contrainsColor,
+              ),
+              onPressed: () async {
+                UserStatusService().disconnectUser(user.id!);
+                Navigator.pop(context);
+              },
+              child: Text("Evet"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<MatchType?> showMatchMenu() async {
@@ -1080,19 +1102,29 @@ class _PlayingScreenState extends State<PlayingScreen>
       elevation: popupMenuTheme.elevation,
       items: [
         PopupMenuItem(
-          child: Text("Rastgele Eşleş"),
+          textStyle: popupTextStyle,
+          child: Text(
+            "Rastgele Eşleş",
+          ),
           value: MatchType.Random,
         ),
         PopupMenuItem(
-          child: Text("Kendin Seç"),
+          textStyle: popupTextStyle,
+          child: Text(
+            "Kendin Seç",
+          ),
           value: MatchType.YourSelect,
         ),
       ],
       position: position,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: Const.kLight,
+          width: 1,
+        ),
       ),
-      color: popupMenuTheme.color,
+      color: Const.themeColor,
     );
   }
 
@@ -1102,15 +1134,13 @@ class _PlayingScreenState extends State<PlayingScreen>
       context: context,
       builder: (context) {
         return SimpleDialog(
-          backgroundColor: Colors.grey.shade200,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor: Const.themeColor,
           title: Center(
             child: Text(
               "Zaman seçin",
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: Const.kBackground,
+                color: Const.contrainsColor,
               ),
             ),
           ),
@@ -1121,11 +1151,11 @@ class _PlayingScreenState extends State<PlayingScreen>
                 width: 200,
                 child: CupertinoTheme(
                   data: CupertinoThemeData(
-                    primaryColor: Const.kBackground,
+                    primaryColor: Const.contrainsColor,
                     textTheme: CupertinoTextThemeData(
                       pickerTextStyle: TextStyle(
                         fontSize: 16,
-                        color: Const.kBackground,
+                        color: Const.contrainsColor,
                       ),
                     ),
                   ),
@@ -1143,7 +1173,7 @@ class _PlayingScreenState extends State<PlayingScreen>
               children: [
                 TextButton(
                   style: TextButton.styleFrom(
-                    primary: Const.kBackground.withOpacity(0.7),
+                    primary: Const.contrainsColor,
                   ),
                   onPressed: () {
                     Navigator.pop(context);
@@ -1157,11 +1187,22 @@ class _PlayingScreenState extends State<PlayingScreen>
                   onPressed: () {
                     sleepTimer(_time.inMinutes);
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: Const.contrainsColor,
                         content: Text(
-                            "Zamanlayıcı ${_time.inMinutes} dakikaya ayarlandı")));
+                          "Zamanlayıcı ${_time.inMinutes} dakikaya ayarlandı",
+                          style: TextStyle(
+                            color: Const.themeColor,
+                          ),
+                        ),
+                      ),
+                    );
                   },
-                  child: Text("Kaydet"),
+                  child: Text(
+                    "Kaydet",
+                    style: subtitleStyle,
+                  ),
                 ),
                 const SizedBox(
                   width: 20,
@@ -1187,18 +1228,16 @@ class _PlayingScreenState extends State<PlayingScreen>
           List<UserModel> users =
               await ListeningSongService().getFutureListenersFrom(song.id);
           if (users.isNotEmpty) {
-            if (users.length < 1) {
-              showMyOverlayNotification(
-                duration: Duration(seconds: 2),
-                message: "Hiç kimse yok",
-                isDismissible: true,
-              );
+            if (users.length >= 1) {
+              users.shuffle();
+              showUserDialog(users.first);
               return;
             }
-            users.shuffle();
-
-            showUserDialog(users.first);
           }
+          showMessage(
+            message: "Eşleşecek hiç kimse yok",
+          );
+          return;
         } else if (type == MatchType.YourSelect) {
           showListeningUsers(song.id);
         }

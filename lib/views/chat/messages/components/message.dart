@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/enums.dart';
 import 'package:onlinemusic/views/chat/messages/components/audio_message.dart';
 import 'package:onlinemusic/views/chat/messages/components/image_message.dart';
@@ -80,7 +81,8 @@ class Message extends StatelessWidget {
   }
 
   TextStyle get timeStyle {
-    return TextStyle(fontSize: 12, color: Colors.black54);
+    return TextStyle(
+        fontSize: 12, color: Const.contrainsColor.withOpacity(0.3));
   }
 
   String getTime(int millis) {

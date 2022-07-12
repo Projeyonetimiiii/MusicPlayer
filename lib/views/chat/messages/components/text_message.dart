@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/views/chat/models/chat_message.dart';
 
 class TextMessage extends StatelessWidget {
@@ -28,13 +29,13 @@ class TextMessage extends StatelessWidget {
           vertical: 8,
         ),
         decoration: BoxDecoration(
-          color: isMee ? Colors.blue : Colors.grey.shade300,
+          color: Const.contrainsColor.withOpacity(isMee ? 1 : .1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
           (message.message ?? ""),
           style: TextStyle(
-            color: isMee ? Colors.white : Colors.black,
+            color: isMee ? Const.themeColor : Const.contrainsColor,
             fontStyle: (message.isRemoved ?? false)
                 ? FontStyle.italic
                 : FontStyle.normal,

@@ -92,11 +92,16 @@ class _BuildAudioWidgetState extends State<BuildAudioWidget> {
                     child: ListView(
                       physics: BouncingScrollPhysics(),
                       children: [
-                        Text(
-                          widget.audios![0].name,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                          ),
+                          child: Text(
+                            widget.audios![0].name,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Const.contrainsColor,
+                            ),
                           ),
                         ),
                         StreamBuilder<Duration>(
@@ -106,18 +111,23 @@ class _BuildAudioWidgetState extends State<BuildAudioWidget> {
                                 children: [
                                   if (widget.onPressedDeleteButton != null)
                                     StreamBuilder<Duration>(
-                                        stream: _player!.positionStream,
-                                        initialData: Duration.zero,
-                                        builder: (context, snapshot) {
-                                          return Text(sliderScroll
+                                      stream: _player!.positionStream,
+                                      initialData: Duration.zero,
+                                      builder: (context, snapshot) {
+                                        return Text(
+                                          sliderScroll
                                               ? Const.getDurationString(
                                                   Duration(
-                                                      milliseconds:
-                                                          scrollSliderValue
-                                                              .toInt()))
+                                                    milliseconds:
+                                                        scrollSliderValue
+                                                            .toInt(),
+                                                  ),
+                                                )
                                               : Const.getDurationString(
-                                                  snapshot.data!));
-                                        }),
+                                                  snapshot.data!),
+                                        );
+                                      },
+                                    ),
                                   Expanded(
                                     child: SliderTheme(
                                       data: SliderThemeData(
@@ -143,9 +153,9 @@ class _BuildAudioWidgetState extends State<BuildAudioWidget> {
                                                         .data!.inMilliseconds
                                                         .toDouble())
                                                 : 0,
-                                        activeColor: Colors.red.shade300,
-                                        inactiveColor:
-                                            Colors.white.withOpacity(0.1),
+                                        activeColor: Const.contrainsColor,
+                                        inactiveColor: Const.contrainsColor
+                                            .withOpacity(0.1),
                                         onChanged: (i) {
                                           setState(() {
                                             scrollSliderValue = i;
@@ -175,7 +185,7 @@ class _BuildAudioWidgetState extends State<BuildAudioWidget> {
                                         _player!.duration!,
                                       ),
                                       style: TextStyle(
-                                        color: Colors.white,
+                                        color: Const.contrainsColor,
                                       ),
                                     ),
                                 ],
@@ -187,8 +197,9 @@ class _BuildAudioWidgetState extends State<BuildAudioWidget> {
                 ),
                 if (widget.onPressedDeleteButton != null)
                   buildButton(
-                      icon: Icons.delete_outline_rounded,
-                      onPressed: () => widget.onPressedDeleteButton!(0)),
+                    icon: Icons.delete_outline_rounded,
+                    onPressed: () => widget.onPressedDeleteButton!(0),
+                  ),
               ],
             ),
     );
@@ -199,18 +210,15 @@ class _BuildAudioWidgetState extends State<BuildAudioWidget> {
       width: 50,
       height: 50,
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.1),
+        color: Const.contrainsColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Center(
         child: IconButton(
           onPressed: onPressed,
           splashRadius: 20,
-          splashColor: Colors.red.shade300.withOpacity(0.5),
-          icon: Icon(
-            icon,
-            color: Colors.red.shade300,
-          ),
+          splashColor: Const.contrainsColor.withOpacity(0.5),
+          icon: Icon(icon, color: Const.contrainsColor),
         ),
       ),
     );

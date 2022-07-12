@@ -10,7 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:rxdart/rxdart.dart';
 
 class AppUpdateService {
-  static final double version = 1.2;
+  static final double version = 1.3;
   static final String _baseUrl =
       "https://raw.githubusercontent.com/OrtakProje-1/app_versions/master/music_player/";
   static final String _lastVersionUrl = _baseUrl + "last_version.json";
@@ -21,10 +21,11 @@ class AppUpdateService {
       if (res.statusCode == 200) {
         UpdateModel model = UpdateModel.fromJson(res.body);
         if (version < model.version) {
-          bool? result = await _showUpdateDialog(model);
+          ApkInfo info = await _getApkInfo(model);
+          bool? result = await _showUpdateDialog(model, info);
           if (result == true) {
             String path = await _getDownloadPath(model);
-            String url = await _getDownloadUrl(model);
+            String url = _getDownloadUrl(model, info);
             showDownloadingDialog(path, url);
           }
         }
@@ -34,7 +35,7 @@ class AppUpdateService {
     }
   }
 
-  static Future<String> _getDownloadUrl(UpdateModel model) async {
+  static Future<ApkInfo> _getApkInfo(UpdateModel model) async {
     String abi = "universal";
 
     List? abis = await cacheBox!.get('supportedAbis') as List?;
@@ -56,12 +57,21 @@ class AppUpdateService {
       }
     }
 
+    ApkInfo? info;
+
     if (abi != "universal") {
-      if (!model.apks.contains(abi)) {
+      if (!model.apks.any((element) => element == abi)) {
         abi = "universal";
       }
     }
-    return _baseUrl + model.version.toString() + "/apks/$abi.apk";
+
+    info = model.apkInfos.firstWhere((element) => element.name == abi);
+    // return _baseUrl + model.version.toString() + "/apks/$abi.apk";
+    return info;
+  }
+
+  static String _getDownloadUrl(UpdateModel model, ApkInfo info) {
+    return _baseUrl + model.version.toString() + "/apks/${info.name}.apk";
   }
 
   static Future<String> _getDownloadPath(UpdateModel model) async {
@@ -176,7 +186,13 @@ void showDownloadingDialog(String path, String url) {
   );
 }
 
-Future<bool?> _showUpdateDialog(UpdateModel model) async {
+String _getTitle(UpdateModel model) {
+  if (model.title != null && model.title!.isNotEmpty) return model.title!;
+  return "Yeni Bir Güncelleme Mevcut " +
+      ("v${AppUpdateService.version}" + " -> v" + model.version.toString());
+}
+
+Future<bool?> _showUpdateDialog(UpdateModel model, ApkInfo info) async {
   return showDialog<bool>(
     context: MyApp.navigatorKey.currentContext!,
     builder: (ctx) {
@@ -186,7 +202,7 @@ Future<bool?> _showUpdateDialog(UpdateModel model) async {
         ),
         backgroundColor: Colors.grey.shade200,
         title: Text(
-          "Güncelleme Mevcut" + " v" + model.version.toString(),
+          _getTitle(model),
         ),
         content: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -220,6 +236,23 @@ Future<bool?> _showUpdateDialog(UpdateModel model) async {
                 ).toList(),
               ),
             ),
+            if (info.size != null && info.size!.isNotEmpty) ...[
+              SizedBox(
+                height: 8,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    "Tahmini İndirme Boyutu: " + info.size!,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
         actions: [

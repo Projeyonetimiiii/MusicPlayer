@@ -84,10 +84,8 @@ class ConnectedSongService {
             }
           } else {
             if (connectSongModel.value != null) {
-              showMyOverlayNotification(
-                duration: Duration(seconds: 2),
+              showMessage(
                 message: "Müziğin eşleşmesi bitirildi",
-                isDismissible: true,
               );
               disconnectSong();
             }
@@ -131,23 +129,27 @@ class ConnectedSongService {
             lastItem = connectedController.song;
             await updateController(
                 connectedController.copyWith(isReady: false), docId);
-            try {
-              await handler.pause();
-            } on Exception catch (_) {}
-            showMyOverlayNotification(
-              duration: Duration(seconds: 2),
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(5),
-                child: Container(
-                  width: 45,
-                  height: 45,
-                  child: lastItem!.getImageWidget,
+            if (appIsRunnig) {
+              try {
+                await handler.pause();
+              } on Exception catch (_) {}
+              showMyOverlayNotification(
+                duration: Duration(seconds: 2),
+                leading: ClipRRect(
+                  borderRadius: BorderRadius.circular(5),
+                  child: Container(
+                    width: 45,
+                    height: 45,
+                    child: lastItem!.getImageWidget,
+                  ),
                 ),
-              ),
-              message: lastItem!.title + " adlı müziği hazırlıyorum",
-              isDismissible: true,
-            );
-            await handler.updateQueue(connectedController.queue);
+                message: lastItem!.title + " adlı müziği hazırlıyorum",
+              );
+            }
+            if (connectedController.queue.map((e) => e.toJson).join() !=
+                handler.queue.value.map((e) => e.toJson).join()) {
+              await handler.updateQueue(connectedController.queue);
+            }
             await handler.playMediaItem(lastItem!);
             await handler.player.seek(connectedController.position);
             if (processSub == null) {

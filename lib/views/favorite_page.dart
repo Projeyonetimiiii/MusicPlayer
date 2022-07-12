@@ -1,8 +1,11 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
-import 'package:onlinemusic/views/playing_screen/playing_screen.dart';
+import 'package:onlinemusic/util/helper_functions.dart';
+import 'package:onlinemusic/util/mixins.dart';
+import 'package:onlinemusic/widgets/custom_back_button.dart';
+import 'package:onlinemusic/widgets/mini_player.dart';
+import 'package:onlinemusic/widgets/short_popupbutton.dart';
 
 class FavoritePage extends StatefulWidget {
   FavoritePage({Key? key}) : super(key: key);
@@ -11,99 +14,91 @@ class FavoritePage extends StatefulWidget {
   State<FavoritePage> createState() => _FavoritePageState();
 }
 
-class _FavoritePageState extends State<FavoritePage> {
+class _FavoritePageState extends State<FavoritePage> with BuildMediaItemMixin {
+  SortType? sortType;
+  OrderType? orderType;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: CustomBackButton(),
         title: Text("Favori Müziklerim"),
-      ),
-      body: StreamBuilder<List<MediaItem>>(
-        stream: context.myData.favoriteSongs,
-        initialData: context.myData.favoriteSongs.value,
-        builder: (c, snapshot) {
-          List<MediaItem> songs = snapshot.data!;
-
-          if (songs.isEmpty) {
-            return Center(
-              child: Text("Favori Müziğiniz Yok"),
-            );
-          }
-
-          return ListView.builder(
-            physics: BouncingScrollPhysics(),
-            itemCount: songs.length,
-            itemBuilder: (BuildContext context, int index) {
-              MediaItem mediItem = songs[index];
-              return Dismissible(
-                key: Key(mediItem.id),
-                background: Container(
-                  color: Colors.red,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Icon(Icons.delete, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
-                secondaryBackground: Container(
-                  color: Colors.red,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Icon(Icons.delete, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ),
-                onDismissed: (l) {
-                  setState(() {
-                    context.myData.removeFavoritedSong(mediItem);
-                  });
-                },
-                child: ListTile(
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                  onTap: () {
-                    context.pushOpaque(PlayingScreen(
-                      song: mediItem,
-                      queue: songs,
-                    ));
-                  },
-                  leading: Material(
-                    elevation: 10,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: SizedBox(
-                        width: 90,
-                        child: AspectRatio(
-                          aspectRatio: 16 / 9,
-                          child: mediItem.getImageWidget,
-                        ),
-                      ),
-                    ),
-                  ),
-                  trailing: Text(Const.getDurationString(
-                      mediItem.duration ?? Duration.zero)),
-                  title: Text(
-                    mediItem.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ),
-              );
+        actions: [
+          SortPopupButton(
+            changeSort: (sort, order) {
+              WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+                setState(() {
+                  sortType = sort;
+                  orderType = order;
+                });
+              });
             },
-          );
-        },
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder<List<MediaItem>>(
+              stream: context.myData.favoriteSongs,
+              initialData: context.myData.favoriteSongs.value,
+              builder: (c, snapshot) {
+                List<MediaItem> items = snapshot.data!;
+
+                if (items.isEmpty) {
+                  return Center(
+                    child: Text("Favori Müziğiniz Yok"),
+                  );
+                }
+                if (sortType == null && orderType == null) {
+                  items = sortItems(items, SortType.Name, OrderType.Growing);
+                } else {
+                  items = sortItems(items, sortType!, orderType!);
+                }
+                return ListView.builder(
+                  physics: BouncingScrollPhysics(),
+                  itemCount: items.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    MediaItem mediItem = items[index];
+                    return Dismissible(
+                        key: Key(mediItem.id),
+                        background: Container(
+                          color: Colors.red,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Icon(Icons.delete, color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
+                        secondaryBackground: Container(
+                          color: Colors.red,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Icon(Icons.delete, color: Colors.white),
+                              ),
+                            ],
+                          ),
+                        ),
+                        onDismissed: (l) {
+                          setState(() {
+                            context.myData.removeFavoritedSong(mediItem);
+                          });
+                        },
+                        child: buildMusicItem(mediItem, items));
+                  },
+                );
+              },
+            ),
+          ),
+          MiniPlayer(),
+        ],
       ),
     );
   }

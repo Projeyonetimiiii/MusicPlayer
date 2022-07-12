@@ -20,100 +20,123 @@ class ChatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        stream: AuthService().getUserStreamFromId(chat.userIds.firstWhere(
-            (element) => element != FirebaseAuth.instance.currentUser!.uid)),
-        builder: (context, snapshot) {
-          UserModel? user;
-          if (snapshot.hasData) {
-            user = UserModel.fromMap(snapshot.data!.data()!);
-          }
-          return Container(
-            padding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(16),
-              onTap: press,
-              child: Container(
-                padding: EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.grey.shade500.withOpacity(0.5),
+      stream: AuthService().getUserStreamFromId(chat.userIds.firstWhere(
+          (element) => element != FirebaseAuth.instance.currentUser!.uid)),
+      builder: (context, snapshot) {
+        UserModel? user;
+        if (snapshot.hasData) {
+          user = UserModel.fromMap(snapshot.data!.data()!);
+        }
+        return InkWell(
+          onTap: press,
+          child: Container(
+            padding: EdgeInsets.all(8),
+            child: Row(
+              children: [
+                if (user == null) ...[
+                  CircleAvatar(
+                    radius: 45 / 2,
+                    backgroundColor: Const.contrainsColor.withOpacity(0.1),
                   ),
-                ),
-                child: Row(
-                  children: [
-                    if (user == null) ...[
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(5),
-                        child: Container(
-                          width: 45,
-                          height: 45,
-                          color: Colors.black26,
+                ],
+                if (user != null) ...[
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Card(
+                        elevation: 5,
+                        clipBehavior: Clip.antiAlias,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(23),
                         ),
-                      ),
-                    ],
-                    if (user != null) ...[
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(5),
-                            child: Container(
-                              width: 45,
-                              height: 45,
+                        child: SizedBox.square(
+                          dimension: 45,
+                          child: Hero(
+                            tag: (user.id.toString()) + "i",
+                            child: Material(
+                              elevation: 0,
+                              clipBehavior: Clip.antiAlias,
+                              shape: StadiumBorder(),
                               child: CachedNetworkImage(
                                 imageUrl: user.image!,
                                 fit: BoxFit.cover,
                                 placeholder: (c, i) {
-                                  return Container(
-                                    width: 45,
-                                    height: 45,
-                                    color: Colors.black26,
+                                  return CircleAvatar(
+                                    backgroundColor:
+                                        Const.contrainsColor.withOpacity(0.1),
                                   );
                                 },
                               ),
                             ),
                           ),
-                        ],
+                        ),
                       ),
                     ],
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                ],
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Text(
-                              user?.userName ?? "User",
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.w500),
+                            Expanded(
+                              child: Hero(
+                                tag: (user?.id.toString() ??
+                                        DateTime.now()
+                                            .microsecondsSinceEpoch
+                                            .toString()) +
+                                    "n",
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: Text(
+                                    user?.userName ?? "User",
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
-                            SizedBox(height: 8),
-                            Opacity(
-                              opacity: 0.64,
+                          ],
+                        ),
+                        SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Expanded(
                               child: Text(
                                 chat.message.message ?? "",
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
+                            Opacity(
+                              opacity: 0.64,
+                              child: Text(
+                                Const.timeEllapsed(
+                                  DateTime.fromMillisecondsSinceEpoch(
+                                    chat.message.messageTime!,
+                                  ),
+                                ),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-                      ),
+                      ],
                     ),
-                    Opacity(
-                      opacity: 0.64,
-                      child: Text(Const.getDateTimeString(
-                        DateTime.fromMillisecondsSinceEpoch(
-                          chat.message.messageTime!,
-                        ),
-                      ).toString()),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          );
-        });
+          ),
+        );
+      },
+    );
   }
 }

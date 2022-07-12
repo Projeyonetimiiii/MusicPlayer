@@ -7,7 +7,6 @@ import 'package:onlinemusic/models/connected_song_model.dart';
 import 'package:onlinemusic/models/usermodel.dart';
 import 'package:onlinemusic/services/connected_song_service.dart';
 import 'package:onlinemusic/util/enums.dart';
-import 'package:onlinemusic/widgets/my_overlay_notification.dart';
 import 'package:rxdart/rxdart.dart';
 
 class UserStatusService {

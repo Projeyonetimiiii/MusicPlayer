@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/views/chat/models/chat_message.dart';
 
@@ -72,6 +73,8 @@ class _AudioMessageState extends State<AudioMessage> {
 
   bool get isPlaying => _player.playing;
 
+  bool handlerLastPlaying = false;
+
   @override
   Widget build(BuildContext context) {
     bool isMee =
@@ -85,7 +88,7 @@ class _AudioMessageState extends State<AudioMessage> {
         width: MediaQuery.of(context).size.width * 0.60,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          color: isMee ? Colors.blue : Colors.grey.shade400,
+          color: Const.contrainsColor.withOpacity(isMee ? 1 : .1),
         ),
         child: Stack(
           children: [
@@ -101,22 +104,32 @@ class _AudioMessageState extends State<AudioMessage> {
                         height: 40,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
-                          color: Colors.white.withOpacity(0.4),
+                          color:
+                              (isMee ? Const.themeColor : Const.contrainsColor)
+                                  .withOpacity(0.4),
                         ),
                         child: Center(
-                          child: Icon(Icons.audiotrack_rounded),
+                          child: Icon(
+                            Icons.audiotrack_rounded,
+                            color:
+                                isMee ? Const.themeColor : Const.contrainsColor,
+                          ),
                         ),
                       ),
                       Padding(
                         padding: const EdgeInsets.all(4.0),
                         child: InkWell(
-                          onLongPress: () {},
                           borderRadius: BorderRadius.circular(90),
                           onTap: () {
                             try {
                               if (isPlaying) {
+                                if (handlerLastPlaying) {
+                                  handler.play();
+                                }
                                 _player.pause();
                               } else {
+                                handlerLastPlaying = handler.isPlaying;
+                                handler.pause();
                                 _player.play();
                               }
                               if (mounted)
@@ -130,7 +143,8 @@ class _AudioMessageState extends State<AudioMessage> {
                                 ? Icons.pause_rounded
                                 : Icons.play_arrow_rounded,
                             size: 30,
-                            color: isMee ? Colors.white : Colors.black,
+                            color:
+                                isMee ? Const.themeColor : Const.contrainsColor,
                           ),
                         ),
                       ),
@@ -144,7 +158,8 @@ class _AudioMessageState extends State<AudioMessage> {
                                 child: SliderTheme(
                                   data: SliderThemeData(
                                     overlayShape: RoundSliderOverlayShape(
-                                        overlayRadius: 13),
+                                      overlayRadius: 13,
+                                    ),
                                     thumbShape: RoundSliderThumbShape(
                                       disabledThumbRadius: 12,
                                       enabledThumbRadius: 7,
@@ -154,9 +169,13 @@ class _AudioMessageState extends State<AudioMessage> {
                                     value: getValue(pos)!,
                                     max: millisecond,
                                     min: 0,
-                                    activeColor:
-                                        isMee ? Colors.white : Colors.black,
-                                    inactiveColor: Colors.black12,
+                                    activeColor: isMee
+                                        ? Const.themeColor
+                                        : Const.contrainsColor,
+                                    inactiveColor: (isMee
+                                            ? Const.themeColor
+                                            : Const.contrainsColor)
+                                        .withOpacity(0.3),
                                     onChanged: (i) {
                                       if (mounted)
                                         setState(() {
@@ -198,7 +217,8 @@ class _AudioMessageState extends State<AudioMessage> {
                       child: Text(
                         widget.message!.message.toString(),
                         style: TextStyle(
-                          color: isMee ? Colors.white : Colors.black,
+                          color:
+                              isMee ? Const.themeColor : Const.contrainsColor,
                           fontSize: 13,
                         ),
                       ),
@@ -213,7 +233,7 @@ class _AudioMessageState extends State<AudioMessage> {
                 getDuration(sliderScroll ? scrollSliderValue : millisecond),
                 style: TextStyle(
                   fontSize: 12,
-                  color: isMee ? Colors.white : Colors.black,
+                  color: isMee ? Const.themeColor : Const.contrainsColor,
                 ),
               ),
             ),
