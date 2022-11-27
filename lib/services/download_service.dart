@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:dio/adapter.dart';
 import 'package:downloader/downloader.dart';
 import 'package:http/http.dart' as http;
 import 'package:audio_service/audio_service.dart';
@@ -455,6 +456,12 @@ class Download with ChangeNotifier {
     bool showNotification = true;
 
     Dio dio = Dio();
+    (dio.httpClientAdapter as DefaultHttpClientAdapter).onHttpClientCreate =
+        (HttpClient client) {
+      client.badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+      return client;
+    };
     dio.downloadUri(
       Uri.parse(kUrl),
       filepath,
@@ -631,7 +638,7 @@ class Download with ChangeNotifier {
       Uri.parse("https://yt1s.com/api/ajaxSearch/index"),
       body: {
         "q": "https://www.youtube.com/watch?v=$id",
-        "vt": "mp3",
+        "vt": "home",
       },
     );
 
