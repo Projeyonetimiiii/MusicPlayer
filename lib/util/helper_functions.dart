@@ -1,4 +1,5 @@
 import 'package:audio_service/audio_service.dart';
+import 'package:flutter/services.dart';
 import 'package:onlinemusic/widgets/my_overlay_notification.dart';
 import 'package:onlinemusic/widgets/short_popupbutton.dart';
 
@@ -58,4 +59,8 @@ List<MediaItem> sortItems(
   }
 
   return items;
+}
+
+Future<String> loadJsonFromAssets(String fileName) async {
+  return await rootBundle.loadString('assets/$fileName');
 }

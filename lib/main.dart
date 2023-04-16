@@ -13,6 +13,7 @@ import 'package:onlinemusic/services/connected_song_service.dart';
 import 'package:onlinemusic/services/listening_song_service.dart';
 import 'package:onlinemusic/services/theme_service.dart';
 import 'package:onlinemusic/services/user_status_service.dart';
+import 'package:onlinemusic/services/youtube_api_service.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/extensions.dart';
 import 'package:onlinemusic/widgets/app_lifecycle.dart';
@@ -35,6 +36,7 @@ void main() async {
       DeviceOrientation.portraitUp,
     ],
   );
+  YoutubeApiService();
   await Firebase.initializeApp();
   await initHive();
   awesomeNotificationInitialize();

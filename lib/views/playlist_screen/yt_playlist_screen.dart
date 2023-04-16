@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:onlinemusic/main.dart';
 import 'package:onlinemusic/models/youtube_playlist.dart';
 import 'package:onlinemusic/services/download_service.dart';
+import 'package:onlinemusic/services/youtube_api_service.dart';
 import 'package:onlinemusic/util/const.dart';
 import 'package:onlinemusic/util/converter.dart';
 import 'package:onlinemusic/util/extensions.dart';
@@ -13,6 +14,7 @@ import 'package:onlinemusic/util/mixins.dart';
 import 'package:onlinemusic/views/video_player_screen.dart';
 import 'package:onlinemusic/widgets/mini_player.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
+import 'package:googleapis/youtube/v3.dart' as ytb;
 
 class YtPlaylistScreen extends StatefulWidget {
   final YoutubePlaylist playlist;
@@ -27,7 +29,8 @@ class _YtPlaylistScreenState extends State<YtPlaylistScreen>
   YoutubePlaylist get playlist => widget.playlist;
   late YoutubeExplode _yt;
   List<MediaItem> searchedList = [];
-
+  late YoutubeApiService newService;
+  List<ytb.PlaylistItem> playlists = [];
   bool fetched = false;
 
   @override
@@ -38,6 +41,14 @@ class _YtPlaylistScreenState extends State<YtPlaylistScreen>
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       if (playlist.isPlaylist) {
         getVideos();
+      }
+    });
+    newService = new YoutubeApiService();
+    newService.getPlaylistItems(widget.playlist.playlistId ?? "").then((value) {
+      if (value != null) {
+        setState(() {
+          playlists = value;
+        });
       }
     });
     super.initState();
